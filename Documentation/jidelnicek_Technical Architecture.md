@@ -16,9 +16,8 @@ graph TB
         NGINX[Nginx<br/>Reverse Proxy & Static Files]
         
         subgraph "Docker Compose Stack"
-            API[FastAPI Application<br/>Modular Monolith]
+            API[FastAPI Application<br/>Simple Monolith]
             POSTGRES[(PostgreSQL<br/>Single Database)]
-            REDIS[(Redis<br/>Optional Cache)]
         end
         
         FILES[/uploads<br/>Local Volume]
@@ -27,10 +26,7 @@ graph TB
     WEB -->|HTTPS| NGINX
     NGINX -->|proxy_pass| API
     API -->|asyncpg| POSTGRES
-    API -->|Optional| REDIS
     API -->|File I/O| FILES
-    
-    style REDIS stroke-dasharray: 5 5
 ```
 
 ### Architecture Principles
@@ -348,7 +344,7 @@ CREATE TABLE trip_days (
 CREATE TABLE meals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     trip_day_id UUID REFERENCES trip_days(id) ON DELETE CASCADE,
-    meal_slot VARCHAR(50) NOT NULL, -- Matches name from trip.meal_slots JSONB array
+    meal_slot VARCHAR(50) NOT NULL, -- Matches name from trip_trips.meal_slots JSONB array
     recipe_snapshot_id UUID,
     target_calories_per_person DECIMAL(10,2),
     scaling_factor DECIMAL(10,4) DEFAULT 1.0000,
@@ -472,7 +468,7 @@ CREATE TABLE trip_templates (
 );
 
 -- Flexible Meal Slot Design
--- The meal_slots field in trips table uses JSONB to store an array of meal slot names
+-- The meal_slots field in trip_trips table uses JSONB to store an array of meal slot names
 -- This design provides complete flexibility:
 --   - No hard limit on number of meal slots (backend supports unlimited)
 --   - UI is optimized for 1-10 slots for best user experience
@@ -826,72 +822,72 @@ GET    /api/marketplace/search       # Search recipes
 #### Trip Planning
 ```
 GET    /api/trips                    # List user's trips
-POST   /api/trips                    # Create new trip
-GET    /api/trips/:id                # Get trip details
-PUT    /api/trips/:id                # Update trip
-DELETE /api/trips/:id                # Delete trip
-POST   /api/trips/:id/days           # Add day
-PUT    /api/trips/:id/days/:dayId    # Update day
-DELETE /api/trips/:id/days/:dayId    # Remove day
-PUT    /api/trips/:id/days/reorder   # Reorder days
-POST   /api/trips/:id/participants   # Add participant
-PUT    /api/trips/:id/participants/:pId # Update participant
-DELETE /api/trips/:id/participants/:pId # Remove participant
-PUT    /api/trips/:id/stove          # Set/update stove
+POST   /api/v1/trips                    # Create new trip
+GET    /api/v1/trips/:id                # Get trip details
+PUT    /api/v1/trips/:id                # Update trip
+DELETE /api/v1/trips/:id                # Delete trip
+POST   /api/v1/trips/:id/days           # Add day
+PUT    /api/v1/trips/:id/days/:dayId    # Update day
+DELETE /api/v1/trips/:id/days/:dayId    # Remove day
+PUT    /api/v1/trips/:id/days/reorder   # Reorder days
+POST   /api/v1/trips/:id/participants   # Add participant
+PUT    /api/v1/trips/:id/participants/:pId # Update participant
+DELETE /api/v1/trips/:id/participants/:pId # Remove participant
+PUT    /api/v1/trips/:id/stove          # Set/update stove
 ```
 
 #### Meal Management
 ```
-POST   /api/trips/:tripId/days/:dayId/meals # Add meal
-PUT    /api/trips/:tripId/days/:dayId/meals/:slot # Update meal
-DELETE /api/trips/:tripId/days/:dayId/meals/:slot # Remove meal
-POST   /api/trips/:tripId/days/:dayId/snacks # Add snack
-PUT    /api/trips/:tripId/days/:dayId/snacks/:id # Update snack
-DELETE /api/trips/:tripId/days/:dayId/snacks/:id # Remove snack
-POST   /api/trips/:tripId/days/:dayId/drinks # Add drink
-PUT    /api/trips/:tripId/days/:dayId/drinks/:id # Update drink
-DELETE /api/trips/:tripId/days/:dayId/drinks/:id # Remove drink
+POST   /api/v1/trips/:tripId/days/:dayId/meals # Add meal
+PUT    /api/v1/trips/:tripId/days/:dayId/meals/:slot # Update meal
+DELETE /api/v1/trips/:tripId/days/:dayId/meals/:slot # Remove meal
+POST   /api/v1/trips/:tripId/days/:dayId/snacks # Add snack
+PUT    /api/v1/trips/:tripId/days/:dayId/snacks/:id # Update snack
+DELETE /api/v1/trips/:tripId/days/:dayId/snacks/:id # Remove snack
+POST   /api/v1/trips/:tripId/days/:dayId/drinks # Add drink
+PUT    /api/v1/trips/:tripId/days/:dayId/drinks/:id # Update drink
+DELETE /api/v1/trips/:tripId/days/:dayId/drinks/:id # Remove drink
 ```
 
 #### Ingredients & Snacks
 ```
-GET    /api/ingredients              # List ingredients
-POST   /api/ingredients              # Create ingredient
-PUT    /api/ingredients/:id          # Update ingredient
-DELETE /api/ingredients/:id          # Delete ingredient
-GET    /api/ingredients/global       # Get global ingredients
-GET    /api/snacks                   # List snacks
-POST   /api/snacks                   # Create snack
-PUT    /api/snacks/:id               # Update snack
-DELETE /api/snacks/:id               # Delete snack
-GET    /api/snacks/global            # Get global snacks
+GET    /api/v1/ingredients              # List ingredients
+POST   /api/v1/ingredients              # Create ingredient
+PUT    /api/v1/ingredients/:id          # Update ingredient
+DELETE /api/v1/ingredients/:id          # Delete ingredient
+GET    /api/v1/ingredients/global       # Get global ingredients
+GET    /api/v1/snacks                   # List snacks
+POST   /api/v1/snacks                   # Create snack
+PUT    /api/v1/snacks/:id               # Update snack
+DELETE /api/v1/snacks/:id               # Delete snack
+GET    /api/v1/snacks/global            # Get global snacks
 ```
 
 #### Export & Reports
 ```
-GET    /api/trips/:id/export/summary # Export trip summary
-GET    /api/trips/:id/export/shopping-list # Export shopping list
-GET    /api/trips/:id/export/packing-list # Export packing list
-GET    /api/trips/:id/export/nutrition # Export nutrition report
-POST   /api/trips/:id/export/custom  # Custom export with options
+GET    /api/v1/trips/:id/export/summary # Export trip summary
+GET    /api/v1/trips/:id/export/shopping-list # Export shopping list
+GET    /api/v1/trips/:id/export/packing-list # Export packing list
+GET    /api/v1/trips/:id/export/nutrition # Export nutrition report
+POST   /api/v1/trips/:id/export/custom  # Custom export with options
 ```
 
 #### Templates
 ```
-GET    /api/templates                # List templates
-POST   /api/templates/from-trip/:id  # Create from trip
-POST   /api/templates/from-day/:tripId/:dayId # Create from day
-PUT    /api/templates/:id            # Update template
-DELETE /api/templates/:id            # Delete template
-POST   /api/trips/:id/apply-template/:templateId # Apply template
+GET    /api/v1/templates                # List templates
+POST   /api/v1/templates/from-trip/:id  # Create from trip
+POST   /api/v1/templates/from-day/:tripId/:dayId # Create from day
+PUT    /api/v1/templates/:id            # Update template
+DELETE /api/v1/templates/:id            # Delete template
+POST   /api/v1/trips/:id/apply-template/:templateId # Apply template
 ```
 
 #### Sharing
 ```
-POST   /api/share/recipe/:id         # Create recipe share link
-POST   /api/share/trip/:id           # Create trip share link
-GET    /api/share/:token             # View shared content
-DELETE /api/share/:token             # Revoke share link
+POST   /api/v1/share/recipe/:id         # Create recipe share link
+POST   /api/v1/share/trip/:id           # Create trip share link
+GET    /api/v1/share/:token             # View shared content
+DELETE /api/v1/share/:token             # Revoke share link
 ```
 
 
@@ -922,12 +918,12 @@ DELETE /api/share/:token             # Revoke share link
 - **Authentication**: python-jose[cryptography] with JWT + Passlib
 - **File Upload**: python-multipart + Pillow for image processing
 - **PDF Generation**: ReportLab (lightweight)
-- **Task Queue**: Celery with Redis (single worker) - Optional for Phase 1.1
+- **Task Queue**: None for MVP (synchronous operations)
 - **Testing**: pytest + pytest-asyncio + pytest-cov
 
 ### Database & Storage
 - **Primary DB**: PostgreSQL 15 (Docker container)
-- **Cache**: In-memory for MVP, Redis 7 optional (Phase 1.1) - see [[backend/core/cache_strategy]]
+- **Cache**: Python dict for MVP, Redis as future enhancement if needed
 - **File Storage**: Local volume mount (no S3)
 - **Search**: PostgreSQL full-text search
 - **Connection Pool**: asyncpg with limited pool size (max 10 connections)
@@ -945,7 +941,7 @@ DELETE /api/share/:token             # Revoke share link
 - **CI/CD**: GitHub Actions (simple deployment)
 - **Monitoring**: Health check endpoints + uptime monitoring
 - **Logging**: Docker logs + logrotate
-- **Error Tracking**: Sentry free tier (optional)
+- **Error Tracking**: Basic logging to files
 - **API Documentation**: Auto-generated with FastAPI + ReDoc/Swagger UI
 
 ## 5. Security Architecture
@@ -978,10 +974,8 @@ DELETE /api/share/:token             # Revoke share link
 
 ### Caching Strategy
 
-The application uses a flexible caching abstraction layer that supports in-memory caching for the MVP with a clear migration path to Redis. For detailed implementation, see [[backend/core/cache_strategy]].
-
 ```
-1. Cache Layers (In-Memory for MVP, Redis for Phase 1.1):
+1. Simple In-Memory Cache (Python dict):
    - Session cache (15 min TTL)
    - User preferences (1 hour TTL)
    - Recipe calculations (24 hour TTL)
@@ -990,13 +984,11 @@ The application uses a flexible caching abstraction layer that supports in-memor
 
 2. Database Optimizations:
    - Indexed columns: user_id, recipe_id, trip_id, dates
-   - Materialized views for nutrition calculations
-   - Partitioning for large tables (recipe_versions)
-   - Connection pooling
+   - Standard indexes for foreign keys
+   - Connection pooling (max 10 connections)
 
 3. API Response Caching:
-   - CDN for static assets
-   - API response cache headers
+   - Cache-Control headers
    - ETags for conditional requests
 ```
 
@@ -1005,7 +997,7 @@ The application uses a flexible caching abstraction layer that supports in-memor
 - **API Response**: < 200ms p95
 - **Export Generation**: < 30s for large trips
 - **Search Results**: < 500ms
-- **Concurrent Users**: 10,000+
+- **Concurrent Users**: 100 max
 
 ### Optimization Techniques
 - **Lazy loading** for images and components
@@ -1017,9 +1009,7 @@ The application uses a flexible caching abstraction layer that supports in-memor
 
 ## Cache Configuration
 
-For detailed cache implementation and migration strategy, see [[backend/core/cache_strategy]].
-
-### Cache TTL Values (Works with both In-Memory and Redis)
+### Cache TTL Values (Python dict implementation)
 
 | Cache Type | TTL | Key Pattern | Notes |
 |------------|-----|-------------|--------|
@@ -1034,7 +1024,7 @@ For detailed cache implementation and migration strategy, see [[backend/core/cac
 | Static assets | 7 days | static:{hash} | CDN backed |
 | API rate limit | 1 minute | rate:{user_id}:{endpoint} | Sliding window |
 
-## 7. Python Backend Project Structure (Modular Monolith)
+## 7. Python Backend Project Structure (Simple Monolith)
 
 ### Recommended Project Layout
 
@@ -1048,60 +1038,42 @@ jidelnicek-backend/
 │   ├── main.py             # FastAPI app initialization
 │   ├── config.py           # Global configuration
 │   ├── database.py         # Database connection setup
-│   ├── modules/            # Modular monolith modules
+│   ├── api/                # API routes
 │   │   ├── __init__.py
-│   │   ├── auth/           # Auth Module
-│   │   │   ├── __init__.py
-│   │   │   ├── routes.py   # Module routes
-│   │   │   ├── controllers/
-│   │   │   ├── services/
-│   │   │   ├── repositories/
-│   │   │   ├── models/
-│   │   │   ├── schemas/
-│   │   │   └── interfaces/
-│   │   ├── recipe/         # Recipe Module
-│   │   │   ├── __init__.py
-│   │   │   ├── routes.py
-│   │   │   ├── controllers/
-│   │   │   ├── services/
-│   │   │   ├── repositories/
-│   │   │   ├── models/
-│   │   │   ├── schemas/
-│   │   │   └── interfaces/
-│   │   ├── trip/           # Trip Module
-│   │   │   ├── __init__.py
-│   │   │   ├── routes.py
-│   │   │   ├── controllers/
-│   │   │   ├── services/
-│   │   │   ├── repositories/
-│   │   │   ├── models/
-│   │   │   ├── schemas/
-│   │   │   └── interfaces/
-│   │   └── sharing/        # Sharing Module
-│   │       ├── __init__.py
-│   │       ├── routes.py
-│   │       ├── controllers/
-│   │       ├── services/
-│   │       ├── repositories/
-│   │       ├── models/
-│   │       ├── schemas/
-│   │       └── interfaces/
-│   ├── shared/             # Shared across modules
+│   │   ├── auth.py         # Authentication endpoints
+│   │   ├── recipes.py      # Recipe endpoints
+│   │   ├── trips.py        # Trip endpoints
+│   │   ├── marketplace.py  # Public recipe endpoints
+│   │   └── sharing.py      # Sharing endpoints
+│   ├── services/           # Business logic
 │   │   ├── __init__.py
-│   │   ├── interfaces/     # Shared interfaces
-│   │   ├── middleware/     # Common middleware
-│   │   ├── events/         # Event bus
-│   │   ├── utils/          # Utilities
-│   │   └── types/          # Common types
-│   ├── tasks/              # Background tasks
+│   │   ├── auth_service.py
+│   │   ├── recipe_service.py
+│   │   ├── trip_service.py
+│   │   ├── calculation_service.py
+│   │   └── export_service.py
+│   ├── models/             # SQLAlchemy models
 │   │   ├── __init__.py
-│   │   ├── export_tasks.py
-│   │   └── email_tasks.py
-│   └── infrastructure/     # Infrastructure services
+│   │   ├── user.py
+│   │   ├── recipe.py
+│   │   ├── trip.py
+│   │   └── common.py
+│   ├── schemas/            # Pydantic schemas
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── recipe.py
+│   │   ├── trip.py
+│   │   └── common.py
+│   ├── core/               # Core utilities
+│   │   ├── __init__.py
+│   │   ├── security.py     # Auth utilities
+│   │   ├── cache.py        # Simple dict cache
+│   │   ├── dependencies.py # FastAPI dependencies
+│   │   └── exceptions.py   # Custom exceptions
+│   └── utils/              # Helper functions
 │       ├── __init__.py
-│       ├── cache.py
-│       ├── storage.py
-│       └── email.py
+│       ├── validators.py
+│       └── formatters.py
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py         # pytest fixtures
@@ -1130,7 +1102,7 @@ jidelnicek-backend/
 └── README.md
 ```
 
-### Example Main Application Setup (Modular Monolith)
+### Example Main Application Setup (Simple Monolith)
 
 ```python
 # app/main.py
@@ -1141,38 +1113,19 @@ import uvicorn
 
 from app.config import settings
 from app.database import engine
-from app.modules.auth import AuthModule
-from app.modules.recipe import RecipeModule
-from app.modules.trip import TripModule
-from app.modules.sharing import SharingModule
-from app.shared.events import EventBus
-from app.shared.middleware import setup_middleware
+from app.api import auth, recipes, trips, marketplace, sharing
+from app.core.cache import init_cache
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    # Initialize event bus
-    event_bus = EventBus()
-    
-    # Initialize modules with dependencies
-    auth_module = AuthModule(event_bus)
-    recipe_module = RecipeModule(event_bus, auth_module.get_service())
-    trip_module = TripModule(event_bus, auth_module.get_service(), recipe_module.get_service())
-    sharing_module = SharingModule(event_bus, auth_module.get_service(), recipe_module.get_service())
-    
-    # Store modules in app state
-    app.state.modules = {
-        'auth': auth_module,
-        'recipe': recipe_module,
-        'trip': trip_module,
-        'sharing': sharing_module
-    }
+    # Initialize simple cache
+    init_cache()
     
     yield
     
     # Shutdown
     await engine.dispose()
-    await event_bus.shutdown()
 
 app = FastAPI(
     title="Jídelníček API",
@@ -1182,29 +1135,28 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
-# Setup common middleware
-setup_middleware(app, settings)
+# Setup CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Register module routes
-@app.on_event("startup")
-async def register_routes():
-    modules = app.state.modules
-    
-    # Register each module's routes
-    app.include_router(modules['auth'].get_routes(), prefix="/api/auth", tags=["Authentication"])
-    app.include_router(modules['recipe'].get_routes(), prefix="/api/recipes", tags=["Recipes"])
-    app.include_router(modules['trip'].get_routes(), prefix="/api/trips", tags=["Trips"])
-    app.include_router(modules['sharing'].get_routes(), prefix="/api/sharing", tags=["Sharing"])
+# Register routes
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(recipes.router, prefix="/api/v1/recipes", tags=["Recipes"])
+app.include_router(trips.router, prefix="/api/v1/trips", tags=["Trips"])
+app.include_router(marketplace.router, prefix="/api/v1/marketplace", tags=["Marketplace"])
+app.include_router(sharing.router, prefix="/api/v1/share", tags=["Sharing"])
 
 # Health check endpoint
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
-        "modules": {
-            name: module.health_check() 
-            for name, module in app.state.modules.items()
-        }
+        "version": settings.VERSION
     }
 
 if __name__ == "__main__":
@@ -1282,8 +1234,8 @@ class Settings(BaseSettings):
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = []
     
-    # Redis (Optional - Phase 1.1)
-    REDIS_URL: Optional[str] = None  # Set to "redis://localhost:6379" when using Redis
+    # Cache configuration
+    CACHE_TTL_DEFAULT: int = 300  # 5 minutes default TTL
     
     # File Storage (local for MVP)
     UPLOAD_DIR: str = "/uploads"
@@ -1322,8 +1274,8 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 pillow==10.1.0
 reportlab==4.0.7
-celery==5.3.4
-redis==5.0.1
+# celery==5.3.4  # Not needed for MVP
+# redis==5.0.1   # Not needed for MVP
 httpx==0.25.2
 # boto3==1.29.7  # Not needed for MVP (local storage)
 structlog==23.2.0
@@ -1350,7 +1302,7 @@ prometheus-fastapi-instrumentator==6.1.0
 
 ## 8. Deployment Architecture
 
-> **Note**: The modular monolith architecture significantly simplifies deployment compared to microservices. See [[jidelnicek_Modular_Monolith_Architecture]] for module extraction strategies when scaling becomes necessary.
+> **Note**: The simple monolith architecture is optimized for a 100-user application with straightforward deployment and maintenance.
 
 ### MVP Deployment Architecture
 
@@ -1366,7 +1318,6 @@ graph TB
             NGINX[Nginx Container<br/>:80 :443]
             API[FastAPI Container<br/>:8000]
             POSTGRES[(PostgreSQL Container<br/>:5432)]
-            REDIS[(Redis Container<br/>:6379<br/>Optional)]
         end
         
         subgraph "Docker Volumes"
@@ -1382,14 +1333,12 @@ graph TB
     
     NGINX -->|proxy| API
     API -->|query| POSTGRES
-    API -.->|cache| REDIS
     
     POSTGRES --> PGDATA
     API --> UPLOADS
     NGINX --> CERTS
     
     style CF stroke-dasharray: 5 5
-    style REDIS stroke-dasharray: 5 5
 ```
 
 ### Deployment Strategy
@@ -1492,12 +1441,10 @@ services:
     build: .
     environment:
       - DATABASE_URL=postgresql://user:pass@postgres/jidelnicek
-      - REDIS_URL=redis://redis:6379
     volumes:
       - uploads:/app/uploads
     depends_on:
       - postgres
-      - redis
     restart: unless-stopped
     mem_limit: 1g
 
@@ -1512,11 +1459,12 @@ services:
     restart: unless-stopped
     mem_limit: 1g
 
-  redis:
-    image: redis:7-alpine
-    command: redis-server --maxmemory 400mb --maxmemory-policy allkeys-lru
-    restart: unless-stopped
-    mem_limit: 512m
+  # Redis not needed for MVP - add later if required
+  # redis:
+  #   image: redis:7-alpine
+  #   command: redis-server --maxmemory 400mb --maxmemory-policy allkeys-lru
+  #   restart: unless-stopped
+  #   mem_limit: 512m
 
 volumes:
   postgres_data:
@@ -1542,32 +1490,29 @@ Per User Storage:
 - Trips (avg 100): 100 * 50 KB = 5 MB
 - Total per user: ~1 GB
 
-For 10,000 active users:
-- Database size: ~100 GB
-- Object storage: ~10 TB
-- Redis cache: ~5 GB
-- Backups (30 days): ~3 TB
+For 100 active users:
+- Database size: ~1 GB
+- File storage: ~10 GB
+- Backups (7 days): ~2 GB
+- Total storage needs: < 15 GB
 
-Growth projections:
-- Year 1: 10,000 users = 10 TB
-- Year 2: 50,000 users = 50 TB
-- Year 3: 200,000 users = 200 TB
+Storage is not a concern for this scale
 ```
 
 ### Database Performance Metrics
 ```
-Expected Load:
-- Read QPS: 1000-5000
-- Write QPS: 100-500
-- Concurrent connections: 100-500
-- Average query time: < 10ms
-- Peak traffic: 10x normal
+Expected Load (100 users):
+- Read QPS: 50-100
+- Write QPS: 10-20
+- Concurrent connections: 10-20
+- Average query time: < 50ms
+- Peak traffic: 3x normal
 
-Resource Requirements:
-- CPU: 16-32 cores
-- RAM: 64-128 GB
-- Storage: 1-2 TB SSD
-- IOPS: 10,000+
+VPS Resource Requirements:
+- CPU: 2-4 cores
+- RAM: 4 GB
+- Storage: 20 GB SSD
+- Basic I/O performance
 ```
 
 ### Backup Strategy
@@ -1615,6 +1560,84 @@ Business Metrics:
 ### Python Testing Approach
 
 #### Unit Testing with pytest
+#### Simple Cache Implementation
+
+```python
+# app/core/cache.py
+from typing import Any, Optional
+from datetime import datetime, timedelta
+import asyncio
+from functools import wraps
+
+class SimpleCache:
+    """Simple in-memory cache using Python dict"""
+    
+    def __init__(self):
+        self._cache = {}
+        self._locks = {}
+    
+    async def get(self, key: str) -> Optional[Any]:
+        """Get value from cache if not expired"""
+        if key in self._cache:
+            value, expiry = self._cache[key]
+            if expiry > datetime.now():
+                return value
+            else:
+                del self._cache[key]
+        return None
+    
+    async def set(self, key: str, value: Any, ttl_seconds: int = 300):
+        """Set value in cache with TTL"""
+        expiry = datetime.now() + timedelta(seconds=ttl_seconds)
+        self._cache[key] = (value, expiry)
+    
+    async def delete(self, key: str):
+        """Delete key from cache"""
+        self._cache.pop(key, None)
+    
+    async def clear(self):
+        """Clear entire cache"""
+        self._cache.clear()
+
+# Global cache instance
+cache = SimpleCache()
+
+def init_cache():
+    """Initialize cache (placeholder for future Redis migration)"""
+    global cache
+    cache = SimpleCache()
+
+# Cache decorator
+def cached(ttl_seconds: int = 300):
+    """Decorator for caching function results"""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Create cache key from function name and arguments
+            cache_key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
+            
+            # Try to get from cache
+            result = await cache.get(cache_key)
+            if result is not None:
+                return result
+            
+            # Call function and cache result
+            result = await func(*args, **kwargs)
+            await cache.set(cache_key, result, ttl_seconds)
+            return result
+        
+        return wrapper
+    return decorator
+
+# Usage example:
+# @cached(ttl_seconds=3600)
+# async def get_recipe_nutrition(recipe_id: str):
+#     # Expensive calculation
+#     return calculate_nutrition(recipe_id)
+```
+
+#### Unit Testing Configuration
+
 ```python
 # tests/conftest.py
 import pytest
@@ -1751,13 +1774,13 @@ class TestCalculationService:
 ### Testing Best Practices
 
 1. **Test Coverage Requirements**
-   - Minimum 80% code coverage
-   - 100% coverage for critical business logic
-   - Integration tests for all API endpoints
+   - Target 70% code coverage for MVP
+   - Focus on critical business logic
+   - Basic integration tests for main endpoints
 
 2. **Testing Pyramid**
-   - Unit tests: 70% (fast, isolated)
-   - Integration tests: 20% (API and service layer)
+   - Unit tests: 60% (fast, isolated)
+   - Integration tests: 30% (API endpoints)
    - E2E tests: 10% (critical user flows)
 
 3. **Performance Testing**
@@ -1779,9 +1802,8 @@ class TestCalculationService:
    ```
 
 4. **Database Testing Strategy**
-   - Use SQLite in-memory for unit tests only (fast, isolated)
-   - Use PostgreSQL for integration tests (matching production)
-   - Use PostgreSQL for E2E tests (with test data)
+   - Use SQLite in-memory for unit tests (fast, isolated)
+   - Use test database for integration tests
    - Transaction rollback for test isolation
    - Fixtures for common test data
 
@@ -1851,12 +1873,10 @@ async def get_recipes():
 ```
 Container Memory Allocation:
 - NGINX: 256MB
-- FastAPI App: 1GB
-- PostgreSQL: 1GB  
-- Redis: 512MB (Optional - Phase 1.1)
-- Celery Worker: 512MB (Optional - Phase 1.1)
+- FastAPI App: 1.5GB
+- PostgreSQL: 1.5GB  
 - System Reserved: 768MB
-Total: 4GB (3GB for MVP without Redis/Celery)
+Total: 4GB
 
 Memory Optimization:
 - Limit PostgreSQL connections to 20
@@ -1889,10 +1909,8 @@ PostgreSQL Configuration:
 - work_mem = 4MB
 - max_connections = 20
 
-Redis Configuration (Optional - Phase 1.1):
-- maxmemory 400mb
-- maxmemory-policy allkeys-lru
-- save "" (disable persistence for performance)
+# Redis not configured for MVP
+# Add Redis later if caching becomes a bottleneck
 
 Python/FastAPI:
 - Single Uvicorn worker
@@ -1930,12 +1948,12 @@ Python/FastAPI:
    - Native app-like navigation
    - Offline recipe viewing
 
-### Migration Path (When Needed)
-1. **Vertical scaling** first (upgrade VPS to 8GB)
-2. **Database optimization** before adding replicas
-3. **CDN integration** for static assets
-4. **Separate database VPS** when needed
-5. **Load balancer** only after 500+ users
+### Future Growth Path
+1. **Optimize queries** if performance degrades
+2. **Add Redis** if caching becomes necessary
+3. **Upgrade VPS** if hitting resource limits
+4. **Consider managed database** at 500+ users
+5. **Full re-architecture** only if exceeding 1000 users
 
 ### Feature Priorities
 1. **Core functionality** stability

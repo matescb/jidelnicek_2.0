@@ -1,4 +1,5 @@
 # Jídelníček 2.0 - Comprehensive Product Requirements Document
+# Version 4.0 - Simplified Architecture for 100 Users
 # Part 1: Executive Summary, User Management, and Recipe Core
 
 ## Executive Summary
@@ -35,17 +36,17 @@ To become the essential meal planning tool for outdoor expeditions by providing 
 - Multi-language support (English and Czech)
 
 ### Technical Overview
-- **Architecture**: Modular monolith with clear module boundaries, ready for future microservices migration
+- **Architecture**: Monolithic application built for 100 users maximum
 - **Deployment**: Single VPS (vpsFree.cz) optimized for 100 concurrent users
 - **Backend**: Python 3.11+ with FastAPI, SQLAlchemy 2.0, PostgreSQL 15
 - **Frontend**: Next.js 14 with React 18, TypeScript, Tailwind CSS + Shadcn/ui
 - **Performance**: <3s page loads, <200ms API responses, 99.9% calculation accuracy
 - **Security**: JWT authentication, OAuth2, optional 2FA, comprehensive input validation
-- **Scalability**: Designed for 100 users on 4GB VPS with clear upgrade path
+- **Scalability**: Designed for 100 users on 4GB VPS - this is the final architecture
 
 ### Success Metrics
-- **Launch Goals (3 months)**: 50 registered users, 50 active trips, <2% critical bugs
-- **Year One Goals**: 100 users, 50% MAU, 100+ marketplace recipes, NPS >50
+- **Launch Goals (2 months)**: 50 registered users, 50 active trips, <2% critical bugs
+- **6 Month Goals**: 100 users, 50% MAU, 100+ marketplace recipes, NPS >50
 - **Performance**: 95% uptime, <200ms API response time, 99.9% calculation accuracy
 - **Quality**: >80% test coverage, <5 user-reported bugs/month
 
@@ -64,6 +65,8 @@ User registration with comprehensive security:
   - Must be unique in system
   - Case-insensitive matching
   - Verification required before activation
+  - Verification link expires in 24 hours
+  - Resend limited to 3 per hour
   - Error: "Please enter a valid email address" / "Email must not exceed 255 characters" / "An account with this email already exists"
 
 - **Password Requirements**:
@@ -73,9 +76,11 @@ User registration with comprehensive security:
   - Must contain at least one number (0-9)
   - Must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)
   - Cannot contain the email address or username
+  - Cannot be in common passwords list (top 10,000)
+  - No sequential patterns (abc, 123)
+  - No repeated characters (aaa, 111)
   - Stored using bcrypt with cost factor 12
   - Password strength indicator during entry
-  - Common password check against top 10,000 list
   - Error messages:
     - "Password must be at least 12 characters long"
     - "Password must contain at least one uppercase letter"
@@ -85,6 +90,8 @@ User registration with comprehensive security:
     - "Password must not exceed 128 characters"
     - "Password cannot contain your email address"
     - "This password is too common. Please choose a more unique password"
+    - "Password contains sequential characters"
+    - "Password contains too many repeated characters"
 
 - **Email Verification**:
   - Verification link sent immediately upon registration
@@ -93,7 +100,7 @@ User registration with comprehensive security:
   - One-time use only
   - Resend option available (max 3 per hour)
   - Clear instructions in email
-  - Error: "Verification link has expired" / "Invalid verification token"
+  - Error: "Verification link has expired" / "Invalid verification token" / "Too many verification emails sent. Please try again later"
 
 #### 1.1.2 Login and Session Management
 
@@ -103,10 +110,12 @@ Secure authentication flow:
   - Case-insensitive email matching
   - Timing-safe password comparison
   - Session fingerprinting (IP + User-Agent hash)
+  - Device fingerprinting for security
   - Account lockout after 5 failed attempts
   - Progressive delays: 5 min, 15 min, 1 hour
   - CAPTCHA after 3 failed attempts
   - Clear error messages without revealing account existence
+  - Breach monitoring integration (HaveIBeenPwned API)
   - Error: "Invalid email or password" (generic for security)
 
 - **Session Management**:
@@ -118,14 +127,18 @@ Secure authentication flow:
   - Session timeout after 24 hours of inactivity
   - Automatic session cleanup for expired tokens
   - Device management view for users
+  - Session binding to prevent token theft
+  - Re-authentication for sensitive operations
 
 - **OAuth2 Integration**:
   - Google OAuth2 with email scope
   - Facebook OAuth2 with email scope
   - Account linking for existing emails
+  - Email must match for linking
   - Profile data synchronization options
   - Secure state parameter for CSRF protection
   - Clear consent screen information
+  - Token storage encryption
 
 #### 1.1.3 Password Reset Flow
 
@@ -136,8 +149,10 @@ Secure password recovery:
   - Success message regardless of email existence
   - Token generation for valid accounts
   - 1-hour expiration for reset tokens
+  - Single use enforcement
   - Secure random token generation
   - Email with clear instructions
+  - IP address logging for security
   - Error: "Too many password reset attempts. Please try again later"
 
 - **Reset Completion**:
@@ -147,9 +162,11 @@ Secure password recovery:
   - Email notification of password change
   - Token single-use enforcement
   - IP address logging for security
-  - Error: "Password reset link has expired" / "Invalid reset token"
+  - Force re-authentication on all devices
+  - Error: "Password reset link has expired" / "Invalid reset token" / "This reset link has already been used"
 
-#### 1.1.4 Two-Factor Authentication (Phase 1.1 Post-MVP)
+#### 1.1.4 Two-Factor Authentication (Phase 2)
+**[Phase 2 - Post-MVP Enhancement]**
 
 Enhanced security with 2FA:
 - **TOTP Implementation**:
@@ -159,6 +176,7 @@ Enhanced security with 2FA:
   - Manual key entry option
   - Compatible with standard authenticator apps
   - 6-digit numeric codes
+  - Window tolerance for clock drift
   - Error: "Invalid authenticator code. Please check your device time is synchronized"
 
 - **Recovery Codes**:
@@ -169,6 +187,7 @@ Enhanced security with 2FA:
   - Regeneration requires current password
   - Used codes marked as consumed
   - Warning when only 2 codes remain
+  - Encrypted storage in database
   - Error: "Invalid recovery code" / "This recovery code has already been used"
 
 - **2FA Management**:
@@ -178,6 +197,7 @@ Enhanced security with 2FA:
   - 2FA bypass requires email verification
   - Session elevation for sensitive operations
   - Clear setup wizard with testing
+  - Disable requires password confirmation
 
 ### 1.2 User Roles and Permissions
 **Priority: High - Phase 1**
@@ -227,6 +247,7 @@ User Account Management    | Own only     | All users
 Global Ingredients Edit    | ✗            | ✓
 System Statistics View     | ✗            | ✓
 Audit Log Access          | ✗            | ✓
+Security Event Monitoring  | ✗            | ✓
 ```
 
 ### 1.3 User Preferences and Settings
@@ -403,9 +424,10 @@ Recipe preparation metrics:
 - **Water Requirements**:
   - Required field for cooking
   - Range: 0-10000 ml
-  - Cooking water only (not drinking)
+  - **Important**: Tracks COOKING water only, NOT drinking water
   - Used for fuel calculations
   - Separate from ingredient water
+  - Clear UI label: "Cooking Water (not drinking)"
   - Error: "Water amount must be between 0-10000 ml"
 
 #### 2.1.3 Ingredients Management
@@ -505,7 +527,7 @@ System-wide recipe constraints:
 
 ### 2.2 Recipe Versioning System
 **Priority: High - Phase 2**
-**User Story Reference: US-2, US-11**
+**User Story Reference: US-2, US-10, US-11**
 
 #### 2.2.1 Version Creation Triggers
 
@@ -529,11 +551,12 @@ Automatic versioning for significant changes:
 
 - **Version Metadata**:
   - Version number (auto-incremented)
-  - Creation timestamp
+  - Creation timestamp (exact datetime)
   - Author identification
   - Change summary (auto-generated)
   - Parent version reference
   - Size of change indicator
+  - Format: "v{number} - {date} {time} ({time_ago})"
 
 #### 2.2.2 Version Management
 
@@ -570,6 +593,7 @@ Managing recipe changes in active trips:
   - "Update all trips using this recipe"
   - "Keep existing version in trips"
   - "Update selected trips only"
+  - "Save as new version while keeping original"
   - Clear explanation of impact
   - Preview affected trips
   - Bulk update option
@@ -588,12 +612,15 @@ Managing recipe changes in active trips:
   - Impact on nutritional totals
   - Option to accept/reject
   - Batch notifications
-  - Email digest option# Jídelníček 2.0 - Comprehensive Product Requirements Document
+  - Email digest option
+# Jídelníček 2.0 - Comprehensive Product Requirements Document
 # Part 2: Recipe Marketplace, Trip Planning, and Ingredients
 
 ## 2.3 Recipe Marketplace
 **Priority: High - Phase 3**
 **User Story Reference: US-8, US-9 (merged), US-10**
+
+Note: Recipe sharing functionality (formerly User Story 9) has been consolidated into this section.
 
 ### 2.3.1 Recipe Publishing
 
@@ -602,7 +629,7 @@ Public recipe sharing with controls:
 #### Publishing Requirements
 - **Eligibility**:
   - Recipe must be complete (all required fields)
-  - Valid nutritional data required
+  - Valid nutritional data required (calories and macros minimum)
   - At least one image recommended
   - Author must have verified email
   - No pending moderation flags
@@ -674,7 +701,7 @@ Creating personal copies of public recipes:
   - Increments fork counter
   - Affects unpublish eligibility
   - No notification to author (MVP)
-  - Analytics for author (Phase 4)
+  - Analytics for author (Phase 3)
   - Popular recipe badges
 
 ### 2.3.3 Unpublishing Restrictions
@@ -700,6 +727,7 @@ Protecting community resources:
   - Shows active trip usage count
   - Warning: "This recipe is used in {count} active trips"
   - 30-day grace period notice
+  - Message: "Recipe scheduled for removal on {date}"
   - Option to cancel
 
 - **After Unpublishing**:
@@ -721,6 +749,7 @@ Public feedback system:
   - Scale: 1-5 stars (half stars display only)
   - Eligibility: Must have forked recipe
   - One rating per user per recipe
+  - Users can only submit one marketplace review per recipe they've forked
   - Can update existing rating
   - Cannot delete ratings
   - Affects marketplace ranking
@@ -737,6 +766,8 @@ Public feedback system:
   - Error: "Marketplace review must not exceed 1000 characters"
   - One review per user per recipe
   - Error: "You have already reviewed this recipe"
+  - Reviews can be edited but not deleted
+  - Review history maintained
 
 - **Review Display**:
   - Chronological order (newest first)
@@ -806,12 +837,12 @@ Private recipe sharing without publishing:
   - QR code generation option
 
 - **Link Configuration**:
-  - Expiration range: 1-365 days
-  - Default: 30 days
+  - Default expiration: 30 days
+  - User can set custom expiration: 1-365 days
+  - Validation: "Share link expiration must be between 1 and 365 days"
   - Custom message option
   - View-only access
   - No authentication required
-  - Validation: "Share link expiration must be between 1 and 365 days"
 
 - **Link Management**:
   - List all active links
@@ -819,6 +850,7 @@ Private recipe sharing without publishing:
   - View access count
   - Revoke immediately
   - Extend expiration
+  - Users can regenerate expired links
   - Copy link again
   - See creation date
 
@@ -884,6 +916,7 @@ Core trip setup and configuration:
   - Error: "Notes must not exceed 2000 characters"
 
 ### 3.1.2 Participant Management
+**User Story Reference: US-5**
 
 Group configuration with coefficients:
 
@@ -914,6 +947,15 @@ Group configuration with coefficients:
   - Error: "Participant coefficient must be between 10% and 300%"
   - Example display: "600 kcal base × 150% = 900 kcal portion"
 
+#### Important Coefficient Limitations
+- **Coefficients Apply Only to Meals**:
+  - All meal portions are scaled by participant coefficient
+  - Example: 600 kcal base meal × 150% coefficient = 900 kcal portion
+  - Snacks are NOT affected by coefficients (manual adjustment required)
+  - Drinks are NOT affected by coefficients (manual adjustment required)
+  - This is a deliberate design choice for flexibility
+  - Error message when trying to apply to snacks: "Participant coefficients do not apply to snacks or drinks"
+
 #### Coefficient Behavior
 - **What Coefficients Affect**:
   - Recipe ingredient quantities
@@ -932,6 +974,7 @@ Group configuration with coefficients:
   - Cannot adjust per day  
   - Cannot exclude participant from specific meals
   - Same coefficient throughout trip
+  - No option to exclude participants from specific meals
 
 ### 3.1.3 Meal Slot Configuration
 
@@ -956,1598 +999,782 @@ Customizable daily meal structure:
 - **Meal Slot Consistency**:
   - Same structure all days
   - Cannot vary by day
-  - Changes apply to entire trip
-  - Existing assignments preserved
-  - Warning before deletion
-
-### 3.1.4 Recipe Storage Options
-
-How recipes are linked to trips:
-
-#### Storage Modes
-- **Snapshot Mode (Default)**:
-  - Copies recipe state at assignment
-  - Immune to recipe changes
-  - Preserves exact nutrition
-  - No surprise changes
-  - Storage efficient (deduplication)
-  - Recommended for most users
-
-- **Live Tracking Mode**:
-  - Always uses latest recipe version
-  - Sees all recipe updates
-  - Nutrition may change
-  - Notification of changes
-  - Good for active development
-  - Toggle per trip
-
-#### Storage Implications
-- **Data Integrity**:
-  - Snapshots never change
-  - Live recipes may change
-  - Version reference stored
-  - Change history tracked
-  - Orphan handling for deleted recipes
-
-### 3.1.5 Trip Limits and Validation
-
-System constraints for trips:
-
-#### User Limits
-- **Active Trips**:
-  - Maximum 100 active trips per user
-  - Warning at 90 trips
-  - Archived trips don't count
-  - Error: "You have reached the maximum limit of 100 active trips"
-  - Suggestion to archive old trips
-
-- **Trip Size Limits**:
-  - No day limit (unlimited duration)
-  - 20 participants maximum
-  - Memory optimization for long trips
-  - Pagination for very long trips
-  - Performance monitoring
+  - Applied retroactively
+  - Warning on structure change
+  - Option to preserve assignments
 
 ### 3.2 Meal Assignment and Management
 **Priority: Critical - Phase 1**
-**User Story Reference: US-3, US-5, US-12**
+**User Story Reference: US-3, US-6, US-7**
 
-### 3.2.1 Recipe Assignment
+### 3.2.1 Recipe Assignment to Meals
 
 Flexible meal planning interface:
 
 #### Assignment Methods
-- **Drag-and-Drop**:
-  - Drag recipes from sidebar
-  - Drop on meal slots
-  - Visual feedback during drag
-  - Supports touch devices
-  - Undo/redo support
-  - Batch selection (future)
-
-- **Search and Assign**:
-  - Quick search box
+- **Recipe Selection**:
+  - Search from user's recipes
   - Filter by category
-  - Recent recipes list
-  - Favorites quick access
-  - One-click assignment
-  - Keyboard navigation
+  - Filter by dietary tags
+  - Sort by creation date
+  - Sort by rating
+  - Recent recipes section
+  - Favorite recipes section
 
-- **Quick Actions**:
-  - Copy meal to multiple days
-  - Copy entire day
-  - Paste meal pattern
-  - Clear meal slot
-  - Swap meals
-  - Fill week with pattern
-
-#### Meal Slot Rules
-- **One Recipe Per Slot**:
-  - Single recipe only
-  - No meal combining (MVP)
-  - Empty slots allowed
-  - Visual empty state
-  - Quick suggestions
+- **Assignment Options**:
+  - Single day assignment
+  - Multi-day selection
+  - Pattern-based assignment
+  - Copy from previous day
+  - Clear assignments
+  - Bulk operations
 
 - **Assignment Validation**:
-  - Recipe must exist
-  - User must own recipe
-  - Or recipe must be public
-  - Handles deleted recipes
-  - Version checking
-
-### 3.2.2 Automatic Scaling
-
-Core calorie-targeting feature:
-
-#### Calorie Target System
-- **Setting Targets**:
-  - Per meal slot targets
-  - Range: 100-2000 kcal per person
-  - Default suggestions by meal type
-  - Visual slider + number input
-  - Save target presets
-  - Error: "Target calories must be between 100-2000 kcal per person per meal"
-
-- **Scaling Calculation**:
-  - Recipe base calories calculated
-  - Target / base = scaling factor
-  - Apply to all ingredients
-  - Maintain proportions
-  - Round to practical amounts
-  - Display scaling percentage
-
-- **Scaling Accuracy**:
-  - Target: ±5% of requested calories
-  - Minimum portion constraints
-  - Maximum portion warnings
-  - Can't scale below 10%
-  - Can't scale above 500%
-  - Show actual vs target
-
-#### Daily Calorie Management
-- **Daily Totals**:
-  - Sum all meal targets
-  - Add snacks and drinks
-  - Per-person display
-  - Total group display
-  - Warning if >6000 kcal/person/day
-  - Visual progress bars
-
-- **Calorie Distribution**:
-  - Suggested distributions
-  - 25% breakfast, 35% lunch, 35% dinner, 5% snacks
-  - Customizable templates
-  - Activity-based suggestions
-  - Elevation adjustments
-
-### 3.2.3 Snacks and Drinks
-
-Separate non-meal tracking:
-
-#### Snack Management
-- **Adding Snacks**:
-  - Separate snacks section
-  - Not part of meals
-  - Search snack database
-  - Quick-add common items
-  - Create custom snacks
-  - Nutritional data required
-
-- **Snack Quantities**:
-  - Manual entry per person
-  - No automatic coefficient
-  - Display total needed
-  - Measurement by piece or weight
-  - Smart unit conversion
-  - Running totals
-
-#### Drinks Management  
-- **Drink Categories**:
-  - Hot drinks (coffee, tea)
-  - Cold drinks (juice, sports drinks)
-  - Powder mixes
-  - Separate from water
-  - Examples: "coffee beans, tea bags"
-
-- **Drink Planning**:
-  - Per day quantities
-  - Manual group adjustment  
-  - Nutritional tracking
-  - Weight calculations
-  - Not included in water requirements
-  - Shopping list integration
-
-### 3.3 Day Management
-**Priority: High - Phase 1**
-**User Story Reference: US-3**
-
-### 3.3.1 Day Operations
-
-Dynamic trip day organization:
-
-#### Adding Days
-- **Add Day Options**:
-  - Add at end (default)
-  - Insert at position
-  - Duplicate existing day
-  - Add multiple days
-  - With or without meals
-  - Maintain day numbers
-
-- **Day Templates**:
-  - Save day as template
-  - Apply template to day
-  - Template library
-  - Share templates (future)
-  - Category organization
-
-#### Removing Days
-- **Delete Confirmation**:
-  - Show meals being deleted
-  - Confirm action required
-  - Undo option (30 seconds)
-  - Batch deletion
-  - Keyboard shortcuts
-
-### 3.3.2 Day Reordering
-
-Flexible itinerary management:
-
-#### Drag-and-Drop Reordering
-- **Reorder Behavior**:
-  - Drag entire day card
-  - Visual insertion indicator
-  - Smooth animations
-  - Touch device support
-  - Multi-select (future)
-
-- **Data Preservation**:
-  - All meals move with day
-  - Snacks move with day
-  - Drinks move with day
-  - Notes preserved
-  - Nutritional values updated
-  - Day numbers auto-update
-
-- **Summary Updates**:
-  - Trip totals recalculated
-  - Shopping lists updated
-  - Packing lists reordered
-  - Exports reflect new order
-  - No data loss
-
-### 3.3.3 Day Labels and Notes
-
-Enhanced day identification:
-
-#### Day Identification
-- **Automatic Labels**:
-  - Day 1, Day 2, etc.
-  - Date display
-  - Weekday display
-  - Relative dates (tomorrow, etc.)
-
-- **Custom Labels**:
-  - Optional day names
-  - Location tags
-  - Activity type
-  - Elevation notes
-  - Weather expectations
-  - Max 100 characters
-
-## 4. Ingredient and Snack Management
-
-### 4.1 Ingredient Database
-**Priority: Critical - Phase 1**
-**User Story Reference: US-13**
-
-### 4.1.1 Dual Database System
-
-Global and personal ingredient management:
-
-#### Global Ingredient Database
-- **Fixed Common Ingredients**:
-  - ~500 common expedition foods
-  - Verified nutritional data
-  - Multiple reliable sources
-  - Admin maintained only
-  - Regularly updated
-  - Version controlled
-
-- **Global Ingredient Features**:
-  - Read-only for users
-  - Always available
-  - Searchable
-  - Categorized
-  - Multi-language names
-  - Barcode linked (future)
-
-#### Personal Ingredient Database
-- **User Ingredients**:
-  - Unlimited personal ingredients
-  - Full CRUD operations
-  - Private to user
-  - Import/export capability
-  - Bulk operations
-  - Duplicate detection
-
-- **Personal Features**:
-  - Custom categories
-  - Brand specific items
-  - Local specialties
-  - Recipe ingredients
-  - Quick nutrition copy
-  - Sharing options (future)
-
-### 4.1.2 Ingredient Data Requirements
-
-Comprehensive nutritional tracking:
-
-#### Required Nutritional Data
-- **Macronutrients (per 100g)**:
-  - Calories: 0-900 kcal (9999.99 max)
-  - Proteins: 0-100g
-  - Carbohydrates: 0-100g
-  - Fats: 0-100g
-  - All required for save
-  - Error: "All macronutrients are required"
-
-#### Optional Nutritional Data
-- **Detailed Carbohydrates**:
-  - Sugars: 0-100g (≤ total carbs)
-  - Fiber: 0-100g
-  - Starch: calculated
-  - Sugar alcohols: 0-100g
-
-- **Detailed Fats**:
-  - Saturated: 0-100g (≤ total fats)
-  - Trans: 0-100g
-  - Monounsaturated: 0-100g
-  - Polyunsaturated: 0-100g
-  - Cholesterol: 0-1000mg
-
-- **Minerals**:
-  - Sodium: 0-10000mg
-  - Calcium: 0-5000mg
-  - Iron: 0-100mg
-  - Potassium: 0-10000mg
-  - Magnesium: 0-2000mg
-  - Zinc: 0-100mg
-
-- **Vitamins**:
-  - Vitamin A: 0-10000μg
-  - Vitamin B1-B12: various limits
-  - Vitamin C: 0-2000mg
-  - Vitamin D: 0-1000μg
-  - Vitamin E: 0-1000mg
-  - Vitamin K: 0-1000μg
-  - Folate: 0-5000μg
-
-- **Special Dietary**:
-  - PHE (phenylalanine): 0-5000mg
-  - For PKU dietary needs
-  - Critical for some users
-  - High accuracy required
-
-- **Other**:
-  - Water content: 0-100g
-  - Alcohol: 0-100g
-  - Caffeine: 0-1000mg
-  - Salt: 0-100g
-
-### 4.1.3 Ingredient Validation
-
-Data integrity and accuracy:
-
-#### Validation Rules
-- **Basic Validation**:
-  - Name: Required, 1-100 characters
-  - Category: Max 50 characters
-  - Brand: Optional, max 100 characters
-  - All values non-negative
-  - Error messages per field
-
-- **Cross-Field Validation**:
-  - Sugars ≤ total carbohydrates
-  - Saturated fats ≤ total fats
-  - Macros sum ≈ 95-105% dry weight
-  - Water + macros ≤ 100g
-  - Energy calculation check
-
-- **Validation Messages**:
-  - "Ingredient name is required and must be between 1-100 characters"
-  - "Calories must be between 0-900 per 100g"
-  - "Sugars cannot exceed total carbohydrates"
-  - "Macronutrient sum seems incorrect"
-  - "Please review the nutritional values"
-
-#### Data Precision
-- **Storage Precision**:
-  - Weight: 0.1g precision
-  - Calories: 0.01 kcal
-  - Macros: 0.01g
-  - Vitamins: 0.001mg or μg
-  - Internal decimal storage
-
-- **Display Precision**:
-  - Weight: 1 decimal (100.0g)
-  - Calories: whole numbers
-  - Macros: 0.1g
-  - Vitamins/minerals: 0.01mg
-  - Values <0.01: show "<0.01"
-
-### 4.1.4 Ingredient Categories
-
-Organization for shopping lists:
-
-#### Standard Categories
-- **Primary Categories**:
-  - Grains & Pasta
-  - Proteins (Meat/Fish)
-  - Proteins (Plant)
-  - Dairy & Eggs
-  - Fruits (Dried)
-  - Vegetables (Dried)
-  - Nuts & Seeds
-  - Oils & Fats
-  - Spices & Seasonings
-  - Beverages
-  - Snacks & Bars
-  - Baking Supplies
-  - Condiments
-  - Supplements
-
-- **Category Usage**:
-  - Shopping list grouping
-  - Quick filtering
-  - Inventory management
-  - Cost estimation
-  - Storage planning
-
-### 4.2 Snack Management System
-**Priority: Medium - Phase 2**
-**User Story Reference: US-16**
-
-### 4.2.1 Snack Definition
-
-Items tracked separately from meals:
-
-#### Snack Characteristics
-- **What Makes a Snack**:
-  - Not part of recipes
-  - Individual portions
-  - Ready-to-eat items
-  - Between-meal foods
-  - Trail foods
-  - Energy supplements
-
-- **Snack vs Ingredient**:
-  - Snacks: Complete items
-  - Ingredients: Recipe components
-  - No overlap in system
-  - Requires duplication if both
-  - Clear UI distinction
-
-### 4.2.2 Snack Database
-
-Dedicated snack tracking:
-
-#### Default Snacks
-- **System Snacks**:
-  - Common trail snacks
-  - Energy bars
-  - Dried fruits
-  - Nuts and mixes
-  - Chocolate/candy
-  - Jerky varieties
-
-- **Snack Properties**:
-  - Name: 1-100 characters
-  - Brand: Optional
-  - Measurement type required
-  - Full nutritional data
-  - Images optional
-  - Categories for organization
-
-### 4.2.3 Snack Measurement
-
-Flexible quantity tracking:
-
-#### Measurement Types
-- **By Piece**:
-  - Weight per piece required
-  - Range: 0.1-1000g per piece
-  - Quantity in pieces
-  - Total weight calculated
-  - Error: "Piece weight must be between 0.1-1000 grams"
-
-- **By Weight (per 100g)**:
-  - Direct weight entry
-  - Nutritional per 100g
-  - Total quantity in grams
-  - Standard nutrition display
-
-#### Quantity Management
-- **Per Person Entry**:
-  - Manual quantity entry
-  - Range: 0.01-999.99 units
-  - No automatic coefficients
-  - Visual calculator
-  - Running totals
-
-- **Group Calculations**:
-  - Show per person column
-  - Show total needed column
+  - No duplicate recipes per meal
+  - Warning for missing meals
+  - Calorie target indicators
+  - Nutritional balance check
+  - Shopping optimization hints
+
+### 3.2.2 Calorie-Based Scaling
+**User Story Reference: US-6**
+
+Automatic portion adjustment system:
+
+#### Scaling Configuration
+- **Calorie Targets**:
+  - Per-meal targets
+  - Daily total targets
+  - Per-person basis
+  - Default suggestions
+  - Custom input allowed
+  - Range: 100-10000 kcal/meal
+
+- **Scaling Algorithm**:
+  ```
+  scaled_quantity = base_quantity × (target_calories / recipe_calories) × servings_multiplier
+  ```
+  - Maintains proportions
+  - Rounds to practical amounts
+  - Shows scaling factor
+  - Preview before save
+  - Undo capability
+
+- **Scaling Constraints**:
+  - Minimum 10% of original
+  - Maximum 1000% of original
+  - Warning outside 50-200% range
+  - Override capability
   - Manual adjustment allowed
-  - Rounding suggestions
-  - Package size hints
 
-### 4.3 Drinks Management
-**Priority: Medium - Phase 2**
-**User Story Reference: US-19**
-
-### 4.3.1 Drink Categories
-
-Beverage planning system:
-
-#### Drink Types
-- **Hot Drinks**:
-  - Coffee (beans, instant)
-  - Tea (bags, loose)
-  - Hot chocolate
-  - Instant soups
-  - Powder mixes
-
-- **Cold Drinks**:
-  - Juice powders
-  - Sports drinks
-  - Flavor enhancers
-  - Milk powders
-  - Protein shakes
-
-### 4.3.2 Drink Planning
-
-Separate from water tracking:
-
-#### Drink Quantities
-- **Daily Planning**:
-  - Per person per day
-  - Manual group totals
-  - Weight calculations
-  - Nutritional tracking
-  - Shopping integration
-
-- **Important Distinction**:
-  - Drinks ≠ water requirements
-  - Water for cooking only
-  - Drinking water separate
-  - Clear UI separation
-  - No confusion in calculations# Jídelníček 2.0 - Comprehensive Product Requirements Document
-# Part 3: Nutritional Tracking, Fuel Management, Exports, and Templates
-
-## 5. Nutritional Tracking System
-
-### 5.1 Comprehensive Nutrient Monitoring
-**Priority: Critical - Phase 1**
-**User Story Reference: US-4, US-19**
-
-### 5.1.1 Macronutrient Tracking
-
-Core nutritional components with precision:
-
-#### Primary Macronutrients
-- **Proteins**:
-  - Display precision: 0.1g
-  - Range: 0-100g per 100g food
-  - Essential amino acids (future)
-  - Quality score (future)
-  - Complete/incomplete indicator
-
-- **Carbohydrates**:
-  - Display precision: 0.1g
-  - Total carbohydrates tracked
-  - Sugars subset display
-  - Fiber tracked separately
-  - Net carbs calculation
-  - Glycemic index (future)
-
-- **Fats**:
-  - Display precision: 0.1g
-  - Total fats required
-  - Detailed breakdown:
-    - Saturated fats
-    - Trans fats  
-    - Monounsaturated fats
-    - Polyunsaturated fats
-    - Omega-3, Omega-6 (future)
-  - Cholesterol (mg)
-
-#### Macronutrient Validation
-- **Cross-Validation Rules**:
-  - Proteins + Carbs + Fats ≈ 95-105% of dry weight
-  - Warning: "Macronutrient sum seems incorrect"
-  - Sugars cannot exceed total carbohydrates
-  - Saturated fats cannot exceed total fats
-  - Automatic calculation verification
-  - Manual override with warning
-
-### 5.1.2 Micronutrient Tracking
-
-Comprehensive vitamin and mineral monitoring:
-
-#### Minerals Tracked
-- **Major Minerals**:
-  - Sodium: 0-10000mg per 100g
-  - Calcium: 0-5000mg per 100g
-  - Iron: 0-100mg per 100g
-  - Potassium: 0-10000mg per 100g
-  - Magnesium: 0-2000mg per 100g
-  - Phosphorus: 0-5000mg per 100g
-
-- **Trace Minerals**:
-  - Zinc: 0-100mg per 100g
-  - Copper: 0-50mg per 100g
-  - Manganese: 0-50mg per 100g
-  - Selenium: 0-1000μg per 100g
-  - Iodine: 0-5000μg per 100g
-
-#### Vitamins Tracked
-- **Fat-Soluble Vitamins**:
-  - Vitamin A: 0-10000μg RAE
-  - Vitamin D: 0-1000μg
-  - Vitamin E: 0-1000mg
-  - Vitamin K: 0-1000μg
-
-- **Water-Soluble Vitamins**:
-  - Vitamin C: 0-2000mg
-  - B1 (Thiamine): 0-100mg
-  - B2 (Riboflavin): 0-100mg
-  - B3 (Niacin): 0-500mg
-  - B5 (Pantothenic): 0-200mg
-  - B6 (Pyridoxine): 0-100mg
-  - B7 (Biotin): 0-5000μg
-  - B9 (Folate): 0-5000μg
-  - B12 (Cobalamin): 0-1000μg
-
-#### Special Dietary Tracking
-- **PHE (Phenylalanine)**:
-  - For PKU dietary management
-  - Range: 0-5000mg per 100g
-  - High precision required
-  - Separate display section
-  - Warning thresholds configurable
-  - Daily limit tracking
-
-- **Other Dietary Components**:
-  - Dietary fiber: 0-100g
-  - Salt: 0-100g
-  - Water content: 0-100g
-  - Alcohol: 0-100g
-  - Caffeine: 0-1000mg
-
-### 5.1.3 Display Precision Rules
-
-Consistent numerical presentation:
-
-#### Precision Standards
-- **Energy**:
-  - Calories: Whole numbers only
-  - kJ conversion: Whole numbers
-  - Example: "365 kcal" not "365.2 kcal"
-
-- **Macronutrients**:
-  - Display: 0.1g precision
-  - Example: "24.3g protein"
-  - Below 0.05g: Display "0.0g"
-
-- **Vitamins/Minerals**:
-  - Display: 0.01mg or μg precision
-  - Values <0.01: Display as "<0.01"
-  - Percentage DV: Whole numbers
-  - Example: "1.25mg iron (7% DV)"
-
-- **Special Rules**:
-  - Round halves up consistently
-  - Trailing zeros displayed
-  - Scientific notation avoided
-  - Consistent decimal separator
-
-### 5.2 Nutritional Summaries and Views
-**Priority: High - Phase 1**
-**User Story Reference: US-4**
-
-### 5.2.1 Multi-Level Analysis
-
-Hierarchical nutritional views:
-
-#### Per Meal Analysis
-- **Meal Card Display**:
-  - Recipe name and image
-  - Calories per serving
-  - Macro breakdown (g)
-  - Scaling percentage
-  - Participant portions
-  - Quick nutrition facts
-
-- **Detailed Meal View**:
-  - Complete nutrition label
-  - All vitamins/minerals
-  - Per person values
-  - Total group values
-  - Percentage of daily values
-  - Ingredient contribution
-
-#### Daily Summaries
-- **Daily Overview Card**:
-  - Total calories
-  - Macro pie chart
-  - Meal distribution
-  - Snacks/drinks totals
-  - Key nutrient alerts
-  - Progress indicators
-
-- **Detailed Daily Analysis**:
-  - Meal-by-meal breakdown
-  - Running totals
-  - RDA comparison
-  - Nutrient density score
-  - Balance indicators
-  - Export options
-
-#### Trip Overview
-- **Trip Summary Dashboard**:
-  - Average daily calories
-  - Total food weight
-  - Weight per person per day
-  - Nutritional highlights
-  - Potential deficiencies
-  - Cost estimates (future)
-
-- **Comprehensive Trip Report**:
-  - Day-by-day summaries
-  - Participant breakdowns
-  - Shopping requirements
-  - Nutritional analysis
-  - Charts and graphs
-  - Print-optimized view
-
-### 5.2.2 Visual Representations
-
-Data visualization for insights:
-
-#### Chart Types
-- **Macro Distribution**:
-  - Pie charts
-  - Stacked bars
-  - Percentage displays
-  - Target comparisons
-  - Trend lines
-
-- **Micro Tracking**:
-  - Progress bars vs RDA
-  - Heat maps for vitamins
-  - Deficiency warnings
-  - Excess alerts
-  - Historical trends
-
-#### Interactive Features
-- **Drill-Down Capability**:
-  - Click for details
-  - Hover information
-  - Expandable sections
-  - Filter by nutrient
-  - Compare days
-
-### 5.2.3 Nutritional Alerts
-
-Proactive nutritional guidance:
-
-#### Deficiency Warnings
-- **Alert Triggers**:
-  - <50% RDA for vitamins
-  - <70% protein target
-  - Imbalanced macros
-  - Missing food groups
-  - Low fiber warnings
-
-- **Alert Display**:
-  - Color-coded indicators
-  - Priority sorting
-  - Actionable suggestions
-  - Recipe recommendations
-  - Supplement reminders
-
-#### Balance Indicators
-- **Macro Balance**:
-  - Carb:Protein:Fat ratios
-  - Activity-based targets
-  - Visual equilibrium
-  - Adjustment suggestions
-
-### 5.3 Calculation Engine
-**Priority: Critical - Phase 1**
-
-### 5.3.1 Calculation Accuracy
-
-Precision requirements for trust:
-
-#### Accuracy Standards
-- **Overall Accuracy**: 99.9% requirement
-- **Rounding Rules**:
-  - Calculate in full precision
-  - Round only for display
-  - Consistent rounding method
-  - Documented algorithms
-
-- **Validation Methods**:
-  - Unit test coverage
-  - Known value testing
-  - Edge case handling
-  - Regression testing
-  - Manual spot checks
-
-### 5.3.2 Scaling Calculations
-
-Complex multi-factor calculations:
-
-#### Calculation Order
-1. Base recipe nutrition (per serving)
-2. Apply serving size adjustment
-3. Apply participant coefficient
-4. Apply recipe scaling for calories
-5. Sum all components
-6. Add snacks and drinks
-7. Calculate group totals
-
-#### Edge Cases
-- **Minimum Portions**:
-  - Never scale below 10%
-  - Warning for tiny portions
-  - Suggest alternatives
-
-- **Maximum Portions**:
-  - Warning above 300%
-  - Practicality checks
-  - Split meal suggestions
-
-## 6. Fuel and Equipment Management
-
-### 6.1 Stove Configuration
-**Priority: Medium - Phase 2**
-**User Story Reference: US-18**
-
-### 6.1.1 Stove Setup
-
-Single stove per trip model:
-
-#### Stove Properties
-- **Stove Identification**:
-  - Name: Optional, max 100 characters
-  - Brand/Model: Optional
-  - Fuel type selection
-  - Personal notes field
-  - Error: "Stove name must not exceed 100 characters"
-
-- **Efficiency Rating**:
-  - Grams fuel per liter water
-  - Range: 1-100 g/L
-  - Default suggestions by type
-  - User override allowed
-  - Error: "Stove efficiency must be between 1-100 g/L"
-
-#### Reference Efficiency Values
-- **Common Stove Types**:
-  - Canister stoves: 8-12 g/L
-  - White gas stoves: 10-15 g/L
-  - Alcohol stoves: 20-30 g/L
-  - Wood stoves: N/A
-  - Multi-fuel: 10-15 g/L
-
-- **Factors Affecting Efficiency**:
-  - Wind protection
-  - Pot efficiency
-  - Altitude effects
-  - Temperature effects
-  - Maintenance state
-
-### 6.1.2 Stove Constraints
-
-System limitations:
-
-#### Single Stove Rule
-- **One Stove Only**:
-  - Database constraint enforced
-  - UI prevents multiple
-  - Error: "A trip can only have one stove configuration"
-  - Future: Multi-stove support
-
-### 6.2 Fuel Calculation System
-**Priority: Medium - Phase 2**
-**User Story Reference: US-18**
-
-### 6.2.1 Calculation Inputs
-
-Comprehensive fuel requirement factors:
-
-#### Water Requirements
-- **Sources of Water Needs**:
-  - Recipe cooking water
-  - Hot drink preparation
-  - Rehydration needs
-  - Cleaning allowance
-  - No drinking water
-
-- **Water Calculation**:
-  - Sum all recipe water
-  - Add drink water needs
-  - Apply group size
-  - Daily breakdown
-  - Total trip amount
-
-#### Time Requirements
-- **Cooking Time Sources**:
-  - Recipe cooking times
-  - Stove time only
-  - Excludes prep time
-  - Excludes boiling time
-  - Simmer time included
-
-### 6.2.2 Environmental Adjustments
-
-Real-world condition factors:
-
-#### Default Assumptions
-- **Base Conditions**:
-  - Water temp: 20°C (68°F)
-  - Elevation: Sea level
-  - Boiling time: 5 min/L
-  - No wind factor
-  - Clean stove assumed
-
-#### Altitude Adjustments
-- **Elevation Impact**:
-  - +10% fuel per 1000m
-  - Manual altitude entry
-  - Automatic calculation
-  - Range: 0-5000m
-  - Visual adjustment slider
-
-- **Other Adjustments**:
-  - Cold weather: +20%
-  - Wind exposure: +15%
-  - Winter conditions: +30%
-  - User defined: ±50%
-
-### 6.2.3 Fuel Output
-
-Clear fuel requirements:
-
-#### Calculation Results
-- **Fuel Display**:
-  - Base requirement (g)
-  - Adjusted total (g)
-  - No automatic safety margin
-  - User adds own buffer
-  - Canister size hints
-
-- **Fuel Breakdown**:
-  - Daily requirements
-  - By meal type
-  - Water vs cooking
-  - Visual charts
-  - Export ready
-
-#### Important Notes
-- **User Discretion**:
-  - "No safety margin included"
-  - "Add buffer for conditions"
-  - "Consider stove maintenance"
-  - Link to fuel guide
-
-## 7. Export and Reporting System
-
-### 7.1 Shopping List Generation
-**Priority: Critical - Phase 1**
+#### Important Scaling Behavior
+- **What Gets Scaled**:
+  - All recipe ingredients
+  - Cooking water requirements
+  - Nutritional values
+  - Preparation quantities
+
+- **What Doesn't Scale**:
+  - Cooking times
+  - Number of servings
+  - Recipe instructions
+  - Equipment needs
+
+### 3.2.3 Snacks and Drinks Management
 **User Story Reference: US-7**
 
-### 7.1.1 List Compilation
+Separate handling for non-meal items:
+
+#### Snack System
+- **Snack Addition**:
+  - Search ingredients directly
+  - Pre-made snack recipes
+  - Custom quantities
+  - No coefficient scaling
+  - Manual per-person entry
+  - Copy to multiple days
+
+- **Snack Organization**:
+  - Group by meal slot
+  - Separate "All Day" category
+  - Sort by time
+  - Total per day
+  - Running calorie count
+
+#### Drink Management
+- **Drink Categories**:
+  - Hot beverages
+  - Cold beverages
+  - Recovery drinks
+  - Meal replacements
+  - Custom categories
+
+- **Drink Handling**:
+  - No coefficient scaling
+  - Manual quantities
+  - Water tracking separate
+  - Fuel calculation impact
+  - Nutritional inclusion
+
+### 3.3 Trip Calculations and Outputs
+**Priority: Critical - Phase 1**
+**User Story Reference: US-4**
+
+### 3.3.1 Shopping List Generation
 
 Intelligent ingredient aggregation:
 
-#### Aggregation Process
-- **Quantity Calculation**:
-  - Sum all recipe instances
-  - Apply all scaling factors
-  - Include coefficients
-  - Add snacks/drinks
+#### Aggregation Rules
+- **Combining Logic**:
+  - Same ingredient = combine quantities
+  - Different units = convert to grams
   - Round to practical amounts
+  - Group by category
+  - Sort alphabetically
 
-- **Smart Rounding**:
-  - Package size awareness
-  - Practical quantities
-  - Minimum purchases
-  - Waste reduction
-  - Cost optimization
+- **Practical Rounding**:
+  ```
+  < 10g: round to 1g
+  10-100g: round to 5g
+  100-1000g: round to 10g
+  > 1000g: round to 50g
+  ```
 
-### 7.1.2 List Organization
-
-User-friendly shopping format:
-
-#### Grouping Options
-- **By Category** (Default):
-  - Ingredient categories
-  - Logical store sections
-  - Customizable order
-  - Skip empty categories
-  - Page breaks optional
-
-- **By Store** (Future):
-  - Multi-store planning
-  - Specialty items
-  - Cost comparison
-  - Route optimization
+- **List Organization**:
+  - By ingredient category
+  - By store section
+  - By meal/day
+  - Custom grouping
+  - Checkbox interface
 
 #### List Features
-- **Item Display**:
-  - Ingredient name
-  - Total quantity needed
-  - Unit conversion option
-  - Package suggestions
-  - Check-off boxes
-  - Notes field
-
-- **Additional Info**:
-  - Total weight estimate
-  - Cost estimate (future)
-  - Store suggestions
-  - Brand preferences
-  - Substitution notes
-
-### 7.1.3 Export Formats
-
-Multiple output options:
-
-#### PDF Export
-- **Features**:
-  - Professional formatting
-  - Printable layout
-  - Check boxes
-  - Trip header info
-  - Date generated
-  - Page numbers
-
 - **Customization**:
-  - Logo option
-  - Color/B&W modes
-  - Font size options
-  - Margin settings
-  - Orientation choice
+  - Add custom items
+  - Adjust quantities
+  - Remove items
+  - Add notes
+  - Save templates
 
-#### Excel Export
-- **Spreadsheet Features**:
-  - Sortable columns
-  - Filter ready
-  - Formulas included
-  - Multiple sheets
-  - Pivot table ready
+- **Export Options**:
+  - PDF with checkboxes
+  - Excel spreadsheet
+  - Plain text
+  - Email to self
+  - Print-friendly
 
-- **Columns Included**:
-  - Category
-  - Ingredient
-  - Quantity
-  - Unit
-  - Notes
-  - Price (empty)
-  - Purchased (checkbox)
+### 3.3.2 Packing List by Day
 
-#### Text Export
-- **Simple Format**:
-  - Plain text list
-  - Tab delimited option
-  - CSV format option
-  - Mobile friendly
-  - Easy sharing
+Day-by-day meal organization:
 
-### 7.2 Packing List Generation
-**Priority: High - Phase 2**
-**User Story Reference: US-8**
+#### Packing Structure
+- **Daily Breakdown**:
+  - Day header with date
+  - Meal slots in order
+  - Ingredients per meal
+  - Snacks separate
+  - Daily totals
 
-### 7.2.1 List Types
-
-Detailed packing documentation:
-
-#### Total Trip List
-- **Complete Inventory**:
-  - All ingredients
+- **Packing Information**:
   - Exact quantities
-  - By meal grouping
-  - Weight subtotals
   - Container suggestions
+  - Weight calculations
+  - Volume estimates
+  - Repackaging hints
 
-- **Organization Options**:
-  - By day
-  - By meal type  
-  - By ingredient
-  - By storage type
-  - Custom grouping
+#### Packing Features
+- **Visualization**:
+  - Timeline view
+  - Calendar view
+  - List view
+  - Weight chart
+  - Space optimization
 
-#### Day-by-Day Lists
-- **Daily Packing**:
-  - Per day breakdown
-  - Meal ingredients
-  - Snacks included
-  - Running totals
-  - Resupply points
+- **Practical Tools**:
+  - Container calculator
+  - Ziplock bag count
+  - Label generator
+  - Packing checklist
+  - Weight distribution
 
-- **Features**:
-  - Day labels
-  - Meal identifiers
-  - Quantity precision
-  - Weight per day
-  - Cumulative weight
+### 3.3.3 Nutritional Summary
 
-### 7.2.2 Packing Optimization
+Comprehensive nutritional analysis:
 
-Smart packing suggestions:
-
-#### Container Planning
-- **Recommendations**:
-  - Zip-lock sizes
-  - Container types
-  - Labeling system
-  - Color coding
-  - Waterproofing needs
-
-#### Weight Distribution
-- **Analysis Provided**:
-  - Weight per person
-  - Daily consumption
-  - Heavy/light days
-  - Balance suggestions
-  - Resupply planning
-
-### 7.3 Trip Summary Reports
-**Priority: High - Phase 2**
-**User Story Reference: US-17 (includes US-6, US-7)**
-
-### 7.3.1 Comprehensive Documentation
-
-All-in-one trip reference:
-
-#### Report Sections
+#### Summary Levels
 - **Trip Overview**:
-  - Basic trip info
-  - Participant list
-  - Date range
-  - Total statistics
-  - Key highlights
+  - Total calories
+  - Average per day
+  - Average per person
+  - Macro breakdown
+  - Micro nutrients
 
-- **Meal Plan**:
-  - Complete itinerary
-  - All recipes included
-  - Nutritional summaries
-  - Special notes
-  - Cooking instructions
+- **Daily Breakdown**:
+  - Calories per meal
+  - Running totals
+  - Nutritional balance
+  - Deficit/surplus
+  - Recommendations
 
-- **Shopping List**:
-  - Integrated section
-  - Category grouping
-  - Total quantities
-  - Cost estimates
-  - Purchase tracking
+- **Per-Person View**:
+  - Individual totals
+  - Coefficient impact
+  - Special requirements
+  - Allergy tracking
+  - Custom needs
 
-- **Packing Lists**:
-  - Multiple formats
-  - Day-by-day option
-  - Total inventory
-  - Weight analysis
-  - Container plan
+#### Nutritional Metrics
+- **Macronutrients**:
+  - Proteins (g, %)
+  - Carbohydrates (g, %)
+  - Fats (g, %)
+  - Fiber (g)
+  - Sugar (g)
 
-- **Nutritional Analysis**:
-  - Complete breakdown
-  - Daily summaries
-  - Participant needs
-  - Deficiency alerts
-  - Charts included
+- **Micronutrients**:
+  - All vitamins (A, B complex, C, D, E, K)
+  - Essential minerals
+  - Electrolytes
+  - PKU tracking (PHE)
+  - Custom tracking
 
-- **Fuel Requirements**:
-  - Total needed
-  - Daily breakdown
-  - Canister planning
-  - Efficiency notes
-  - Safety margins
-
-### 7.3.2 Report Customization
-
-Flexible report generation:
-
-#### Section Selection
-- **Choose Sections**:
-  - Toggle on/off
-  - Reorder sections
-  - Custom headers
-  - Page breaks
-  - Table of contents
-
-- **Detail Levels**:
-  - Summary only
-  - Standard detail
-  - Complete detail
-  - Custom mix
-  - Quick reference
-
-### 7.3.3 Export Features
-
-Professional output options:
-
-#### Export Formats
-- **PDF Features**:
-  - Multi-page support
-  - Headers/footers
-  - Page numbering
-  - Professional layout
-  - Print optimized
-  - Digital bookmarks
-
-- **Excel Features**:
-  - Multiple worksheets
-  - Linked data
-  - Formulas active
-  - Charts included
-  - Filter ready
-
-- **Print Options**:
-  - A4/Letter size
-  - Margin control
-  - Color/B&W
-  - Draft mode
-  - Duplex hints
-
-#### Validation Requirements
-- **Export Limits**:
-  - Max 20MB file size
-  - Timeout: 30 seconds
-  - At least one section
-  - Error: "Export file exceeds maximum size of 20MB"
-  - Error: "Please select at least one section to export"
-  - Error: "Export timed out, please try with fewer items"
-
-## 8. Templates and Sharing
-
-### 8.1 Trip Templates
+### 3.4 Trip Templates
 **Priority: Medium - Phase 2**
-**User Story Reference: US-15**
 
-### 8.1.1 Template Creation
+### 3.4.1 Template Creation
 
-Reusable trip structures:
+Save trips as reusable templates:
 
-#### What Templates Store
-- **Included Elements**:
+#### Template Components
+- **Saved Elements**:
   - Meal structure
   - Recipe assignments
-  - Meal slot configuration
-  - Snack selections
-  - Daily patterns
-  - Notes and labels
-
-- **Excluded Elements**:
-  - Specific dates
-  - Participant names
-  - Participant coefficients
-  - Personal notes
-  - Trip-specific data
-  - Calculated values
-
-#### Template Types
-- **Full Trip Template**:
-  - Complete trip structure
-  - All days included
-  - Meal patterns
-  - Ready to customize
-  - Version controlled
-
-- **Day Templates**:
-  - Single day pattern
-  - Reusable across trips
-  - Quick application
-  - Mix and match
-  - Building blocks
-
-- **Week Templates**:
-  - 7-day patterns
-  - Common cycles
-  - Expedition phases
-  - Seasonal variants
-
-### 8.1.2 Template Management
-
-Organized template library:
-
-#### Template Organization
-- **Categories**:
-  - By trip type
-  - By duration
-  - By season
-  - By difficulty
-  - Custom tags
-
-- **Template Metadata**:
-  - Name and description
-  - Creation date
-  - Usage count
-  - Author notes
   - Calorie targets
-  - Participant range
-
-#### Template Operations
-- **CRUD Operations**:
-  - Create from trip
-  - Update existing
-  - Delete unused
-  - Duplicate/modify
-  - Share (future)
-
-- **Application Process**:
-  - Browse templates
-  - Preview contents
-  - Select target trip
-  - Customize dates
-  - Add participants
-  - Adjust portions
-
-### 8.1.3 Recipe References
-
-Dynamic recipe linking:
-
-#### Reference Behavior
-- **Always Current**:
-  - Templates store recipe IDs
-  - Use latest versions
-  - Handle missing recipes
-  - Show update alerts
-  - Maintain integrity
-
-- **Important Note**:
-  - Recipe changes affect templates
-  - No snapshot in template
-  - Preview shows current
-  - Clear user messaging
-
-### 8.2 Trip Sharing System
-**Priority: Medium - Phase 3**
-**User Story Reference: US-21**
-
-### 8.2.1 Share Link Generation
-
-Secure trip sharing mechanism:
-
-#### Link Creation
-- **Generation Process**:
-  - One-click generation
-  - Unique secure token
-  - No user data in URL
-  - Short URL option
-  - QR code available
-
-- **Link Configuration**:
-  - Expiration: 1-365 days
-  - Default: 30 days
-  - Custom message option
-  - Preview what's shared
-  - Revocable anytime
-
-#### Share Options
-- **Access Levels**:
-  - View-only (default)
-  - Fork permission
-  - No edit access
-  - No live collaboration
-  - Clear limitations
-
-### 8.2.2 Shared Trip Experience
-
-What recipients see:
-
-#### Preview Information
-- **Trip Summary Shows**:
-  - Trip name and dates
   - Participant count
-  - Duration in days
-  - Total calories
-  - Key meal highlights
+  - Duration pattern
+
+- **Variable Elements**:
+  - Start/end dates
+  - Participant names
+  - Specific quantities
+  - Notes and details
+  - Custom adjustments
+
+#### Template Management
+- **Organization**:
+  - Name templates
+  - Add descriptions
+  - Categorize
+  - Share publicly
+  - Version control
+
+- **Usage Tracking**:
+  - Times used
+  - User ratings
+  - Modifications made
+  - Success metrics
+  - Popular templates
+
+## 4. Ingredient Management System
+
+### 4.1 Global Ingredient Database
+**Priority: Critical - Phase 1**
+
+### 4.1.1 Pre-populated Database
+
+Comprehensive ingredient library:
+
+#### Database Content
+- **Coverage Goals**:
+  - 1000+ common ingredients
+  - Trail food focus
+  - International options
+  - Brand variations
+  - Nutritional completeness
+
+- **Data Sources**:
+  - USDA food database
+  - Czech food database
+  - Manufacturer data
+  - Verified submissions
+  - Scientific sources
+
+#### Data Structure
+- **Required Fields**:
+  - Name (multilingual)
+  - Category
+  - Calories per 100g
+  - Protein per 100g
+  - Carbs per 100g
+  - Fat per 100g
+
+- **Optional Fields**:
+  - All vitamins
+  - All minerals
+  - Fiber content
+  - Sugar breakdown
+  - Sodium content
+  - PKU (PHE) values
+
+### 4.1.2 Ingredient Categories
+
+Logical organization system:
+
+#### Category Hierarchy
+```
+- Proteins
+  - Meat & Poultry
+  - Fish & Seafood
+  - Plant Proteins
+  - Dairy & Eggs
+- Carbohydrates
+  - Grains & Pasta
+  - Bread & Crackers
+  - Cereals
+- Fats & Oils
+- Vegetables
+  - Fresh
+  - Dried
+  - Canned
+- Fruits
+- Seasonings & Spices
+- Beverages
+- Specialty Trail Foods
+```
+
+### 4.2 Personal Ingredients
+**Priority: High - Phase 1**
+
+### 4.2.1 Custom Ingredient Creation
+
+User-defined ingredients:
+
+#### Creation Process
+- **Input Fields**:
+  - Name (required)
+  - Brand (optional)
+  - Calories (required)
+  - Macros (required)
+  - Micros (optional)
+  - Notes (optional)
+
+- **Validation**:
+  - Calorie sanity check
+  - Macro sum validation
+  - Duplicate detection
+  - Unit consistency
+  - Completeness score
+
+#### Management Features
+- **Organization**:
+  - Personal categories
+  - Favorite marking
+  - Usage tracking
+  - Quick access
+  - Bulk operations
+
+- **Sharing Options**:
+  - Keep private
+  - Share with recipe
+  - Submit to global
+  - Export/import
+  - Sync across devices
+
+## 5. Export and Sharing Features
+
+### 5.1 Export Formats
+**Priority: Critical - Phase 1**
+
+### 5.1.1 PDF Export
+
+Professional document generation:
+
+#### PDF Features
+- **Layout Options**:
+  - Full trip details
+  - Shopping list only
+  - Daily packing lists
+  - Nutritional summary
+  - Combined document
+
+- **Customization**:
+  - Include images
+  - Font size options
+  - Page orientation
+  - Color or B&W
+  - Logo addition
+
+#### PDF Content
+- **Trip Summary Page**:
+  - Trip name and dates
+  - Participant list
+  - Total statistics
+  - Key metrics
+  - QR code link
+
+- **Detail Pages**:
+  - Day-by-day breakdown
+  - Recipe instructions
+  - Shopping checklist
+  - Packing lists
+  - Notes sections
+
+### 5.1.2 Excel Export
+
+Structured data export:
+
+#### Excel Structure
+- **Worksheets**:
+  - Trip Overview
+  - Shopping List
+  - Daily Meals
+  - Nutritional Data
+  - Recipes Used
+
+- **Features**:
+  - Formulas included
+  - Conditional formatting
+  - Print-ready layout
+  - Pivot table ready
+  - Macro-free
+
+### 5.1.3 Other Export Formats
+
+Additional export options:
+
+#### Plain Text
+- **Format Options**:
+  - Markdown format
+  - Simple text
+  - CSV data
+  - JSON structure
+  - XML format
+
+- **Content Control**:
+  - Section selection
+  - Detail level
+  - Include/exclude
+  - Custom delimiter
+  - Encoding options
+
+### 5.2 Share Links
+**Priority: High - Phase 3**
+
+### 5.2.1 Trip Sharing
+
+Share trips without account:
+
+#### Share Features
+- **Link Generation**:
+  - Unique URL
+  - Custom expiration
+  - Password option
+  - View count limit
+  - Revoke anytime
+
+- **Shared Content**:
+  - Read-only view
+  - All trip details
+  - Export capability
+  - No editing
+  - Mobile friendly
+
+#### Privacy Controls
+- **Options**:
+  - Hide participant names
+  - Hide personal notes
+  - Show summary only
+  - Watermark exports
+  - Analytics tracking
+
+### 5.2.2 Public Trip Templates
+
+Community trip sharing:
+
+#### Publishing Rules
+- **Requirements**:
+  - Complete trip plan
+  - Verified recipes
+  - Meaningful description
+  - Appropriate content
   - Author attribution
 
-- **Detailed View Includes**:
-  - Complete meal plan
-  - All recipes (public)
-  - Nutritional summaries
-  - Shopping lists
-  - No personal notes
-  - No participant names
+- **Template Features**:
+  - Fork capability
+  - Rating system
+  - Usage counter
+  - Comments section
+  - Version tracking
 
-#### Recipient Actions
-- **Without Account**:
-  - View all details
-  - Print/save pages
-  - See nutritional data
-  - Browse recipes
-  - No modifications
+## 6. Admin Features
 
-- **With Account**:
-  - Fork entire trip
-  - Customize copy
-  - Save to library
-  - Edit as needed
-  - No link to original
+### 6.1 User Management
+**Priority: Medium - Phase 1**
 
-### 8.2.3 Link Management
+### 6.1.1 Account Administration
 
-Control over shared content:
+User account controls:
 
-#### Active Link Tracking
-- **Link Dashboard Shows**:
-  - All active links
-  - Creation dates
-  - Expiration times
-  - Access count
-  - Last accessed
-  - Revoke buttons
+#### Admin Capabilities
+- **User Actions**:
+  - View user list
+  - Search/filter users
+  - Suspend accounts
+  - Delete accounts
+  - Reset passwords
+  - View activity
 
-#### Link Expiration
-- **Expired Behavior**:
-  - Returns 404 error
-  - Clean error page
-  - Message: "This link has expired"
-  - No data exposed
-  - Contact option
+- **Restrictions**:
+  - Cannot view passwords
+  - Cannot modify user data
+  - Cannot access private recipes
+  - Audit trail required
+  - Reason documentation
 
-- **Cleanup Process**:
-  - Auto-delete after 30 days
-  - No notification
-  - Logs maintained
-  - Storage optimized
+### 6.1.2 Support Tools
 
-## 9. Rating and Review Systems
+Customer support features:
 
-### 9.1 Personal Meal Ratings
-**Priority: Medium - Phase 2**
-**User Story Reference: US-14**
+#### Support Functions
+- **User Assistance**:
+  - View user's trips
+  - View public recipes
+  - Check error logs
+  - Export user data
+  - Account recovery
 
-### 9.1.1 Personal Rating System
+- **Communication**:
+  - Send system messages
+  - Email users
+  - Announcement banner
+  - Maintenance notices
+  - Feature updates
 
-Private meal experience tracking:
+### 6.2 Content Moderation
+**Priority: Medium - Phase 3**
 
-#### Rating Mechanism
-- **Rating Scale**:
-  - 1-5 stars
-  - Full stars only
-  - Visual star display
-  - Quick click rating
-  - Updatable anytime
+### 6.2.1 Marketplace Moderation
 
-- **Rating Context**:
-  - Per meal instance
-  - Tied to specific trip
-  - Private to user
-  - Not shared publicly
-  - Historical tracking
+Community content management:
 
-#### Personal Notes
-- **Note Features**:
-  - Optional text field
-  - 2000 character limit
-  - Markdown support
-  - Private visibility
-  - Recipe modifications
-  - Cooking tips
-  - Weather notes
-  - Group feedback
+#### Moderation Tools
+- **Content Review**:
+  - Report queue
+  - Quick actions
+  - Bulk operations
+  - Pattern detection
+  - User warnings
 
-#### Rating Constraints
-- **Access Rules**:
-  - Own trips only
-  - Own meals only
-  - Cannot rate others'
-  - Error: "You can only rate meals in your own trips"
-  - Clear messaging
+- **Actions Available**:
+  - Remove from marketplace
+  - Edit inappropriate content
+  - Warn users
+  - Temporary suspension
+  - Permanent ban
 
-### 9.1.2 Personal Rating Uses
+### 6.2.2 Quality Control
 
-Leveraging rating data:
+Maintaining marketplace quality:
 
-#### Personal Analytics
-- **Rating History**:
-  - Favorite meals list
-  - Lowest rated meals
-  - Average by category
-  - Trends over time
-  - Success patterns
+#### Quality Metrics
+- **Automated Checks**:
+  - Profanity filter
+  - Spam detection
+  - Duplicate detection
+  - Quality scoring
+  - Completeness check
 
-- **Trip Planning Aid**:
-  - Filter by rating
-  - Suggest favorites
-  - Avoid poor meals
-  - Build better trips
-  - Learn preferences
+- **Manual Review**:
+  - Featured recipes
+  - Editor's picks
+  - Quality badges
+  - Verified recipes
+  - Expert endorsements
 
-### 9.2 Marketplace Ratings
-**Priority: High - Phase 3**
-**User Story Reference: US-8, US-9 (merged)**
+## 7. Performance Monitoring
 
-### 9.2.1 Public Rating System
+### 7.1 System Metrics
+**Priority: High - Phase 2**
 
-Community feedback mechanism:
+### 7.1.1 Performance Tracking
 
-#### Rating Eligibility
-- **Must Fork First**:
-  - Only forked recipes
-  - Ensures actual use
-  - Prevents gaming
-  - Quality feedback
-  - Error: "You can only review recipes you have forked"
+Real-time system monitoring:
 
-#### Rating Rules
-- **One Per Recipe**:
-  - Single rating only
-  - Can update existing
-  - Cannot delete
-  - Affects averages
-  - Permanent record
+#### Key Metrics
+- **Response Times**:
+  - API endpoints
+  - Page loads
+  - Database queries
+  - Calculation time
+  - Export generation
 
-### 9.2.2 Review System
+- **System Health**:
+  - CPU usage
+  - Memory usage
+  - Disk space
+  - Network traffic
+  - Error rates
 
-Detailed public feedback:
+### 7.1.2 User Analytics
 
-#### Review Requirements
-- **Review Properties**:
-  - Max 1000 characters
-  - Plain text only
-  - Accompanies rating
-  - Profanity filtered
-  - Cannot be empty
+Understanding user behavior:
 
-- **Review Validation**:
-  - Error: "Marketplace review must not exceed 1000 characters"
-  - Error: "Review text is required with rating"
-  - Error: "Review contains inappropriate content"
+#### Usage Metrics
+- **Engagement**:
+  - Active users
+  - Session duration
+  - Feature usage
+  - Conversion rates
+  - Retention metrics
 
-#### Review Display
-- **Public Visibility**:
-  - Shows on recipe
-  - Newest first order
-  - With username
-  - With date
-  - With star rating
-  - Pagination support
+- **Content Metrics**:
+  - Popular recipes
+  - Search patterns
+  - Export formats
+  - Share links
+  - API usage
 
-### 9.3 Rating System Differences
-**Priority: High - Phase 2-3**
+## 8. Security Considerations
 
-### 9.3.1 System Comparison
+### 8.1 Data Protection
+**Priority: Critical - Phase 1**
 
-Clear distinction between systems:
+### 8.1.1 Encryption
 
-| Feature | Personal Rating | Marketplace Rating |
-|---------|----------------|-------------------|
-| Visibility | Private | Public |
-| Purpose | Personal tracking | Community feedback |
-| Eligibility | Own meals only | Forked recipes only |
-| Multiple ratings | Yes (per trip) | No (one per recipe) |
-| Text limit | 2000 chars | 1000 chars |
-| Affects ranking | No | Yes |
-| Can delete | Yes | No |
-| Shows username | No | Yes |
+Comprehensive encryption strategy:
 
-### 9.3.2 User Education
+#### Encryption Layers
+- **In Transit**:
+  - TLS 1.3 minimum
+  - HSTS enabled
+  - Certificate pinning
+  - Forward secrecy
+  - No weak ciphers
 
-Preventing confusion:
+- **At Rest**:
+  - Database encryption
+  - File encryption
+  - Backup encryption
+  - Key rotation
+  - HSM consideration
 
-#### UI Differentiation
-- **Visual Cues**:
-  - Different colors
-  - Clear labels
-  - Separate sections
-  - Icon differences
-  - Hover explanations
+### 8.1.2 Access Control
 
-- **Help Text**:
-  - Context tooltips
-  - First-use guide
+Strict access management:
+
+#### Access Policies
+- **Authentication**:
+  - Multi-factor capable
+  - Session management
+  - Device tracking
+  - Anomaly detection
+  - Breach monitoring
+
+- **Authorization**:
+  - Role-based access
+  - Resource ownership
+  - API permissions
+  - Rate limiting
+  - Audit logging
+
+### 8.2 Privacy Compliance
+**Priority: High - Phase 1**
+
+### 8.2.1 GDPR Compliance
+
+European privacy requirements:
+
+#### GDPR Features
+- **User Rights**:
+  - Data portability
+  - Right to deletion
+  - Access requests
+  - Correction rights
+  - Processing limits
+
+- **Implementation**:
+  - Privacy by design
+  - Consent management
+  - Data minimization
+  - Purpose limitation
+  - Retention policies
+
+### 8.2.2 Data Handling
+
+Responsible data management:
+
+#### Data Policies
+- **Collection**:
+  - Minimal data only
   - Clear purposes
-  - Examples shown
-  - FAQ section# Jídelníček 2.0 - Comprehensive Product Requirements Document
-# Part 4: Technical Architecture and Implementation
+  - User consent
+  - Transparent usage
+  - No dark patterns
+
+- **Storage**:
+  - EU data residency
+  - Backup policies
+  - Deletion schedules
+  - Archive procedures
+  - Disaster recovery
+
+## 9. Testing Strategy
+
+### 9.1 Test Coverage
+**Priority: Critical - All Phases**
+
+### 9.1.1 Testing Levels
+
+Comprehensive test approach:
+
+#### Test Types
+- **Unit Tests**:
+  - 80% coverage minimum
+  - Critical paths 100%
+  - Calculation accuracy
+  - Edge cases
+  - Error handling
+
+- **Integration Tests**:
+  - API endpoints
+  - Database operations
+  - External services
+  - Module boundaries
+  - Event handling
+
+- **E2E Tests**:
+  - Critical user flows
+  - Cross-browser
+  - Mobile testing
+  - Performance tests
+  - Load testing
+
+### 9.1.2 Quality Assurance
+
+Ensuring calculation accuracy:
+
+#### QA Focus Areas
+- **Calculation Verification**:
+  - Nutritional accuracy
+  - Scaling precision
+  - Rounding rules
+  - Unit conversions
+  - Edge cases
+
+- **User Experience**:
+  - Usability testing
+  - Accessibility testing
+  - Performance testing
+  - Security testing
+  - Compatibility testing
 
 ## 10. Technical Implementation
 
 ### 10.1 Architecture
 **Priority: Critical - Foundation**
 
-### 10.1.1 Modular Monolith Design
+### 10.1.1 Monolithic Application Design
 
-Future-ready architecture pattern:
+Simple, unified architecture:
 
 #### Core Principles
 - **Single Deployable Unit**:
@@ -2558,49 +1785,49 @@ Future-ready architecture pattern:
   - Easier debugging
   - Lower operational complexity
 
-- **Module Boundaries**:
+- **Direct Service Communication**:
   - Clear separation of concerns
-  - Well-defined interfaces
-  - No cross-module database access
+  - Well-defined service interfaces
+  - Direct service-to-service calls
   - Dependency injection
-  - Event-driven communication
-  - Future extraction ready
+  - Full referential integrity with foreign keys
+  - Single unified codebase
 
-#### Module Structure
-- **Auth Module** (auth.*):
+#### Service Structure
+- **Auth Service** (auth_*):
   - User authentication
   - Session management
   - OAuth integration
   - Permission handling
   - Password management
   - 2FA implementation
-  - No dependencies
+  - Direct database access
 
-- **Recipe Module** (recipe.*):
+- **Recipe Service** (recipe_*):
   - Recipe CRUD operations
   - Version management
   - Nutritional calculations
   - Image handling
   - Category management
-  - Depends on: Auth
+  - Direct queries to auth tables
 
-- **Trip Module** (trip.*):
+- **Trip Service** (trip_*):
   - Trip planning
   - Meal assignment
   - Participant management
   - Day operations
   - Calculations
-  - Depends on: Auth, Recipe
+  - Direct queries to auth and recipe tables
 
-- **Sharing Module** (sharing.*):
+- **Sharing Service** (sharing_*):
   - Marketplace features
   - Recipe publishing
   - Ratings and reviews
   - Share links
   - Fork tracking
-  - Depends on: Auth, Recipe
+  - Direct queries to all tables
 
-- **Common Module** (common.*):
+- **Common Utilities** (common_*):
   - Shared utilities
   - Base models
   - Constants
@@ -2611,23 +1838,27 @@ Future-ready architecture pattern:
 **Priority: Critical - Foundation**
 
 #### PostgreSQL Schema Design
-- **Schema Organization**:
+- **Single Schema Organization**:
   ```sql
-  -- Module-specific schemas
-  CREATE SCHEMA auth;
-  CREATE SCHEMA recipe;
-  CREATE SCHEMA trip;
-  CREATE SCHEMA sharing;
-  CREATE SCHEMA common;
+  -- All tables in public schema with prefixes
+  CREATE TABLE auth_users (...);
+  CREATE TABLE auth_sessions (...);
+  CREATE TABLE recipe_recipes (...);
+  CREATE TABLE recipe_ingredients (...);
+  CREATE TABLE trip_trips (...);
+  CREATE TABLE trip_participants (...);
+  CREATE TABLE sharing_reviews (...);
+  CREATE TABLE sharing_forks (...);
   ```
 
 - **Key Design Decisions**:
-  - No foreign keys across schemas
-  - Eventual consistency between modules
-  - Materialized views for cross-module data
-  - Event sourcing for critical operations
-  - Soft deletes with timestamps
+  - Single public schema with table prefixes
+  - Full foreign key constraints between all tables
+  - Strong consistency throughout
+  - Direct queries allowed everywhere
+  - Is_archived boolean flag instead of soft deletes
   - UUID primary keys
+  - Automatic vacuum weekly
 
 #### Connection Management
 - **Pool Configuration**:
@@ -2637,6 +1868,7 @@ Future-ready architecture pattern:
   - Statement timeout: 30s
   - Idle timeout: 10 minutes
   - Health check interval: 30s
+  - Connection pool: max 10 connections (VPS constraint)
 
 - **Query Optimization**:
   - Prepared statements
@@ -2645,13 +1877,21 @@ Future-ready architecture pattern:
   - Vacuum schedule: weekly
   - Statistics auto-update
   - Slow query logging
+  - work_mem: 4MB (conservative for multiple connections)
 
 #### Data Relationships
-- **Within Modules**: Strong consistency
-- **Across Modules**: Eventual consistency
-- **Reference by ID**: Not foreign keys
-- **Cascade Rules**: Within module only
-- **Orphan Handling**: Scheduled cleanup
+- **All Relationships**: Strong consistency with foreign keys
+- **Cascade Rules**: CASCADE DELETE where appropriate
+- **Archive Handling**: is_archived = true instead of deletion
+- **Referential Integrity**: Fully enforced at database level
+
+#### Index Strategy
+- **Primary Indexes**:
+  - All foreign keys indexed
+  - Frequently queried fields
+  - Composite indexes for common queries
+  - Partial indexes for filtered queries
+  - GIN indexes for full-text search
 
 ### 10.1.3 API Architecture
 **Priority: Critical - Foundation**
@@ -2664,14 +1904,20 @@ Future-ready architecture pattern:
   - UTF-8 encoding
   - ISO 8601 dates
   - Consistent naming
+  - OpenAPI 3.0 specification
 
 - **Endpoint Patterns**:
   ```
-  GET    /api/v1/recipes          # List
+  GET    /api/v1/recipes          # List with pagination
   POST   /api/v1/recipes          # Create
-  GET    /api/v1/recipes/{id}     # Retrieve
+  GET    /api/v1/recipes/{id}     # Retrieve  
   PUT    /api/v1/recipes/{id}     # Update
   DELETE /api/v1/recipes/{id}     # Delete
+  
+  # Additional patterns
+  POST   /api/v1/recipes/{id}/fork      # Fork recipe
+  POST   /api/v1/recipes/{id}/publish   # Publish to marketplace
+  GET    /api/v1/recipes/{id}/versions  # Version history
   ```
 
 - **Response Standards**:
@@ -2681,6 +1927,7 @@ Future-ready architecture pattern:
   - Consistent error format (RFC 7807)
   - Pagination envelope
   - Metadata included
+  - Request ID for tracking
 
 #### Authentication Flow
 - **JWT Implementation**:
@@ -2690,65 +1937,91 @@ Future-ready architecture pattern:
   - Secure HTTP-only cookies
   - CSRF protection
   - Token rotation
+  - Token binding to session
 
 - **Request Authentication**:
   ```
   Authorization: Bearer <access_token>
   X-CSRF-Token: <csrf_token>
+  X-Request-ID: <uuid>
   ```
 
 #### Rate Limiting
 - **Limits by Type**:
   - Authenticated: 1000/hour
   - Unauthenticated: 100/hour
-  - Login endpoints: 5/15min
+  - Login endpoints: 5/15min per IP
+  - Password reset: 3/hour per email
   - File uploads: 10/hour
   - Exports: 20/hour
   - By user + IP combination
+  - Simple in-memory rate limiting
 
-### 10.1.4 Module Communication
+- **Response Headers**:
+  ```
+  X-RateLimit-Limit: 1000
+  X-RateLimit-Remaining: 999
+  X-RateLimit-Reset: 1673094000
+  ```
+
+### 10.1.4 Direct Service Calls
 **Priority: Critical - Foundation**
 
 #### Communication Patterns
-- **Direct Service Calls**:
-  - Through interfaces only
-  - Dependency injection
+- **Direct Service Integration**:
+  - Services call each other directly
+  - Dependency injection for services
   - No circular dependencies
-  - Timeout handling
-  - Circuit breakers
-  - Retry logic
+  - Synchronous calls only
+  - Error propagation
+  - Transaction support
 
-- **Event Bus**:
-  - In-memory for MVP
-  - Redis pub/sub ready
-  - Event versioning
-  - At-least-once delivery
-  - Idempotent handlers
-  - Dead letter queue
+- **Service Examples**:
+  ```python
+  # Direct service calls
+  class TripService:
+      def __init__(self, auth_service, recipe_service):
+          self.auth = auth_service
+          self.recipes = recipe_service
+      
+      async def create_trip(self, user_id, trip_data):
+          # Direct call to auth service
+          user = await self.auth.get_user(user_id)
+          
+          # Direct call to recipe service
+          recipes = await self.recipes.get_recipes(trip_data.recipe_ids)
+          
+          # Create trip with full data
+          return await self.create_with_recipes(user, recipes, trip_data)
+  ```
 
-#### Event Examples
-```python
-# Recipe published event
-{
-    "event_type": "recipe.published",
-    "event_id": "uuid",
-    "timestamp": "2024-01-15T10:30:00Z",
-    "data": {
-        "recipe_id": "uuid",
-        "user_id": "uuid",
-        "version": 1
-    }
-}
-```
-
-#### Module Dependencies
+#### Service Dependencies
 ```
 Auth → None
 Recipe → Auth  
 Trip → Auth, Recipe
-Sharing → Auth, Recipe
+Sharing → Auth, Recipe, Trip
 Common → None (utilities only)
 ```
+
+#### Service Initialization
+- **Startup Sequence**:
+  1. Common utilities
+  2. Auth service
+  3. Recipe service
+  4. Trip service
+  5. Sharing service
+  6. Health checks
+
+- **Dependency Injection**:
+  ```python
+  # FastAPI dependency injection
+  async def get_recipe_service(
+      auth: AuthService = Depends(get_auth_service),
+      db: Database = Depends(get_database)
+  ) -> RecipeService:
+      return RecipeService(auth, db)
+  ```
 
 ### 10.2 Technology Stack
 **Priority: Critical - Foundation**
@@ -2757,14 +2030,14 @@ Common → None (utilities only)
 
 #### Core Technologies
 - **Runtime Environment**:
-  - Python 3.11+ (latest stable)
+  - Python 3.11.8+ (specific version)
   - Async/await throughout
   - Type hints mandatory
   - Virtual environment
   - Poetry for dependencies
 
 - **Web Framework**:
-  - FastAPI (latest)
+  - FastAPI 0.104+ (latest stable)
   - Async request handling
   - Automatic OpenAPI docs
   - Pydantic integration
@@ -2772,582 +2045,302 @@ Common → None (utilities only)
   - Background tasks
 
 - **ORM and Database**:
-  - SQLAlchemy 2.0+
+  - SQLAlchemy 2.0.23+
   - Async support
-  - PostgreSQL 15+
-  - Alembic migrations
+  - PostgreSQL 15.5+
+  - Alembic 1.13+ migrations
   - Connection pooling
   - Query optimization
 
 #### Supporting Libraries
 - **Authentication**:
-  - python-jose[cryptography]
-  - passlib[bcrypt]
-  - python-multipart
-  - pyotp (for 2FA)
-  - email-validator
+  - python-jose[cryptography] 3.3.0
+  - passlib[bcrypt] 1.7.4
+  - python-multipart 0.0.6
+  - pyotp 2.9.0 (for 2FA)
+  - email-validator 2.1.0
 
 - **Data Processing**:
-  - pandas (nutrition calc)
-  - numpy (calculations)
-  - pydantic v2
-  - python-dotenv
-  - pytz (timezone)
+  - pandas 2.1.4 (nutrition calc)
+  - numpy 1.26.2 (calculations)
+  - pydantic 2.5.2
+  - python-dotenv 1.0.0
+  - ujson 5.9.0 (fast JSON)
 
 - **File Handling**:
-  - Pillow (images)
-  - python-magic
-  - aiofiles
-  - boto3 (future S3)
+  - Pillow 10.1.0 (image processing)
+  - python-magic 0.4.27
+  - reportlab 4.0.8 (PDF generation)
+  - openpyxl 3.1.2 (Excel export)
+  - qrcode 7.4.2
 
-- **Export Generation**:
-  - reportlab (PDF)
-  - openpyxl (Excel)
-  - jinja2 (templates)
-  - weasyprint (alt PDF)
+- **Testing**:
+  - pytest 7.4.3
+  - pytest-asyncio 0.21.1
+  - pytest-cov 4.1.0
+  - factory-boy 3.3.0
+  - faker 20.1.0
 
 ### 10.2.2 Frontend Stack
 
 #### Core Technologies
 - **Framework**:
-  - Next.js 14+
+  - Next.js 14.0.4
+  - React 18.2.0
+  - TypeScript 5.3.3
   - App Router
   - Server Components
-  - TypeScript strict
-  - React 18+
+  - Streaming SSR
 
 - **Styling**:
-  - Tailwind CSS 3+
+  - Tailwind CSS 3.4.0
   - Shadcn/ui components
-  - CSS modules support
-  - Dark mode ready
-  - Responsive design
+  - CSS Modules support
+  - Radix UI primitives
+  - Custom theme system
+  - Dark mode support
 
 - **State Management**:
-  - Zustand (lightweight)
-  - React Context (auth)
-  - TanStack Query v5
-  - Local storage sync
-  - Optimistic updates
+  - Zustand 4.4.7 (simple state)
+  - TanStack Query 5.14.2 (server state)
+  - React Hook Form 7.48.2
+  - Zod 3.22.4 (validation)
+  - Immer 10.0.3 (immutability)
 
 #### Supporting Libraries
-- **Forms and Validation**:
-  - React Hook Form
-  - Zod validation
-  - Custom validators
-  - Error boundaries
-  - Field arrays
+- **UI Components**:
+  - Radix UI (all primitives)
+  - Lucide React (icons)
+  - React DnD 16.0.1 (drag-drop)
+  - Recharts 2.10.3 (charts)
+  - React Select 5.8.0
 
-- **Data Fetching**:
-  - TanStack Query
-  - Axios interceptors
-  - Request cancellation
-  - Retry logic
-  - Cache management
+- **Utilities**:
+  - date-fns 3.0.6
+  - lodash-es 4.17.21
+  - axios 1.6.3
+  - js-cookie 3.0.5
+  - uuid 9.0.1
 
-- **UI Enhancements**:
-  - Framer Motion
-  - React DnD Kit
-  - Recharts
-  - React Table v8
-  - Date picker
+- **Development**:
+  - ESLint 8.56.0
+  - Prettier 3.1.1
+  - Husky 8.0.3
+  - lint-staged 15.2.0
+  - Storybook 7.6.7
 
-- **Development Tools**:
-  - ESLint + Prettier
-  - Husky pre-commit
-  - Jest + RTL
-  - Playwright (E2E)
-  - Storybook
-
-### 10.2.3 Infrastructure Stack
-
-#### Deployment Platform
-- **VPS Configuration**:
-  - vpsFree.cz hosting
-  - 4GB RAM allocated
-  - 8 vCPU available
-  - 120GB SSD storage
-  - 10TB bandwidth
-  - LXC container
-
-- **Resource Allocation**:
-  ```
-  Nginx:       256MB
-  FastAPI:     1GB
-  PostgreSQL:  1GB  
-  Redis:       512MB (Phase 1.1)
-  System:      768MB
-  Buffer:      ~500MB
-  ```
-
-#### Container Strategy
-- **Docker Setup**:
-  - Multi-stage builds
-  - Alpine base images
-  - Layer caching
-  - Security scanning
-  - Size optimization
-  - Health checks
-
-- **Docker Compose**:
-  - Single stack
-  - Service dependencies
-  - Volume management
-  - Network isolation
-  - Restart policies
-  - Resource limits
-
-#### Web Server
-- **Nginx Configuration**:
-  - Reverse proxy
-  - SSL termination
-  - Gzip compression
-  - Cache headers
-  - Rate limiting
-  - Security headers
-
-### 10.2.4 Caching Architecture
-**Priority: High - Phase 1**
-
-#### Cache Strategy
-- **Abstraction Layer**:
-  - Interface-based design
-  - In-memory start (dict)
-  - Redis ready (Phase 1.1)
-  - Graceful degradation
-  - Cache-aside pattern
-
-- **Cache Levels**:
-  ```python
-  # TTL Configuration
-  USER_SESSION = 24 * 3600      # 24 hours
-  USER_PREFERENCES = 3600       # 1 hour  
-  RECIPE_DETAIL = 3600         # 1 hour
-  RECIPE_PUBLIC = 300          # 5 minutes
-  CALCULATION = 300            # 5 minutes
-  SHOPPING_LIST = 600          # 10 minutes
-  ```
-
-- **Invalidation Strategy**:
-  - Tag-based invalidation
-  - Cascade clearing
-  - Version bumping
-  - Time-based expiry
-  - Manual flush option
-
-### 10.3 Performance Requirements
-**Priority: High - Phase 1**
-
-### 10.3.1 Response Time Targets
-
-#### Page Load Performance
-- **Target Metrics**:
-  - First Contentful Paint: <1.5s
-  - Time to Interactive: <3s
-  - Largest Contentful Paint: <2.5s
-  - Cumulative Layout Shift: <0.1
-  - On 3G connection
-
-- **Optimization Strategies**:
-  - Code splitting
-  - Lazy loading
-  - Image optimization
-  - CDN for assets
-  - Preload critical
-  - Service worker (Phase 2)
-
-#### API Performance
-- **Response Times**:
-  - Simple queries: <100ms
-  - Complex queries: <200ms
-  - Calculations: <500ms
-  - Exports: <30s
-  - P95 compliance
-
-- **Database Performance**:
-  - Query execution: <50ms
-  - Connection pool: ready
-  - Index hit rate: >95%
-  - No N+1 queries
-  - Explain analyze used
-
-### 10.3.2 Scalability Targets
-
-#### Concurrent Users
-- **MVP Targets**:
-  - 10 concurrent active
-  - 100 total users
-  - 1000 daily requests
-  - 10GB monthly bandwidth
-
-- **Growth Path**:
-  - Vertical scaling first
-  - 8GB RAM upgrade
-  - Redis addition
-  - CDN integration
-  - Read replicas
-
-### 10.3.3 Calculation Accuracy
-
-#### Nutritional Calculations
-- **Accuracy Requirement**: 99.9%
-- **Test Coverage**: 100%
-- **Decimal Precision**: Full
-- **Rounding**: Display only
-- **Validation**: Multi-level
-
-### 10.4 Security Requirements
+### 10.3 Infrastructure
 **Priority: Critical - Phase 1**
 
-### 10.4.1 Enhanced Authentication Security
+### 10.3.1 Hosting Environment
 
-#### Session Security
-- **Session Fingerprinting**:
-  - IP address hash
-  - User-Agent hash
-  - Combined fingerprint
-  - Change detection
-  - Re-authentication prompt
+VPS deployment strategy:
 
-- **Token Security**:
-  - Secure generation
-  - Time-based validity
-  - Single use tokens
-  - Binding to session
-  - Revocation support
+#### Server Specifications
+- **VPS Requirements**:
+  - 4 vCPUs minimum
+  - 4GB RAM
+  - 100GB SSD storage  
+  - 1Gbps network
+  - Ubuntu 22.04 LTS
+  - Docker installed
 
-#### Password Security
-- **Reset Token Rules**:
-  - 1-hour expiration
-  - Single use only
-  - Rate limited: 3/hour
-  - Secure random generation
-  - Email notification
+- **Resource Allocation**:
+  - PostgreSQL: 1.5GB RAM
+  - Application: 1.5GB RAM
+  - Redis: 512MB RAM
+  - Nginx: 256MB RAM
+  - System: 256MB RAM
 
-- **Lockout Policy**:
-  - 5 failed attempts
-  - Progressive delays
-  - 5min → 15min → 1hr
-  - IP-based tracking
-  - Manual unlock option
+### 10.3.2 Network Architecture
 
-### 10.4.2 Input Validation Framework
+Simple network configuration:
 
-#### Validation Patterns
-- **Recipe Names**:
-  ```regex
-  ^[\w\s\.\,'\-\(\)]{1,100}$
-  ```
+#### Network Design
+- **Service Exposure**:
+  - Nginx on port 80/443
+  - Internal services on Docker network
+  - PostgreSQL not exposed
+  - Redis not exposed
+  - Firewall rules configured
 
-- **Email Validation**:
-  ```regex
-  RFC 5322 compliance
-  Max 255 characters
-  Case-insensitive
-  ```
-
-- **Sanitization Rules**:
-  - HTML tags whitelist
-  - JavaScript stripped
-  - SQL injection prevented
-  - Path traversal blocked
-  - Command injection blocked
-
-#### File Upload Security
-- **Validation Steps**:
-  1. Extension whitelist
-  2. MIME type check
-  3. Magic byte verification
-  4. File size limits
-  5. Virus scan (future)
-  6. Sandbox processing
-
-- **Storage Security**:
-  - UUID filenames
-  - No directory traversal
-  - Permission restrictions
-  - Regular cleanup
-  - Access logging
-
-### 10.4.3 API Security Controls
-
-#### CORS Configuration
-```python
-CORS_CONFIG = {
-    "origins": ["https://app.jidelnicek.cz"],
-    "credentials": True,
-    "methods": ["GET", "POST", "PUT", "DELETE"],
-    "headers": ["Authorization", "Content-Type"],
-    "max_age": 3600
-}
-```
-
-#### Request Security
-- **CSRF Protection**:
-  - Double submit cookie
-  - State validation
-  - Origin checking
-  - Referrer validation
-  - SameSite cookies
-
-- **Rate Limiting Details**:
-  ```
-  /api/auth/login:     5/15min/IP
-  /api/auth/reset:     3/hour/email
-  /api/recipes:        1000/hour/user
-  /api/export:         20/hour/user
-  /api/upload:         10/hour/user
-  ```
-
-### 10.4.4 Data Protection & Privacy
-
-#### Encryption Standards
-- **At Rest**:
-  - PII fields: AES-256
-  - Database backups encrypted
-  - Separate key storage
-  - Key rotation quarterly
-  - Audit trail maintained
-
-- **In Transit**:
-  - TLS 1.3 minimum
+- **SSL/TLS**:
+  - Let's Encrypt certificates
+  - Auto-renewal configured
+  - TLS 1.3 preferred
+  - Strong cipher suites
   - HSTS enabled
-  - Certificate pinning
-  - Perfect forward secrecy
-  - A+ SSL Labs rating
 
-#### Audit Logging
-- **Logged Events**:
-  - All authentication attempts
-  - Permission changes
-  - Data exports
-  - Admin actions
-  - Failed access attempts
-  - API usage
+### 10.4 Data Storage
+**Priority: Critical - Phase 1**
 
-- **Log Retention**:
-  - Security logs: 90 days
-  - Access logs: 30 days
-  - Error logs: 7 days
-  - Encrypted storage
-  - Tamper protection
+### 10.4.1 Database Design
 
-### 10.4.5 Security Monitoring
+PostgreSQL optimization:
 
-#### Threat Detection
-- **Monitoring Targets**:
-  - Failed login patterns
-  - Unusual data access
-  - Large exports
-  - Permission escalation
-  - Rate limit violations
-  - Geographic anomalies
+#### Storage Strategy
+- **Table Design**:
+  - Efficient indexes
+  - Appropriate data types
+  - Minimal nullable columns
+  - Constraints enforced
+  - Triggers for validation
 
-- **Alert Thresholds**:
-  - 10 failed logins/hour
-  - 5 account lockouts/hour
-  - Export >1000 items
-  - New country login
-  - Admin action surge
+- **Performance Tuning**:
+  - Connection pooling
+  - Query optimization
+  - Index maintenance
+  - Regular vacuuming
+  - Statistics updates
 
-### 10.4.6 Dependency Security
+### 10.4.2 File Storage
 
-#### Supply Chain Security
-- **Scanning Schedule**:
-  - Daily vulnerability scan
-  - Weekly dependency audit
-  - Monthly manual review
-  - Pre-deploy checks
-  - License compliance
+Media and document storage:
 
-- **Update Policy**:
-  - Critical: 24 hours
-  - High: 7 days
-  - Medium: 30 days
-  - Low: quarterly
-  - Breaking: planned
+#### Storage Configuration
+- **Local Storage**:
+  - Recipe images: /data/images
+  - User avatars: /data/avatars
+  - Exports: /data/exports (temp)
+  - Backups: /data/backups
+  - Logs: /data/logs
 
-### 10.4.7 Infrastructure Hardening
+- **Storage Limits**:
+  - Max 5MB per image
+  - Max 10 images per recipe
+  - Max 50MB exports
+  - 30-day export retention
+  - Weekly backup rotation
 
-#### Server Security
-- **OS Hardening**:
-  - Minimal packages
-  - No root SSH
-  - Key-only auth
-  - Fail2ban active
-  - UFW firewall
-  - Regular updates
+### 10.5 Caching Strategy
+**Priority: High - Phase 2**
 
-- **Network Security**:
-  - Ports: 22, 80, 443 only
-  - DDoS protection
-  - IP whitelisting (SSH)
-  - VPN for admin
-  - Monitoring active
+### 10.5.1 Redis Implementation
 
-### 10.5 Data Storage Limits
-**Priority: High - Phase 1**
+Performance optimization layer:
 
-### 10.5.1 User Quotas
+#### Cache Layers
+- **Application Cache**:
+  - Session storage
+  - Rate limit counters
+  - Temporary exports
+  - Calculation results
+  - Search results
 
-#### Storage Limits
-- **Per User**:
-  - Recipes: 500 maximum
-  - Active trips: 100
-  - Images: 10 per recipe
-  - Total storage: 1GB
-  - Ingredients: Unlimited
+- **Cache Policies**:
+  - TTL by data type
+  - LRU eviction
+  - 512MB total size
+  - Persistence optional
+  - Cluster ready (future)
 
-- **Enforcement**:
-  - Database triggers
-  - Soft warnings at 90%
-  - Hard stop at 100%
-  - Clear error messages
-  - Upgrade prompts
+### 10.5.2 Client Caching
 
-### 10.5.2 File Upload Management
+Browser optimization:
 
-#### Image Processing
-- **Client-Side**:
-  - Auto-compress >3MB
-  - Resize >2048px
-  - Convert HEIC→JPEG
-  - Progress indication
-  - Retry failed chunks
+#### Caching Strategy
+- **Static Assets**:
+  - 1-year cache headers
+  - Versioned filenames
+  - CDN ready
+  - Compression enabled
+  - ETag support
 
-- **Server-Side**:
-  - Validate integrity
-  - Generate thumbnails
-  - Strip EXIF data
-  - Store securely
-  - Track usage
+- **API Responses**:
+  - Conditional requests
+  - Cache-Control headers
+  - Vary headers
+  - No-cache sensitive
+  - Revalidation strategy
 
-### 10.5.3 Data Retention
+### 10.6 Monitoring and Logging
+**Priority: High - Phase 2**
 
-#### Retention Policies
-- **Active Data**:
-  - No automatic deletion
-  - User-initiated only
-  - Soft delete first
-  - 30-day recovery
+### 10.6.1 Application Monitoring
 
-- **Inactive Accounts**:
-  - Warning at 2 years
-  - Deletion at 10 years
-  - Data export offered
-  - Email notifications
+Comprehensive observability:
 
-- **Temporary Data**:
-  - Sessions: 24 hours
-  - Uploads: 1 hour
-  - Exports: 24 hours
-  - Share links: +30 days
-
-### 10.6 Testing Architecture
-**Priority: High - Phase 1**
-
-### 10.6.1 Testing Strategy
-
-#### Test Pyramid
-```
-         /\
-        /E2E\      (10%)
-       /------\
-      /  Integ \   (20%)
-     /----------\
-    /    Unit    \ (70%)
-   /--------------\
-```
-
-#### Coverage Requirements
-- **Overall**: 80% minimum
-- **Critical paths**: 95%
-- **Calculations**: 100%
-- **Security**: 100%
-- **New code**: 90%
-
-### 10.6.2 Test Infrastructure
-
-#### Unit Testing
-- **Backend**:
-  - pytest framework
-  - SQLite in-memory
-  - Mock external calls
-  - Fixtures for data
-  - Parametrized tests
-
-- **Frontend**:
-  - Jest + React Testing Library
-  - Component isolation
-  - Hook testing
-  - Snapshot tests
-  - Coverage reports
-
-#### Integration Testing
-- **Setup**:
-  - PostgreSQL container
-  - Real database schema
-  - Test data seeders
-  - API client tests
-  - Transaction rollback
-
-#### E2E Testing
-- **Framework**:
-  - Playwright
-  - Cross-browser
-  - Visual regression
-  - Accessibility tests
-  - Performance tests
-
-### 10.7 Monitoring Strategy
-**Priority: High - Phase 1**
-
-### 10.7.1 Application Monitoring
-
-#### Health Checks
-```python
-# Health check endpoints
-GET /health          # Basic liveness
-GET /health/ready    # Readiness check
-GET /health/startup  # Startup probe
-```
-
-#### Metrics Collection
-- **Application Metrics**:
-  - Request count
-  - Response times
+#### Monitoring Stack
+- **Metrics Collection**:
+  - Prometheus metrics
+  - Custom business metrics
+  - Performance tracking
   - Error rates
-  - Active users
-  - Cache hit rate
+  - User activity
 
-- **Business Metrics**:
-  - Recipes created
-  - Trips planned
-  - Calculations/day
-  - Marketplace activity
-  - User engagement
+- **Visualization**:
+  - Grafana dashboards
+  - Real-time alerts
+  - Historical trends
+  - Custom reports
+  - Mobile access
 
-### 10.7.2 Infrastructure Monitoring
+### 10.6.2 Logging Architecture
 
-#### System Metrics
-- **Resource Monitoring**:
-  - CPU usage
-  - Memory usage
-  - Disk I/O
-  - Network traffic
-  - Connection pool
+Structured logging approach:
 
-- **Alert Thresholds**:
-  - CPU >80% for 5min
-  - Memory >3.5GB
-  - Disk >80%
-  - Errors >1% for 5min
-  - Response time >1s
+#### Log Management
+- **Log Levels**:
+  - ERROR: System errors
+  - WARN: Degraded operation
+  - INFO: Key events
+  - DEBUG: Dev details
+  - TRACE: Full details
+
+- **Log Storage**:
+  - JSON structured logs
+  - 30-day retention
+  - Searchable index
+  - Automated rotation
+  - Backup to cold storage
+
+### 10.7 API Documentation
+**Priority: High - Phase 1**
+
+### 10.7.1 OpenAPI Specification
+
+Comprehensive API docs:
+
+#### Documentation Features
+- **Auto-Generated**:
+  - From code annotations
+  - Always up-to-date
+  - Interactive testing
+  - Example requests
+  - Response schemas
+
+- **Documentation Sections**:
+  - Authentication guide
+  - Quick start
+  - Rate limits
+  - Error codes
+  - Changelog
+
+### 10.7.2 Developer Portal
+
+API consumer support:
+
+#### Portal Features
+- **Getting Started**:
+  - Registration flow
+  - API key management
+  - Sample code
+  - SDKs (future)
+  - Support contact
+
+- **Resources**:
+  - API reference
+  - Guides and tutorials
+  - Best practices
+  - Status page
+  - Community forum
 
 ### 10.8 Background Jobs
-**Priority: Medium - Phase 1.1**
+**Priority: Medium - Phase 2**
 
 ### 10.8.1 Job System Architecture
+
+Simple async task handling:
 
 #### Job Types
 - **Async Operations**:
@@ -3356,25 +2349,34 @@ GET /health/startup  # Startup probe
   - Image processing
   - Cleanup tasks
   - Report generation
+  - Nutritional recalculation
 
 - **Scheduled Jobs**:
   - Daily backups
   - Expired link cleanup
   - Cache warming
   - Statistics calculation
-  - Health reports
+  - Archive cleanup
 
 ### 10.8.2 Job Processing
 
 #### Implementation
-- **Phase 1**: Simple background tasks
-- **Phase 1.1**: Celery + Redis
+- **Phase 1**: Python asyncio background tasks
+- **Phase 2**: Consider simple job queue if needed
 - **Configuration**:
-  - Single worker
+  - In-process execution
   - 5-minute timeout
-  - 3 retry attempts
-  - Dead letter queue
-  - Result backend
+  - Simple retry logic
+  - Error logging
+  - Progress tracking
+
+#### Job Patterns
+```python
+# Simple background task example
+async def generate_export(trip_id: str, user_id: str):
+    # Run in background using asyncio
+    asyncio.create_task(export_worker(trip_id, user_id))
+```
 
 ### 10.9 Deployment Architecture
 **Priority: Critical - Phase 1**
@@ -3383,1636 +2385,536 @@ GET /health/startup  # Startup probe
 
 #### Docker Configuration
 ```dockerfile
-# Multi-stage build example
-FROM python:3.11-alpine AS builder
-# Build stage...
-
-FROM python:3.11-alpine AS runtime
-# Runtime stage...
+# Simple single-stage build
+FROM python:3.11-alpine
+RUN apk add --no-cache gcc musl-dev postgresql-dev
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN adduser -D appuser
+USER appuser
+COPY --chown=appuser:appuser . /app
+WORKDIR /app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0"]
 ```
 
 #### Service Orchestration
 ```yaml
-# docker-compose.yml structure
+# Simple docker-compose.yml
 version: '3.8'
 services:
-  nginx:
-    mem_limit: 256m
-  api:
-    mem_limit: 1024m
-  postgres:
-    mem_limit: 1024m
-  redis:
-    mem_limit: 512m
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db/jidelnicek
+    depends_on:
+      - db
+  
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=jidelnicek
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+
+volumes:
+  postgres_data:
 ```
 
 ### 10.9.2 Deployment Process
 
-#### CI/CD Pipeline
+#### Simple CI/CD Pipeline
 - **Stages**:
   1. Code checkout
-  2. Dependency install
-  3. Linting/formatting
-  4. Unit tests
-  5. Build images
-  6. Integration tests
-  7. Security scan
-  8. Deploy staging
-  9. E2E tests
-  10. Deploy production
+  2. Run linters
+  3. Run tests
+  4. Build Docker image
+  5. Manual deployment trigger
+  6. Deploy to production
+  7. Run health checks
 
-#### Zero-Downtime Deployment
-- **Strategy**:
-  - Database migration first
-  - Rolling update
-  - Health check gates
-  - Automatic rollback
-  - Session persistence# Jídelníček 2.0 - Comprehensive Product Requirements Document
-# Part 5: Data Validation Framework and Business Rules
+#### Deployment Commands
+```bash
+# Simple deployment script
+#!/bin/bash
+docker-compose down
+docker-compose pull
+docker-compose up -d
+docker-compose exec app alembic upgrade head
+```
 
-## 11. Data Validation Framework
-
-### 11.1 Validation Architecture
+### 10.10 Backup and Recovery
 **Priority: Critical - Phase 1**
 
-### 11.1.1 Multi-Layer Validation
-
-Comprehensive validation at every level:
-
-#### Validation Layers
-1. **Client-Side Validation**:
-   - Immediate user feedback
-   - Format checking
-   - Range validation
-   - Required field checks
-   - Never trust alone
-
-2. **API Layer Validation**:
-   - Pydantic models
-   - Type enforcement
-   - Business rule checks
-   - Request sanitization
-   - Security validation
-
-3. **Database Constraints**:
-   - Foreign keys
-   - Unique constraints
-   - Check constraints
-   - Not null enforcement
-   - Trigger validation
-
-#### Validation Order
-```python
-# Validation pipeline
-1. Format validation (regex, type)
-2. Range validation (min/max)
-3. Business rules (cross-field)
-4. Security checks (injection)
-5. Database constraints
-```
-
-### 11.1.2 Error Response Format
-
-Consistent error communication:
-
-#### Standard Error Response
-```json
-{
-  "errors": [
-    {
-      "field": "email",
-      "code": "INVALID_FORMAT",
-      "message": "Please enter a valid email address",
-      "details": {
-        "pattern": "RFC 5322",
-        "max_length": 255
-      }
-    }
-  ],
-  "request_id": "uuid-v4",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
-#### Error Categories
-- **Validation Errors** (400):
-  - Format violations
-  - Range violations
-  - Required missing
-  - Type mismatches
-
-- **Business Rule Errors** (422):
-  - Logical constraints
-  - State violations
-  - Dependency issues
-  - Limit exceeded
-
-- **Security Errors** (403):
-  - Permission denied
-  - Rate limit exceeded
-  - Suspicious input
-  - Access violations
-
-### 11.2 User Data Validation
-**Priority: Critical - Phase 1**
-
-### 11.2.1 Account Information
-
-#### Email Validation
-- **Format Rules**:
-  - RFC 5322 compliance
-  - Maximum 255 characters
-  - Lowercase storage
-  - Unique constraint
-  - Domain validation
-
-- **Validation Messages**:
-  - "Please enter a valid email address"
-  - "Email must not exceed 255 characters"
-  - "An account with this email already exists"
-  - "Email domain appears invalid"
-  - "Email cannot be empty"
-
-#### Password Validation
-- **Complexity Rules**:
-  ```python
-  MIN_LENGTH = 12
-  MAX_LENGTH = 128
-  REQUIRE_UPPERCASE = True
-  REQUIRE_LOWERCASE = True
-  REQUIRE_NUMBER = True
-  REQUIRE_SPECIAL = True
-  SPECIAL_CHARS = "!@#$%^&*()_+-=[]{}|;:,.<>?"
-  ```
-
-- **Additional Checks**:
-  - Not in common passwords list
-  - No email/username included
-  - No sequential patterns
-  - No repeated characters
-  - Entropy calculation
-
-- **Validation Messages**:
-  ```python
-  MESSAGES = {
-      "TOO_SHORT": "Password must be at least 12 characters long",
-      "TOO_LONG": "Password must not exceed 128 characters",
-      "NO_UPPER": "Password must contain at least one uppercase letter",
-      "NO_LOWER": "Password must contain at least one lowercase letter",
-      "NO_NUMBER": "Password must contain at least one number",
-      "NO_SPECIAL": f"Password must contain at least one special character ({SPECIAL_CHARS})",
-      "TOO_COMMON": "This password is too common. Please choose a more unique password",
-      "CONTAINS_EMAIL": "Password cannot contain your email address",
-      "SEQUENTIAL": "Password contains sequential characters"
-  }
-  ```
-
-#### User Profile Validation
-- **Display Name**:
-  - Length: 1-100 characters
-  - Unicode support
-  - Trim whitespace
-  - No profanity check (MVP)
-  - Error: "Name must be between 1-100 characters"
-
-- **Bio/Description**:
-  - Maximum 500 characters
-  - Line breaks preserved
-  - URLs auto-linked
-  - HTML stripped
-  - Error: "Bio must not exceed 500 characters"
-
-### 11.2.2 Preferences Validation
-
-#### System Preferences
-- **Language**:
-  ```python
-  VALID_LANGUAGES = ['en', 'cs']
-  ERROR_MESSAGE = "Language must be either 'en' (English) or 'cs' (Czech)"
-  ```
-
-- **Unit System**:
-  ```python
-  VALID_UNITS = ['metric', 'imperial']
-  ERROR_MESSAGE = "Unit system must be either 'metric' or 'imperial'"
-  ```
-
-- **Energy Unit**:
-  ```python
-  VALID_ENERGY = ['kcal', 'kJ']
-  ERROR_MESSAGE = "Energy unit must be either 'kcal' or 'kJ'"
-  ```
-
-- **Timezone**:
-  ```python
-  # Must be valid IANA timezone
-  import pytz
-  if timezone not in pytz.all_timezones:
-      raise ValidationError("Invalid timezone format")
-  ```
-
-### 11.3 Recipe Data Validation
-**Priority: Critical - Phase 1**
-
-### 11.3.1 Recipe Properties
-
-#### Name Validation
-```python
-RECIPE_NAME_PATTERN = r"^[\w\s\.\,'\-\(\)]{1,100}$"
-RECIPE_NAME_ERRORS = {
-    "REQUIRED": "Recipe name is required",
-    "TOO_SHORT": "Recipe name must be at least 1 character",
-    "TOO_LONG": "Recipe name must not exceed 100 characters",
-    "INVALID_CHARS": "Recipe name contains invalid characters",
-    "DUPLICATE": "You already have a recipe with this name"
-}
-```
-
-#### Time Validation
-```python
-TIME_CONSTRAINTS = {
-    "prep_time": {
-        "min": 0,
-        "max": 1440,  # 24 hours in minutes
-        "error": "Prep time must be between 0-1440 minutes (24 hours)"
-    },
-    "cook_time": {
-        "min": 0,
-        "max": 1440,
-        "error": "Cook time must be between 0-1440 minutes (24 hours)"
-    }
-}
-
-# Combined validation
-if prep_time + cook_time > 1440:
-    raise ValidationError("Total cooking time cannot exceed 24 hours")
-```
-
-#### Servings Validation
-```python
-SERVINGS_CONSTRAINTS = {
-    "min": 1,
-    "max": 100,
-    "type": int,
-    "error": "Servings must be between 1-100"
-}
-```
-
-#### Water Requirements
-```python
-WATER_CONSTRAINTS = {
-    "min": 0,
-    "max": 10000,  # milliliters
-    "error": "Water amount must be between 0-10000 ml"
-}
-```
-
-### 11.3.2 Ingredient Validation
-
-#### Ingredient Limits
-```python
-INGREDIENT_CONSTRAINTS = {
-    "max_per_recipe": 50,
-    "quantity_min": 0.1,
-    "quantity_max": 5000.0,
-    "name_max_length": 100,
-    "decimal_places": 1
-}
-
-INGREDIENT_ERRORS = {
-    "TOO_MANY": "Maximum 50 ingredients per recipe",
-    "DUPLICATE": "Ingredient already added to recipe",
-    "QUANTITY_LOW": "Quantity must be at least 0.1 grams",
-    "QUANTITY_HIGH": "Quantity must not exceed 5000 grams",
-    "MISSING_NUTRITION": "Ingredient missing required nutritional data"
-}
-```
-
-### 11.3.3 Nutritional Data Validation
-
-#### Macronutrient Validation
-```python
-def validate_macronutrients(data):
-    """Validate macronutrient consistency"""
-    errors = []
-    
-    # All values per 100g
-    proteins = data.get('proteins', 0)
-    carbs = data.get('carbohydrates', 0)
-    fats = data.get('fats', 0)
-    sugars = data.get('sugars', 0)
-    saturated = data.get('saturated_fats', 0)
-    fiber = data.get('fiber', 0)
-    water = data.get('water', 0)
-    
-    # Basic range validation
-    if not 0 <= proteins <= 100:
-        errors.append("Proteins must be between 0-100g per 100g")
-    
-    if not 0 <= carbs <= 100:
-        errors.append("Carbohydrates must be between 0-100g per 100g")
-        
-    if not 0 <= fats <= 100:
-        errors.append("Fats must be between 0-100g per 100g")
-    
-    # Cross-field validation
-    if sugars > carbs:
-        errors.append("Sugars cannot exceed total carbohydrates")
-        
-    if saturated > fats:
-        errors.append("Saturated fats cannot exceed total fats")
-        
-    if fiber > carbs:
-        errors.append("Fiber cannot exceed total carbohydrates")
-    
-    # Dry weight validation (excluding water)
-    dry_weight = proteins + carbs + fats
-    if not 0.95 <= dry_weight / (100 - water) <= 1.05:
-        errors.append("Macronutrient sum seems incorrect for dry weight")
-    
-    # Calorie calculation check
-    calculated_calories = (proteins * 4) + (carbs * 4) + (fats * 9)
-    stated_calories = data.get('calories', 0)
-    if abs(calculated_calories - stated_calories) > stated_calories * 0.1:
-        errors.append("Calorie value doesn't match macronutrient calculation")
-    
-    return errors
-```
-
-#### Micronutrient Validation
-```python
-MICRONUTRIENT_LIMITS = {
-    # Minerals (mg per 100g unless specified)
-    "sodium": (0, 10000),
-    "calcium": (0, 5000),
-    "iron": (0, 100),
-    "potassium": (0, 10000),
-    "magnesium": (0, 2000),
-    "phosphorus": (0, 5000),
-    "zinc": (0, 100),
-    "copper": (0, 50),
-    "manganese": (0, 50),
-    "selenium": (0, 1000),  # μg
-    "iodine": (0, 5000),    # μg
-    
-    # Vitamins
-    "vitamin_a": (0, 10000),    # μg RAE
-    "vitamin_b1": (0, 100),     # mg
-    "vitamin_b2": (0, 100),     # mg
-    "vitamin_b3": (0, 500),     # mg
-    "vitamin_b5": (0, 200),     # mg
-    "vitamin_b6": (0, 100),     # mg
-    "vitamin_b7": (0, 5000),    # μg
-    "vitamin_b9": (0, 5000),    # μg
-    "vitamin_b12": (0, 1000),   # μg
-    "vitamin_c": (0, 2000),     # mg
-    "vitamin_d": (0, 1000),     # μg
-    "vitamin_e": (0, 1000),     # mg
-    "vitamin_k": (0, 1000),     # μg
-    
-    # Special dietary
-    "phe": (0, 5000),          # mg - for PKU
-    "cholesterol": (0, 1000),   # mg
-    "caffeine": (0, 1000),      # mg
-    "alcohol": (0, 100),        # g
-}
-
-def validate_micronutrient(name, value):
-    if name not in MICRONUTRIENT_LIMITS:
-        return None
-        
-    min_val, max_val = MICRONUTRIENT_LIMITS[name]
-    if not min_val <= value <= max_val:
-        return f"{name} must be between {min_val}-{max_val}"
-    return None
-```
-
-### 11.3.4 Image Validation
-
-#### Upload Validation
-```python
-IMAGE_CONSTRAINTS = {
-    "max_size": 5 * 1024 * 1024,  # 5MB
-    "max_count": 10,
-    "allowed_types": ["image/jpeg", "image/png", "image/webp"],
-    "allowed_extensions": [".jpg", ".jpeg", ".png", ".webp"],
-    "max_dimension": 4096,
-    "min_dimension": 100
-}
-
-def validate_image_upload(file):
-    errors = []
-    
-    # Size check
-    if file.size > IMAGE_CONSTRAINTS["max_size"]:
-        errors.append("Image size must not exceed 5MB")
-    
-    # Type check
-    if file.content_type not in IMAGE_CONSTRAINTS["allowed_types"]:
-        errors.append("Image must be in JPEG, PNG, or WebP format")
-    
-    # Extension check
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in IMAGE_CONSTRAINTS["allowed_extensions"]:
-        errors.append("Invalid file extension")
-    
-    # Magic byte verification
-    header = file.read(12)
-    file.seek(0)
-    if not verify_image_header(header):
-        errors.append("File content doesn't match image type")
-    
-    return errors
-```
-
-### 11.4 Trip Data Validation
-**Priority: Critical - Phase 1**
-
-### 11.4.1 Trip Configuration
-
-#### Basic Trip Validation
-```python
-TRIP_CONSTRAINTS = {
-    "name": {
-        "min_length": 1,
-        "max_length": 100,
-        "required": True,
-        "unique_per_user": True
-    },
-    "description": {
-        "max_length": 500,
-        "required": False
-    },
-    "notes": {
-        "max_length": 2000,
-        "required": False
-    },
-    "participants": {
-        "min": 1,
-        "max": 20
-    },
-    "max_active_trips": 100
-}
-
-TRIP_ERRORS = {
-    "NAME_REQUIRED": "Trip name is required",
-    "NAME_LENGTH": "Trip name must be between 1-100 characters",
-    "NAME_DUPLICATE": "You already have a trip with this name",
-    "DESC_LENGTH": "Description must not exceed 500 characters",
-    "NOTES_LENGTH": "Notes must not exceed 2000 characters",
-    "PARTICIPANTS": "Trip must have 1-20 participants",
-    "TOO_MANY_TRIPS": "You have reached the maximum limit of 100 active trips",
-    "DATE_INVALID": "End date must be on or after start date",
-    "DURATION_WARNING": "Warning: Trip duration exceeds one year"
-}
-```
-
-#### Date Validation
-```python
-def validate_trip_dates(start_date, end_date):
-    errors = []
-    warnings = []
-    
-    # Valid date check
-    if not isinstance(start_date, date):
-        errors.append("Start date must be a valid date")
-        
-    if not isinstance(end_date, date):
-        errors.append("End date must be a valid date")
-    
-    if errors:
-        return errors, warnings
-    
-    # Logical checks
-    if end_date < start_date:
-        errors.append("End date must be on or after start date")
-    
-    # Duration check
-    duration = (end_date - start_date).days
-    if duration > 365:
-        warnings.append("Warning: Trip duration exceeds one year")
-    
-    return errors, warnings
-```
-
-### 11.4.2 Participant Validation
-
-#### Participant Properties
-```python
-PARTICIPANT_CONSTRAINTS = {
-    "name": {
-        "max_length": 100,
-        "required": False,
-        "default_pattern": "Participant {n}"
-    },
-    "coefficient": {
-        "min": 0.1,  # 10%
-        "max": 3.0,  # 300%
-        "default": 1.0,  # 100%
-        "decimal_places": 2
-    },
-    "email": {
-        "max_length": 255,
-        "required": False,
-        "format": "email"
-    },
-    "notes": {
-        "max_length": 200,
-        "required": False
-    }
-}
-
-def validate_coefficient(value):
-    """Validate participant coefficient"""
-    if not isinstance(value, (int, float)):
-        return "Coefficient must be a number"
-    
-    if not 0.1 <= value <= 3.0:
-        return "Participant coefficient must be between 10% and 300%"
-    
-    return None
-```
-
-### 11.4.3 Meal Slot Validation
-
-#### Meal Configuration
-```python
-MEAL_SLOT_CONSTRAINTS = {
-    "name": {
-        "min_length": 1,
-        "max_length": 50,
-        "required": True
-    },
-    "max_slots": 10,  # UI optimized
-    "backend_max": 100,  # Technical limit
-}
-
-def validate_meal_slots(slots):
-    errors = []
-    
-    if not slots:
-        errors.append("At least one meal slot is required")
-    
-    if len(slots) > MEAL_SLOT_CONSTRAINTS["max_slots"]:
-        errors.append(f"Maximum {MEAL_SLOT_CONSTRAINTS['max_slots']} meal slots recommended")
-    
-    names = set()
-    for slot in slots:
-        # Name validation
-        if not slot.name or len(slot.name) > 50:
-            errors.append("Meal slot name must be between 1-50 characters")
-        
-        # Duplicate check
-        if slot.name in names:
-            errors.append(f"Duplicate meal slot name: {slot.name}")
-        names.add(slot.name)
-    
-    return errors
-```
-
-### 11.4.4 Calorie Target Validation
-
-#### Target Constraints
-```python
-CALORIE_TARGET_CONSTRAINTS = {
-    "min_per_meal": 100,
-    "max_per_meal": 2000,
-    "max_per_day": 6000,  # Warning threshold
-    "scaling_min": 0.1,   # 10% of original
-    "scaling_max": 5.0,   # 500% of original
-}
-
-def validate_calorie_target(target, meal_type=None):
-    """Validate calorie targets"""
-    errors = []
-    warnings = []
-    
-    if not isinstance(target, (int, float)):
-        errors.append("Target calories must be a number")
-        return errors, warnings
-    
-    if not CALORIE_TARGET_CONSTRAINTS["min_per_meal"] <= target <= CALORIE_TARGET_CONSTRAINTS["max_per_meal"]:
-        errors.append(f"Target calories must be between {CALORIE_TARGET_CONSTRAINTS['min_per_meal']}-{CALORIE_TARGET_CONSTRAINTS['max_per_meal']} kcal per person per meal")
-    
-    return errors, warnings
-
-def validate_daily_calories(daily_total):
-    """Check daily calorie totals"""
-    warnings = []
-    
-    if daily_total > CALORIE_TARGET_CONSTRAINTS["max_per_day"]:
-        warnings.append(f"Warning: Daily calories exceed {CALORIE_TARGET_CONSTRAINTS['max_per_day']} kcal per person")
-    
-    return warnings
-```
-
-### 11.5 Marketplace Validation
-**Priority: High - Phase 3**
-
-### 11.5.1 Publishing Validation
-
-#### Publishing Requirements
-```python
-def validate_recipe_for_publishing(recipe):
-    """Validate recipe meets publishing requirements"""
-    errors = []
-    
-    # Completeness checks
-    if not recipe.name:
-        errors.append("Recipe name is required")
-    
-    if not recipe.instructions:
-        errors.append("Recipe instructions are required")
-    
-    if not recipe.category:
-        errors.append("Recipe category is required")
-    
-    if not recipe.ingredients:
-        errors.append("Recipe must have at least one ingredient")
-    
-    # Nutritional data completeness
-    for ingredient in recipe.ingredients:
-        if not all([ingredient.calories, ingredient.proteins, 
-                   ingredient.carbohydrates, ingredient.fats]):
-            errors.append("All ingredients must have complete nutritional data")
-            break
-    
-    # User verification
-    if not recipe.user.email_verified:
-        errors.append("Email verification required to publish recipes")
-    
-    return errors
-```
-
-#### Unpublishing Validation
-```python
-def validate_unpublish(recipe):
-    """Check if recipe can be unpublished"""
-    errors = []
-    
-    if recipe.fork_count > 5:
-        errors.append(f"Cannot unpublish: This recipe has been forked {recipe.fork_count} times (maximum 5)")
-    
-    if recipe.featured_by_admin:
-        errors.append("Cannot unpublish: This recipe is featured")
-    
-    if recipe.under_moderation:
-        errors.append("Cannot unpublish: Recipe is under moderation review")
-    
-    return errors
-```
-
-### 11.5.2 Review Validation
-
-#### Review Constraints
-```python
-REVIEW_CONSTRAINTS = {
-    "text_max_length": 1000,
-    "rating_min": 1,
-    "rating_max": 5,
-    "requires_fork": True,
-    "one_per_recipe": True
-}
-
-def validate_review(user, recipe, rating, text):
-    """Validate marketplace review"""
-    errors = []
-    
-    # Fork requirement
-    if not has_user_forked_recipe(user, recipe):
-        errors.append("You can only review recipes you have forked")
-    
-    # Existing review check
-    if has_existing_review(user, recipe):
-        errors.append("You have already reviewed this recipe")
-    
-    # Rating validation
-    if not isinstance(rating, int) or not 1 <= rating <= 5:
-        errors.append("Marketplace rating must be between 1 and 5 stars")
-    
-    # Text validation
-    if not text or not text.strip():
-        errors.append("Review text is required with rating")
-    
-    if len(text) > REVIEW_CONSTRAINTS["text_max_length"]:
-        errors.append(f"Marketplace review must not exceed {REVIEW_CONSTRAINTS['text_max_length']} characters")
-    
-    # Content moderation
-    if contains_profanity(text):
-        errors.append("Review contains inappropriate content")
-    
-    return errors
-```
-
-### 11.6 Export Validation
+### 10.10.1 Backup Strategy
+
+Data protection approach:
+
+#### Backup Components
+- **Database Backups**:
+  - Daily pg_dump
+  - 7-day retention
+  - Compressed storage
+  - Offsite copy
+  - Test restores
+
+- **File Backups**:
+  - Daily file sync
+  - Image backup
+  - Export archive
+  - Configuration backup
+  - Version control
+
+### 10.10.2 Disaster Recovery
+
+Business continuity planning:
+
+#### Recovery Procedures
+- **RTO Target**: 4 hours
+- **RPO Target**: 24 hours
+- **Recovery Steps**:
+  1. Provision new VPS
+  2. Install Docker
+  3. Restore database
+  4. Restore files
+  5. Deploy application
+  6. Verify operation
+
+## 11. Scalability Considerations
+
+### 11.1 Performance Targets
+**Priority: High - All Phases**
+
+### 11.1.1 System Capacity
+
+Built for 100 users maximum:
+
+#### Capacity Planning
+- **User Limits**:
+  - 100 total registered users
+  - 100 concurrent users maximum
+  - 100 recipes per user average
+  - 50 trips per user average
+  - This is the final architecture
+
+- **Performance Goals**:
+  - <200ms API response (p95)
+  - <3s page load time
+  - 99.9% calculation accuracy
+  - 95% uptime target
+  - <1% error rate
+
+### 11.1.2 Optimization Strategies
+
+Making the most of limited resources:
+
+#### Optimization Areas
+- **Database**:
+  - Efficient queries
+  - Proper indexing
+  - Connection pooling
+  - Query caching
+  - Regular maintenance
+
+- **Application**:
+  - Async operations
+  - Efficient algorithms
+  - Memory management
+  - Resource pooling
+  - Code optimization
+
+## 12. Internationalization
+
+### 12.1 Language Support
 **Priority: High - Phase 1**
 
-### 11.6.1 Export Request Validation
+### 12.1.1 Supported Languages
 
-#### Format Validation
-```python
-EXPORT_FORMATS = ["pdf", "excel", "txt"]
-EXPORT_CONSTRAINTS = {
-    "max_file_size": 20 * 1024 * 1024,  # 20MB
-    "timeout": 30,  # seconds
-    "rate_limit": 20,  # per hour
-}
+Multi-language from day one:
 
-def validate_export_request(format, sections):
-    """Validate export parameters"""
-    errors = []
-    
-    # Format check
-    if format not in EXPORT_FORMATS:
-        errors.append(f"Export format must be one of: {', '.join(EXPORT_FORMATS)}")
-    
-    # Section check
-    if not sections:
-        errors.append("Please select at least one section to export")
-    
-    valid_sections = ["overview", "meals", "shopping", "packing", "nutrition", "fuel"]
-    for section in sections:
-        if section not in valid_sections:
-            errors.append(f"Invalid section: {section}")
-    
-    return errors
-```
+#### Language Coverage
+- **Phase 1 Languages**:
+  - English (en) - primary
+  - Czech (cs) - secondary
+  - UI translations
+  - Error messages
+  - Email templates
 
-### 11.6.2 Export Size Validation
+- **Translation Scope**:
+  - All UI elements
+  - Form validations
+  - Error messages
+  - Email content
+  - PDF exports
 
-#### Size Limits
-```python
-def estimate_export_size(trip):
-    """Estimate export file size"""
-    # Rough estimates per component
-    base_size = 1024  # 1KB base
-    per_day = 512     # 0.5KB per day
-    per_recipe = 256  # 0.25KB per recipe
-    per_participant = 128  # 0.125KB per participant
-    
-    estimated = (base_size + 
-                (trip.days * per_day) +
-                (trip.unique_recipes * per_recipe) +
-                (trip.participants * per_participant))
-    
-    return estimated
+### 12.1.2 Localization Features
 
-def validate_export_size(trip):
-    """Check if export will exceed limits"""
-    warnings = []
-    errors = []
-    
-    estimated_size = estimate_export_size(trip)
-    
-    if estimated_size > 10 * 1024 * 1024:  # 10MB
-        warnings.append("Warning: Export file is large (>10MB)")
-    
-    if estimated_size > EXPORT_CONSTRAINTS["max_file_size"]:
-        errors.append("Export file exceeds maximum size of 20MB")
-    
-    return errors, warnings
-```
+Cultural adaptations:
 
-### 11.7 Share Link Validation
-**Priority: Medium - Phase 3**
+#### Localization Areas
+- **Number Formats**:
+  - Decimal separators
+  - Thousand separators
+  - Currency display
+  - Percentage format
+  - Unit display
 
-### 11.7.1 Link Configuration
+- **Date/Time Formats**:
+  - Date formatting
+  - Time display
+  - Timezone handling
+  - Week start day
+  - Calendar display
 
-#### Expiration Validation
-```python
-SHARE_LINK_CONSTRAINTS = {
-    "min_days": 1,
-    "max_days": 365,
-    "default_days": 30,
-    "cleanup_after_expiry": 30
-}
+## 13. Development Phases
 
-def validate_share_expiration(days):
-    """Validate share link expiration"""
-    if not isinstance(days, int):
-        return "Expiration must be a whole number of days"
-    
-    if not SHARE_LINK_CONSTRAINTS["min_days"] <= days <= SHARE_LINK_CONSTRAINTS["max_days"]:
-        return f"Share link expiration must be between {SHARE_LINK_CONSTRAINTS['min_days']} and {SHARE_LINK_CONSTRAINTS['max_days']} days"
-    
-    return None
-```
+### 13.1 Phase 1 - MVP Core (Months 1-2)
+**Goal: Launch functional meal planning system**
 
-### 11.8 System-Wide Validation
-**Priority: High - Phase 1**
+#### 13.1.1 Core Features
 
-### 11.8.1 Batch Operation Validation
-
-#### Batch Limits
-```python
-BATCH_CONSTRAINTS = {
-    "max_items": 50,
-    "operations": ["delete", "update", "export"]
-}
-
-def validate_batch_operation(items, operation):
-    """Validate batch operations"""
-    errors = []
-    
-    if len(items) > BATCH_CONSTRAINTS["max_items"]:
-        errors.append(f"Cannot process more than {BATCH_CONSTRAINTS['max_items']} items in a single operation")
-    
-    if operation not in BATCH_CONSTRAINTS["operations"]:
-        errors.append(f"Invalid batch operation: {operation}")
-    
-    return errors
-```
-
-### 11.8.2 Search Validation
-
-#### Search Constraints
-```python
-SEARCH_CONSTRAINTS = {
-    "min_length": 2,
-    "max_length": 100,
-    "allowed_chars": r"[\w\s\-\.\,']",
-    "debounce_ms": 300
-}
-
-def validate_search_query(query):
-    """Validate search input"""
-    if len(query) < SEARCH_CONSTRAINTS["min_length"]:
-        return f"Search query must be at least {SEARCH_CONSTRAINTS['min_length']} characters"
-    
-    if len(query) > SEARCH_CONSTRAINTS["max_length"]:
-        return f"Search query must not exceed {SEARCH_CONSTRAINTS['max_length']} characters"
-    
-    # SQL injection prevention
-    if contains_sql_keywords(query):
-        return "Search query contains invalid characters"
-    
-    return None
-```
-
-### 11.9 Performance Validation
-**Priority: High - Phase 1**
-
-### 11.9.1 Rate Limiting
-
-#### Endpoint Limits
-```python
-RATE_LIMITS = {
-    # Format: (requests, window_seconds)
-    "/api/auth/login": (5, 900),          # 5 per 15 minutes
-    "/api/auth/reset": (3, 3600),         # 3 per hour
-    "/api/recipes": (1000, 3600),         # 1000 per hour
-    "/api/export": (20, 3600),            # 20 per hour
-    "/api/upload": (10, 3600),            # 10 per hour
-    "default_authenticated": (1000, 3600), # 1000 per hour
-    "default_anonymous": (100, 3600)       # 100 per hour
-}
-
-def check_rate_limit(endpoint, user_id, ip_address):
-    """Check if request exceeds rate limit"""
-    key = f"{endpoint}:{user_id or ip_address}"
-    limit, window = RATE_LIMITS.get(endpoint, RATE_LIMITS["default_authenticated"])
-    
-    current_count = get_request_count(key, window)
-    if current_count >= limit:
-        return True, "Rate limit exceeded. Please try again later"
-    
-    increment_request_count(key, window)
-    return False, None
-```
-
-### 11.10 Data Precision Rules
-**Priority: High - Phase 1**
-
-### 11.10.1 Numerical Precision
-
-#### Display Rules
-```python
-PRECISION_RULES = {
-    "weight": {
-        "display_decimals": 1,
-        "storage_decimals": 2,
-        "unit": "g",
-        "example": "100.0g"
-    },
-    "calories": {
-        "display_decimals": 0,
-        "storage_decimals": 2,
-        "unit": "kcal",
-        "example": "365 kcal"
-    },
-    "macronutrients": {
-        "display_decimals": 1,
-        "storage_decimals": 2,
-        "unit": "g",
-        "example": "24.3g"
-    },
-    "micronutrients": {
-        "display_decimals": 2,
-        "storage_decimals": 3,
-        "unit": "mg",
-        "example": "1.25mg",
-        "small_value": "<0.01"
-    },
-    "percentage": {
-        "display_decimals": 0,
-        "storage_decimals": 2,
-        "unit": "%",
-        "example": "45%"
-    },
-    "currency": {
-        "display_decimals": 2,
-        "storage_decimals": 2,
-        "unit": "$",
-        "example": "$12.99"
-    }
-}
-
-def format_nutritional_value(value, nutrient_type):
-    """Format nutritional values for display"""
-    if nutrient_type not in PRECISION_RULES:
-        return str(value)
-    
-    rules = PRECISION_RULES[nutrient_type]
-    
-    # Handle very small values
-    if nutrient_type == "micronutrients" and value < 0.01:
-        return rules["small_value"]
-    
-    # Format with appropriate decimals
-    format_str = f"{{:.{rules['display_decimals']}f}}"
-    formatted = format_str.format(value)
-    
-    # Add unit if specified
-    if "unit" in rules:
-        formatted += rules["unit"]
-    
-    return formatted
-```# Jídelníček 2.0 - Comprehensive Product Requirements Document
-# Part 6: Development Phases, Success Metrics, and Appendices
-
-## 12. Development Phases
-
-### 12.1 Development Timeline Overview
-**Solo Developer with AI Assistance**
-
-Total estimated timeline: 12-18 months
-
-#### Development Approach
-- **Daily Commitment**: 4-6 hours of focused development
-- **Weekly Output**: 1-2 complete features
-- **AI Assistance**: 40-60% code generation with 100% human review
-- **Sustainable Pace**: Maximum 6 hours/day, one day off per week
-- **Buffer Time**: 50% added to all estimates
-
-### 12.2 Phase 1: MVP - Core Individual Planning (Months 1-4)
-**Essential Features for Solo Trip Planning**
-
-### 12.2.1 Month 1: Foundation
-
-#### Week 1-2: Project Setup
-- Development environment configuration
-- Database schema implementation
-- Docker setup and configuration
-- CI/CD pipeline basics
-- Git repository structure
-- Initial documentation
-
-#### Week 3-4: Authentication System
-- User registration endpoints
-- Email verification flow
-- Login/logout functionality
-- JWT token management
+**User Management**:
+- Registration with email verification
+- Login with session management
+- Basic profile management
 - Password reset flow
-- Session handling
-- Basic security measures
+- User preferences (units, language)
 
-### 12.2.2 Month 2: Recipe Management
+**Recipe System**:
+- Full CRUD operations
+- Ingredient management
+- Nutritional calculations
+- Basic image support
+- Category organization
 
-#### Week 5-6: Recipe CRUD
-- Recipe creation API
-- Recipe editing functionality
-- Recipe deletion (soft delete)
-- Recipe listing and filtering
-- Basic validation rules
-- Nutritional calculation engine
-
-#### Week 7-8: Ingredient System
-- Global ingredient database import
-- Personal ingredient management
-- Nutritional data structure
-- Ingredient search functionality
-- Category management
-- Data validation framework
-
-### 12.2.3 Month 3: Trip Planning Core
-
-#### Week 9-10: Trip Management
-- Trip creation and configuration
+**Trip Planning**:
+- Multi-day trip creation
 - Participant management
-- Day structure implementation
 - Meal slot configuration
-- Basic coefficient system
+- Recipe assignment
+- Automatic scaling
 
-#### Week 11-12: Meal Assignment
-- Recipe-to-meal assignment
-- Automatic scaling calculations
-- Calorie target system
-- Nutritional summaries
-- Daily totals calculation
-
-### 12.2.4 Month 4: Export and Polish
-
-#### Week 13-14: Export System
+**Data Export**:
 - Shopping list generation
-- PDF export functionality
-- Basic report formatting
-- Data aggregation logic
+- Basic PDF export
+- Excel export
+- Print-friendly views
 
-#### Week 15-16: MVP Finalization
-- Bug fixes and optimization
-- Performance improvements
-- Basic UI implementation
-- User testing setup
-- Documentation updates
-- Deployment preparation
+**Technical Foundation**:
+- Monolithic application
+- PostgreSQL database
+- FastAPI backend
+- Next.js frontend
+- Docker deployment
+- Basic monitoring
 
-### 12.3 Phase 2: Enhanced Features (Months 4-6)
-**Advanced Planning Tools**
+#### 13.1.2 MVP Success Criteria
 
-### 12.3.1 Month 5: Advanced Features
+**Functional Requirements**:
+- ✓ Users can register and manage recipes
+- ✓ Trips support up to 20 participants
+- ✓ Automatic calorie-based scaling works
+- ✓ Shopping lists aggregate correctly
+- ✓ 99.9% calculation accuracy achieved
+- ✓ System handles 10 concurrent users
 
-#### Week 17-18: Recipe Enhancements
-- Recipe versioning system
-- Version comparison
+**Quality Metrics**:
+- Response time <200ms for API calls
+- Page load <3 seconds on 3G
+- Zero critical bugs at launch
+- 80% unit test coverage
+- Deployment takes <10 minutes
+
+### 13.2 Phase 2 - Polish (Month 3)
+**Goal: Improve user experience and add essential features**
+
+#### 13.2.1 Enhanced Features
+
+**Recipe Enhancements**:
+- Version control system
 - Change tracking
-- Version restoration
-- Impact on trips
-
-#### Week 19-20: Snacks and Fuel
-- Snack management system
-- Drinks tracking
-- Fuel calculation engine
-- Stove configuration
-- Environmental adjustments
-
-### 12.3.2 Month 6: User Experience
-
-#### Week 21-22: Export Enhancements
-- Excel export support
-- Text export format
-- Packing list generation
-- Day-by-day breakdowns
-- Customizable reports
-
-#### Week 23-24: Polish and Testing
-- Personal meal ratings
-- Trip templates
-- Czech language support
-- Performance optimization
-- Comprehensive testing
-- Bug fixes
-
-### 12.4 Phase 3: Community Features (Months 6-9)
-**Recipe Marketplace and Sharing**
-
-### 12.4.1 Month 7: Marketplace Foundation
-
-#### Week 25-26: Publishing System
-- Recipe publishing flow
-- Marketplace infrastructure
-- Search implementation
-- Category browsing
-- Auto-approval system
-
-#### Week 27-28: Social Features
-- Recipe forking
-- Fork tracking
-- Attribution system
-- Unpublishing rules
-- Basic moderation
-
-### 12.4.2 Month 8: Ratings and Reviews
-
-#### Week 29-30: Rating Systems
-- Marketplace ratings
-- Review functionality
-- Rating aggregation
-- Ranking algorithm
-- Review moderation
-
-#### Week 31-32: Discovery Features
-- Advanced search
-- Filters and sorting
-- Recommendations
-- Popular recipes
-- Trending system
-
-### 12.4.3 Month 9: Sharing and Polish
-
-#### Week 33-34: Sharing System
-- Trip sharing links
-- Recipe share links
-- Link management
-- Expiration handling
-- Access control
-
-#### Week 35-36: Community Polish
-- User profiles
-- Activity feeds
-- Statistics
-- Achievements (future)
-- Community guidelines
-
-### 12.5 Phase 4: Professional Tools (Months 9-11)
-**Advanced and Enterprise Features**
-
-### 12.5.1 Month 10: API Development
-
-#### Week 37-38: REST API
-- Complete API coverage
-- OpenAPI documentation
-- Authentication system
-- Rate limiting
-- Webhook support
-
-#### Week 39-40: Advanced Features
+- Recipe variations
 - Bulk operations
-- Advanced templates
-- Cost tracking basics
-- Multi-trip planning
-- Archive system
+- Advanced search
 
-### 12.5.2 Month 11: Professional Features
+**Trip Features**:
+- Trip templates
+- Day templates
+- Meal pattern copying
+- Snack management
+- Fuel calculations
 
-#### Week 41-42: Enterprise Tools
-- White-label preparation
-- Advanced analytics
-- Custom branding
-- Priority support system
-- SLA framework
+**Security & Performance**:
+- Two-factor authentication
+- OAuth2 integration
+- Redis caching layer
+- Query optimization
+- Image optimization
 
-#### Week 43-44: Final Polish
-- Performance optimization
-- Security hardening
-- Documentation completion
-- Marketing preparation
-- Launch readiness
+#### 13.2.2 User Experience
 
-### 12.6 Month 12: Launch Preparation
-**Final Testing and Production Deployment**
+**UI/UX Improvements**:
+- Drag-and-drop interface
+- Keyboard shortcuts
+- Advanced filtering
+- Mobile optimizations
+- Batch operations
 
-#### Week 45-46: Testing Sprint
-- Comprehensive testing
-- Security audit
-- Performance testing
-- User acceptance testing
-- Bug fix sprint
+### 13.3 Phase 3 - Marketplace (Months 4-6)
+**Goal: Build community features**
 
-#### Week 47-48: Production Launch
-- Production deployment
-- Monitoring setup
-- User onboarding
-- Marketing launch
-- Support preparation
-- Post-launch monitoring
+#### 13.3.1 Recipe Marketplace
 
-### 12.7 Phase 1.1: Security Enhancements (Post-Launch)
-**Months 1-2 After Launch**
+**Publishing System**:
+- Recipe publishing flow
+- Marketplace search
+- Advanced filtering
+- Category browsing
+- Featured recipes
 
-#### Security Hardening
-- Two-factor authentication (TOTP)
-- Recovery codes system
-- Enhanced audit logging
-- Advanced threat detection
-- Penetration testing
-- Security documentation
-- Compliance updates
+**Social Features**:
+- Recipe ratings
+- Review system
+- Fork tracking
+- Popular recipes
+- Trending analysis
+
+#### 13.3.2 Sharing Capabilities
+
+**Share Links**:
+- Recipe share links
+- Trip share links
+- Expiration control
+- Access analytics
+- QR code generation
+
+## 14. Success Metrics and KPIs
+
+### 14.1 User Engagement Metrics
+
+#### 14.1.1 Acquisition Metrics
+
+**Target Goals**:
+```
+Metric                    | 2 Months | 6 Months
+-------------------------|----------|----------
+Registered Users         | 50       | 100
+Monthly Active Users     | 30       | 60
+Weekly Active Users      | 20       | 40
+Daily Active Users       | 10       | 20
+New User Retention (7d)  | 40%      | 50%
+New User Retention (30d) | 20%      | 30%
+```
+
+#### 14.1.2 Feature Adoption
+
+**Usage Targets**:
+```
+Feature                  | 2 Months | 6 Months
+------------------------|----------|----------
+Recipes Created/User    | 5        | 10
+Trips Created/User      | 2        | 4
+Marketplace Recipes     | 20       | 100
+Recipe Forks           | 10       | 50
+Share Links Created    | 20       | 100
+Exports Generated      | 50       | 200
+```
+
+### 14.2 Performance Metrics
+
+#### 14.2.1 System Performance
+
+**Performance Targets**:
+```
+Metric                   | Target    | Critical Threshold
+------------------------|-----------|-------------------
+API Response Time (p50)  | <100ms    | >200ms
+API Response Time (p95)  | <200ms    | >500ms
+API Response Time (p99)  | <500ms    | >1000ms
+Page Load Time          | <3s       | >5s
+Time to Interactive     | <3s       | >5s
+Calculation Accuracy    | 99.9%     | <99.5%
+Uptime                  | 95%       | <90%
+Error Rate              | <0.1%     | >1%
+```
+
+#### 14.2.2 Capacity Metrics
+
+**System Limits**:
+```
+Metric                  | Maximum Capacity
+-----------------------|------------------
+Concurrent Users       | 100
+Total Users           | 100
+Database Size         | 20GB
+Daily API Calls       | 50K
+Monthly Bandwidth     | 50GB
+Storage Used          | 25GB
+```
+
+### 14.3 Quality Metrics
+
+#### 14.3.1 Code Quality
+
+**Development Standards**:
+- Test Coverage: >80% (Critical: <70%)
+- Code Review: 100% (No exceptions)
+- Linting Pass: 100% (No warnings)
+- Type Coverage: >95% (Critical: <90%)
+- Documentation: 100% public APIs
+- Security Scan: 0 high/critical
+
+#### 14.3.2 User Satisfaction
+
+**Satisfaction Targets**:
+- Net Promoter Score: >50
+- Customer Satisfaction: >4.0/5.0
+- Support Tickets: <5% of MAU
+- Bug Reports: <10/month
+- Feature Requests: Track and prioritize
+- Churn Rate: <5% monthly
+
+### 14.4 Business Metrics
+
+#### 14.4.1 Growth Indicators
+
+**Business Health**:
+- Monthly Active User Growth: 10%
+- Recipe Creation Rate: 2/user/month
+- Trip Planning Rate: 1/user/month
+- Marketplace Contribution: 10% of users
+- Viral Coefficient: >1.0
+- Activation Rate: >60%
+
+## 15. Security Threats and Mitigations
+
+### 15.1 Comprehensive Threat Model
+
+#### 15.1.1 STRIDE Analysis
+
+**Spoofing Identity**:
+- Threat: Attacker impersonates legitimate user
+- Mitigation: Strong authentication, 2FA, session binding
+- Monitoring: Failed login tracking, geographic anomalies
+
+**Tampering with Data**:
+- Threat: Unauthorized data modification
+- Mitigation: Input validation, RBAC, audit logging
+- Monitoring: Change tracking, anomaly detection
+
+**Repudiation**:
+- Threat: User denies performing action
+- Mitigation: Comprehensive audit logs, timestamps
+- Monitoring: Log integrity checks, tamper detection
+
+**Information Disclosure**:
+- Threat: Sensitive data exposure
+- Mitigation: Encryption, access controls, data masking
+- Monitoring: Access logs, unusual data access patterns
+
+**Denial of Service**:
+- Threat: System availability compromise
+- Mitigation: Rate limiting, resource limits, caching
+- Monitoring: Traffic analysis, resource usage
+
+**Elevation of Privilege**:
+- Threat: Unauthorized access escalation
+- Mitigation: Principle of least privilege, RBAC
+- Monitoring: Permission changes, admin actions
+
+### 15.2 Implementation Security
+
+#### 15.2.1 Secure Coding Practices
+
+**Development Security**:
+- Input validation on all endpoints
+- Parameterized queries only
+- Output encoding
+- Secure session management
+- Dependency scanning
+- Regular security audits
+
+#### 15.2.2 Infrastructure Security
+
+**Deployment Security**:
+- Minimal attack surface
+- Regular updates
+- Firewall configuration
+- Intrusion detection
+- Security monitoring
 - Incident response plan
-
-### 12.8 Phase 2.0: PWA and Offline Support
-**Future Enhancement When User Base Grows**
-
-#### Progressive Web App Features
-- Service worker implementation
-- Offline recipe viewing
-- Background synchronization
-- Push notifications
-- App manifest
-- IndexedDB storage
-- Native app experience
-- Offline-first architecture
-
-## 13. Success Metrics
-
-### 13.1 Launch Success Metrics (First 3 Months)
-
-#### User Acquisition
-- **Target**: 50 registered users
-- **Measurement**: Unique email-verified accounts
-- **Growth Rate**: 15-20 users per month
-- **Activation Rate**: 60% create first recipe
-
-#### User Engagement
-- **Active Users**: 30+ monthly active users
-- **Trip Creation**: 50+ trips created
-- **Recipe Creation**: 200+ recipes created
-- **Return Rate**: 40% weekly return
-
-#### System Quality
-- **Bug Rate**: <2% critical bugs
-- **Uptime**: 95% availability
-- **Performance**: 90% requests <3s
-- **Support Tickets**: <10 per week
-
-### 13.2 Long-term Success Metrics (First Year)
-
-#### User Base Growth
-- **Total Users**: 100 registered users
-- **Monthly Active**: 50% MAU rate
-- **Geographic Spread**: 5+ countries
-- **User Retention**: 60% after 6 months
-
-#### Content Creation
-- **Marketplace Recipes**: 100+ public recipes
-- **Average Rating**: 4.0+ stars
-- **Fork Rate**: 20% of public recipes
-- **Review Count**: 200+ reviews
-
-#### Business Metrics
-- **NPS Score**: >50
-- **Support Response**: <24 hours
-- **Feature Adoption**: 70% use exports
-- **Premium Interest**: 10% inquire
-
-### 13.3 Technical Success Metrics
-
-#### Code Quality
-- **Test Coverage**: >80% overall
-- **Critical Paths**: 95% coverage
-- **Code Reviews**: 100% of PRs
-- **Documentation**: All APIs documented
-
-#### Performance Metrics
-- **API Response**: <200ms p95
-- **Page Load**: <3s on 3G
-- **Calculation Accuracy**: 99.9%
-- **Database Queries**: <50ms p95
-
-#### Security Metrics
-- **Vulnerabilities**: Zero critical
-- **Penetration Tests**: Pass quarterly
-- **Security Incidents**: Zero breaches
-- **Compliance**: GDPR ready
-
-### 13.4 Quality Metrics
-
-#### User Experience
-- **Task Success Rate**: >90%
-- **Error Rate**: <5% of actions
-- **Mobile Usage**: 40% of traffic
-- **Accessibility**: WCAG 2.1 AA
-
-#### System Reliability
-- **Uptime**: 99% (allowing maintenance)
-- **MTTR**: <4 hours
-- **Backup Success**: 100%
-- **Data Loss**: Zero incidents
-
-## 14. Risk Analysis and Mitigation
-
-### 14.1 Technical Risks
-
-#### Risk: Nutritional Calculation Accuracy
-- **Impact**: High - Core feature credibility
-- **Probability**: Medium
-- **Mitigation**:
-  - Comprehensive test suite (100% coverage)
-  - Multiple calculation verification
-  - Community verification system
-  - Regular accuracy audits
-  - Partner with nutrition database
-
-#### Risk: Performance Degradation
-- **Impact**: High - User experience
-- **Probability**: Medium
-- **Mitigation**:
-  - Early load testing
-  - Caching strategy implementation
-  - Database query optimization
-  - Performance monitoring
-  - Scalability planning
-
-#### Risk: Security Vulnerabilities
-- **Impact**: Critical - User trust
-- **Probability**: Low
-- **Mitigation**:
-  - Security-first development
-  - Regular dependency updates
-  - Automated security scanning
-  - Penetration testing
-  - Incident response plan
-
-### 14.2 Business Risks
-
-#### Risk: Low User Adoption
-- **Impact**: High - Project viability
-- **Probability**: Medium
-- **Mitigation**:
-  - MVP user testing
-  - Community engagement
-  - SEO optimization
-  - Content marketing
-  - Influencer partnerships
-
-#### Risk: Data Quality Issues
-- **Impact**: Medium - User trust
-- **Probability**: High
-- **Mitigation**:
-  - Validation frameworks
-  - Community moderation
-  - Verified badges
-  - Report mechanisms
-  - Data cleanup tools
-
-### 14.3 Operational Risks
-
-#### Risk: Solo Developer Burnout
-- **Impact**: High - Project completion
-- **Probability**: Medium
-- **Mitigation**:
-  - Sustainable pace (4-6 hrs/day)
-  - Regular breaks and time off
-  - AI tool assistance
-  - Community support
-  - Flexible timeline
-
-#### Risk: Infrastructure Costs
-- **Impact**: Medium - Sustainability
-- **Probability**: Low
-- **Mitigation**:
-  - Single VPS optimization
-  - Efficient resource usage
-  - Cost monitoring
-  - Revenue planning
-  - Upgrade path defined
-
-## 15. Constraints and Assumptions
-
-### 15.1 Technical Constraints
-
-#### Platform Limitations
-- Web-based application only (no native apps in MVP)
-- Single VPS deployment (vpsFree.cz)
-- No offline functionality in MVP
-- Limited to 20 participants per trip
-- One stove per trip limitation
-- Maximum 100 concurrent users
-
-#### Technology Constraints
-- PostgreSQL single instance
-- No distributed systems
-- Limited background processing
-- Synchronous exports only
-- No WebSocket support (MVP)
-
-### 15.2 Business Constraints
-
-#### Market Limitations
-- English and Czech languages only
-- No payment processing in MVP
-- Manual content moderation
-- No real-time collaboration
-- Community-driven support only
-
-#### Resource Constraints
-- Solo developer capacity
-- Limited marketing budget
-- No dedicated support team
-- Open source dependencies
-- Community hosting
-
-### 15.3 Assumptions
-
-#### User Assumptions
-- Users have stable internet connection
-- Basic nutritional knowledge exists
-- Comfort with web applications
-- Email access for verification
-- Modern browser usage
-
-#### Technical Assumptions
-- VPS reliability (99% uptime)
-- PostgreSQL stability
-- Framework longevity
-- API rate limits sufficient
-- Storage growth manageable
-
-#### Business Assumptions
-- Organic growth pattern
-- Community engagement
-- Positive word-of-mouth
-- No direct competition
-- Sustainable at 100 users
 
 ## 16. Future Considerations
 
-### 16.1 Scalability Path
+### 16.1 Potential Enhancements
 
-#### Infrastructure Evolution
-1. **Phase 1**: Single VPS (current)
-2. **Phase 2**: Add Redis cache
-3. **Phase 3**: CDN integration
-4. **Phase 4**: Read replicas
-5. **Phase 5**: Microservices migration
+Features beyond 6-month roadmap:
 
-#### Feature Expansion
-- Barcode scanning for ingredients
-- AI-powered meal suggestions
-- Fitness tracker integration
-- Weather-based adjustments
-- Real-time collaboration
-- Mobile applications
-- Voice interface
-- AR packing assistance
+#### Future Features
+- **Mobile Apps**: Native iOS/Android apps
+- **Offline Mode**: PWA with sync
+- **AI Features**: Smart meal suggestions
+- **Social Features**: User following, groups
+- **Advanced Analytics**: Detailed insights
+- **API Platform**: Third-party integrations
 
-### 16.2 Business Model Evolution
+### 16.2 Technical Evolution
 
-#### Monetization Options
-1. **Freemium Model**:
-   - Basic: 10 trips/year
-   - Pro: Unlimited trips
-   - Team: Group features
+Possible architectural changes:
 
-2. **Feature Tiers**:
-   - Advanced exports
-   - Priority support
-   - Custom branding
-   - API access
-
-3. **Additional Revenue**:
-   - Sponsored ingredients
-   - Affiliate partnerships
-   - Premium templates
-   - Consulting services
-
-### 16.3 Technology Evolution
-
-#### Architecture Migration
-- Microservices when >1000 users
-- Event-driven architecture
-- CQRS implementation
-- GraphQL API layer
-- Kubernetes orchestration
-
-#### Advanced Features
-- Machine learning for:
-  - Recipe recommendations
-  - Nutritional optimization
-  - Shopping predictions
-  - Portion suggestions
-- Blockchain for recipe attribution
-- IoT integration for smart scales
+#### Evolution Path
+- **If Growth Exceeds 100 Users**:
+  - Consider horizontal scaling
+  - Add caching layers
+  - Optimize database queries
+  - Add CDN for static assets
+  - Consider read replicas
+  - This PRD assumes 100 users maximum
 
 ## 17. Appendices
 
-### 17.1 User Story Consolidation Notes
+### 17.1 Glossary
 
-**Total User Stories: 20** (consolidated from original 21)
+Key terms and definitions:
 
-#### Merged User Stories
-1. **User Story 9 (Recipe Sharing)** has been merged into **User Story 8 (Recipe Duplication, Marketplace, and Sharing)**
-   - All recipe sharing functionality is consolidated under US-8
-   - Share links for both recipes and trips
-   - Consistent expiration handling
+- **Coefficient**: Multiplier applied to participant portions
+- **Fork**: Creating a personal copy of a public recipe
+- **Marketplace**: Public recipe sharing platform
+- **Scaling**: Adjusting recipe quantities to meet calorie targets
+- **Trip**: Multi-day meal planning session
+- **Archive**: Marking data as inactive (is_archived = true)
 
-#### Cross-Referenced Features
-1. **User Story 6 (Shopping List)** functionality is included in **User Story 16 (Trip Summary Export)**
-2. **User Story 7 (Packing List)** functionality is included in **User Story 16 (Trip Summary Export)**
-3. All export features are unified under comprehensive trip documentation
+### 17.2 User Stories Reference
 
-### 17.2 Technology Stack Summary
+Complete user story list:
 
-```
-Backend:  Python 3.11+ | FastAPI | PostgreSQL 15 | Redis (Phase 1.1)
-Frontend: React 18 | Next.js 14 | TypeScript | Tailwind CSS
-Testing:  pytest | Jest | Playwright | Locust
-DevOps:   Docker | GitHub Actions | Nginx | Let's Encrypt
-Security: JWT | OAuth2 | HTTPS | bcrypt | TOTP (Phase 1.1)
-```
+- US-1: User Registration and Authentication
+- US-2: Recipe Creation and Management
+- US-3: Trip Planning
+- US-4: Shopping List Generation
+- US-5: Participant Coefficients
+- US-6: Calorie-Based Scaling
+- US-7: Snacks and Drinks
+- US-8: Recipe Marketplace
+- US-9: Recipe Sharing (merged into US-8)
+- US-10: Recipe Forking
+- US-11: Recipe Versioning
 
-### 17.3 Key Metrics Summary
+### 17.3 Technical Decisions Log
 
-- **User Stories**: 20 (consolidated)
-- **Acceptance Tests**: 114 defined
-- **Security Threats**: 42 identified (8 critical)
-- **Database Tables**: ~20 across 4 schemas
-- **API Endpoints**: ~50 RESTful endpoints
-- **UI Components**: ~25 reusable components
-- **Supported Languages**: 2 (English, Czech)
-- **Timeline**: 12-18 months
-- **Target Users**: 100 initial
+Key architectural decisions:
 
-### 17.4 Reference Data Categories
-
-#### Recipe Categories
-1. Breakfast (Hot, Cold, Quick Start)
-2. Main Meals (Lunch, Dinner, One-Pot)
-3. Snacks (Trail, Energy Bars, Quick Bites)
-4. Beverages (Hot, Cold, Recovery)
-5. Desserts
-6. Special Dietary
-
-#### Dietary Tags
-- Vegetarian
-- Vegan
-- Gluten-Free
-- Dairy-Free
-- Nut-Free
-- High-Protein
-- Low-Carb
-- No-Cook
-- Lightweight
-- PKU-Friendly (Low PHE)
-
-#### Standard Meal Slots
-- Breakfast
-- Lunch
-- Dinner
-- Morning Snack (optional)
-- Afternoon Snack (optional)
-
-### 17.5 Unit Conversion Reference
-
-#### Weight Conversions
-- 1 kg = 2.205 lbs
-- 1 g = 0.035 oz
-- 1 oz = 28.3495 g
-- 1 lb = 453.592 g
-
-#### Volume Conversions
-- 1 L = 33.814 fl oz
-- 1 ml = 0.034 fl oz
-- 1 cup = 236.588 ml
-- 1 fl oz = 29.5735 ml
-- 1 tbsp = 14.7868 ml
-- 1 tsp = 4.92892 ml
-
-#### Energy Conversions
-- 1 kcal = 4.184 kJ
-- 1 kJ = 0.239 kcal
-
-#### Temperature (Cooking)
-- °C to °F: (°C × 9/5) + 32
-- °F to °C: (°F - 32) × 5/9
-
-### 17.6 Nutritional Reference Values
-
-#### Daily Values (Adults)
-- Calories: 2000-2500 kcal
-- Protein: 50g
-- Carbohydrates: 300g
-- Fats: 65g
-- Fiber: 25g
-- Sodium: 2300mg
-- Vitamin C: 90mg
-- Calcium: 1000mg
-- Iron: 18mg
-
-*Note: Adjust based on activity level and individual needs*
-
-### 17.7 Fuel Efficiency Reference
-
-#### Common Stove Types
-- Canister stoves: 8-12 g/L
-- White gas stoves: 10-15 g/L
-- Alcohol stoves: 20-30 g/L
-- Multi-fuel: 10-15 g/L
-
-#### Altitude Adjustments
-- Sea level: Base efficiency
-- 1000m: +10% fuel
-- 2000m: +20% fuel
-- 3000m: +30% fuel
-- 4000m: +40% fuel
-- 5000m: +50% fuel
-
-### 17.8 Water Boiling Times
-
-#### Standard Assumptions
-- Sea level: 5 min/L at 20°C water
-- Per 1000m elevation: +10% time
-- Cold water adjustment: +1 min/L per 10°C below 20°C
-- Wind factor: +15% in exposed conditions
-- Winter conditions: +30% total adjustment
+1. **Monolithic Architecture**: Chosen for simplicity with 100 users
+2. **PostgreSQL**: Reliable, feature-rich, good for 100 users
+3. **FastAPI**: Modern, fast, async Python framework
+4. **Next.js**: Full-stack React framework with SSR
+5. **Docker**: Consistent deployment environment
+6. **Single Schema**: Simplified architecture with prefixes
+7. **Archive Flag**: Using is_archived instead of soft deletes
 
 ---
 
-## Document Completion Notes
-
-**Document Version**: 3.0 (Comprehensive)
-**Total Length**: ~1500 lines across 6 parts
-**Status**: Complete PRD for TaskMaster parsing
-**Last Updated**: 2025-01-08
-**Scope**: 100-user web application with 4-phase development
-
-This comprehensive PRD incorporates all requirements, specifications, and details from the complete Jídelníček 2.0 documentation suite, providing a single source of truth for development planning and task generation.
+End of Jídelníček 2.0 PRD v4.0 - Simplified Architecture

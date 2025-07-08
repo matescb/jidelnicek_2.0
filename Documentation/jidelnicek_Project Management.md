@@ -21,55 +21,47 @@ Jídelníček Project
 
 ## Development Phases
 
-### Phase 1: MVP (3-4 months)
-**Goal**: Core functionality for individual trip planning
+### Phase 1: Core MVP (Months 1-2)
+**Goal**: Working meal planning system for individual use
 
 **Features**:
-- User authentication (email/password only)
-- Basic recipe creation and management
-- Trip planning for single user
-- Nutritional tracking (macros only)
-- Basic shopping list generation
-- English language only
-
-**Key User Stories**: US-1, US-2, US-3, US-4, US-7
-
-### Phase 2: Multi-User Support (2-3 months)
-**Goal**: Enable group expedition planning
-
-**Features**:
+- User registration/login (email/password, no 2FA)
+- Recipe CRUD operations with image upload
+- Basic trip planning interface
 - Participant management with coefficients
-- Meal portion adjustments
-- Packing lists by day
-- Fuel calculations
-- Czech language support
+- Automatic portion scaling calculations
+- Shopping list export (PDF/Excel)
+- Basic Docker deployment setup
 
-**Key User Stories**: US-5, US-6, US-8, US-18, US-20
+**Key User Stories**: US-1, US-2, US-3, US-4, US-5, US-7
 
-### Phase 3: Community Features (2-3 months)
-**Goal**: Recipe sharing and marketplace
-
-**Features**:
-- Recipe marketplace
-- Rating and review system
-- Recipe forking and versioning
-- Public sharing links
-- Templates system
-
-**Key User Stories**: US-9, US-10, US-11, US-14, US-15, US-21
-
-### Phase 4: Advanced Features (2 months)
-**Goal**: Professional expedition planning with complete REST API
+### Phase 2: Polish & Feedback (Month 3)
+**Goal**: Refine MVP based on beta user feedback
 
 **Features**:
-- Complete REST API covering all use cases
-- Comprehensive micronutrient tracking
-- PHE tracking for PKU users
-- Advanced export options
-- Ingredient management system
-- Snack management
+- User feedback incorporation
+- Performance optimization
+- Archive/restore functionality for trips
+- Improved error handling and validation
+- Automated deployment pipeline
+- Enhanced UI/UX based on testing
+- Beta user onboarding process
 
-**Key User Stories**: US-12, US-13, US-16, US-17, US-19
+**Key User Stories**: US-6, US-8, US-18
+
+### Phase 3: Marketplace & Sharing (Months 4-6)
+**Goal**: Enable recipe sharing and community features
+
+**Features**:
+- Recipe marketplace launch
+- Public share links for trips/recipes
+- Basic ratings and reviews
+- Trip templates from past trips
+- Enhanced export formats
+- Optional 2FA for security
+- Mobile UI optimizations
+
+**Key User Stories**: US-9, US-10, US-14, US-15, US-21
 
 ## Development Approach
 
@@ -182,30 +174,29 @@ See [[jidelnicek_PRD#Risk Analysis]] for detailed technical risks
 - User retention (30/60/90 days)
 
 ### Success Criteria
-- 100 registered users in first year
-- 500 recipes in marketplace
+- 20 beta users by Month 3
+- 50-100 active users by Month 6
+- 200+ recipes in marketplace
+- User satisfaction score >4/5
 - Stable performance on single VPS
-- <5% churn rate per month
-- 95%+ uptime (community hosting)
+- 95%+ uptime without complex monitoring
 
 ## Timeline Estimation
 
-### Total Timeline: 12-18 months (Solo Developer)
-- Phase 1 (MVP): Months 1-4
-- Phase 2 (Multi-User): Months 5-7
-- Phase 3 (Community): Months 8-10
-- Phase 4 (Advanced): Months 11-13
-- Final Testing & Launch: Months 14-18
+### Total Timeline: 6 months (Solo Developer)
+- Phase 1 (Core MVP): Months 1-2
+- Phase 2 (Polish & Feedback): Month 3
+- Phase 3 (Marketplace & Sharing): Months 4-6
 
-**Note**: Timeline extended to account for solo development pace and part-time availability
+**Note**: Focused timeline for achievable MVP targeting 100 users maximum
 
 ### Milestones
-1. **Month 3**: Alpha version (personal testing)
-2. **Month 5**: Beta launch (friends & family)
-3. **Month 8**: Public beta (hiking communities)
-4. **Month 12**: Feature complete
-5. **Month 15**: Production launch
-6. **Month 18**: Stable release with user feedback incorporated
+1. **Month 1**: Authentication & recipe management complete
+2. **Month 2**: Trip planning & export functionality ready
+3. **Month 3**: Beta launch with 20 target users
+4. **Month 4**: Marketplace infrastructure deployed
+5. **Month 5**: Public sharing features live
+6. **Month 6**: Stable release with 50-100 active users
 
 ## Budget Considerations
 
@@ -298,4 +289,5 @@ See [[jidelnicek_PRD#Risk Analysis]] for detailed technical risks
 
 - v1.0 - Initial project management structure
 - v1.1 - Updated for solo developer approach
+- v1.2 - Revised to realistic 6-month timeline with 3 phases
 - Last Updated: 2025-01-08
