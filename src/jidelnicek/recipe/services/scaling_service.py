@@ -105,66 +105,66 @@ class ScalingService:
             # Configure scaler with validation
             scaler = RecipeScaler(use_rounding=use_rounding, use_constraints=use_constraints, use_validation=True)
         
-        # Prepare ingredients data
-        ingredients = []
-        for ri in recipe.recipe_ingredients:
-            ingredients.append({
-                'name': ri.ingredient.name,
-                'quantity': ri.quantity,
-                'unit': ri.unit
-            })
-        
-        # Calculate scaling
-        if use_constraints:
-            result = scaler.scale_recipe_with_constraints(
-                original_servings=recipe.servings,
-                target_participants=target_servings,
-                ingredient_quantities=[ing['quantity'] for ing in ingredients]
-            )
-            scaling_factor = result['scaling_factor']
-            scaled_quantities = result['scaled_quantities']
-            warnings = result.get('warnings', [])
-        else:
-            scaling_factor, scaled_quantities = scaler.scale_recipe(
-                original_servings=recipe.servings,
-                target_participants=target_servings,
-                ingredient_quantities=[ing['quantity'] for ing in ingredients]
-            )
-            warnings = []
+            # Prepare ingredients data
+            ingredients = []
+            for ri in recipe.recipe_ingredients:
+                ingredients.append({
+                    'name': ri.ingredient.name,
+                    'quantity': ri.quantity,
+                    'unit': ri.unit
+                })
             
-            # Add all accumulated warnings
-            warnings.extend(all_warnings)
-        
-        # Build preview response
-        ingredient_previews = []
-        for i, (orig_ing, scaled_qty) in enumerate(zip(ingredients, scaled_quantities)):
-            preview = {
-                'name': orig_ing['name'],
-                'original_quantity': float(orig_ing['quantity']),
-                'scaled_quantity': float(scaled_qty),
-                'unit': orig_ing['unit'],
-                'was_rounded': use_rounding
+            # Calculate scaling
+            if use_constraints:
+                result = scaler.scale_recipe_with_constraints(
+                    original_servings=recipe.servings,
+                    target_participants=target_servings,
+                    ingredient_quantities=[ing['quantity'] for ing in ingredients]
+                )
+                scaling_factor = result['scaling_factor']
+                scaled_quantities = result['scaled_quantities']
+                warnings = result.get('warnings', [])
+            else:
+                scaling_factor, scaled_quantities = scaler.scale_recipe(
+                    original_servings=recipe.servings,
+                    target_participants=target_servings,
+                    ingredient_quantities=[ing['quantity'] for ing in ingredients]
+                )
+                warnings = []
+                
+                # Add all accumulated warnings
+                warnings.extend(all_warnings)
+            
+            # Build preview response
+            ingredient_previews = []
+            for i, (orig_ing, scaled_qty) in enumerate(zip(ingredients, scaled_quantities)):
+                preview = {
+                    'name': orig_ing['name'],
+                    'original_quantity': float(orig_ing['quantity']),
+                    'scaled_quantity': float(scaled_qty),
+                    'unit': orig_ing['unit'],
+                    'was_rounded': use_rounding
+                }
+                
+                # Add rounding details if applicable
+                if use_rounding:
+                    unrounded = orig_ing['quantity'] * scaling_factor
+                    preview['unrounded_quantity'] = float(unrounded)
+                    preview['rounding_difference'] = float(scaled_qty - unrounded)
+                
+                ingredient_previews.append(preview)
+            
+            return {
+                'recipe_id': str(recipe_id),
+                'recipe_name': recipe.title,
+                'original_servings': recipe.servings,
+                'target_servings': target_servings,
+                'scaling_factor': float(scaling_factor),
+                'ingredients': ingredient_previews,
+                'warnings': warnings,
+                'constraints_applied': use_constraints,
+                'rounding_applied': use_rounding
             }
-            
-            # Add rounding details if applicable
-            if use_rounding:
-                unrounded = orig_ing['quantity'] * scaling_factor
-                preview['unrounded_quantity'] = float(unrounded)
-                preview['rounding_difference'] = float(scaled_qty - unrounded)
-            
-            ingredient_previews.append(preview)
-        
-        return {
-            'recipe_id': str(recipe_id),
-            'recipe_name': recipe.title,
-            'original_servings': recipe.servings,
-            'target_servings': target_servings,
-            'scaling_factor': float(scaling_factor),
-            'ingredients': ingredient_previews,
-            'warnings': warnings,
-            'constraints_applied': use_constraints,
-            'rounding_applied': use_rounding
-        }
         
         except Exception as e:
             # Provide graceful degradation

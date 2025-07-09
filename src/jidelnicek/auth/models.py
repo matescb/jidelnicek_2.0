@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from jidelnicek.trip.models import Trip, TripTemplate
     from jidelnicek.core.models.job import Job
     from jidelnicek.core.storage.service import StoredFile
+    from jidelnicek.core.models.monitoring import PerformanceLog
 
 
 class AuthUser(Base):
@@ -227,6 +228,14 @@ class AuthUser(Base):
         back_populates="user",
         lazy="select",
         order_by="StoredFile.created_at.desc()",
+        passive_deletes=True
+    )
+    
+    # Performance monitoring relationships
+    performance_logs: Mapped[List["PerformanceLog"]] = relationship(
+        "PerformanceLog",
+        back_populates="user",
+        lazy="select",
         passive_deletes=True
     )
     

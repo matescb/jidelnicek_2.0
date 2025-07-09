@@ -5,6 +5,7 @@ from sqlalchemy import (
     ForeignKey, Index, Float
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from datetime import datetime
 
 from ..database import Base
@@ -20,7 +21,7 @@ class ErrorLog(Base):
     error_type = Column(String(100), index=True, nullable=False)
     error_code = Column(String(50), index=True)
     error_message = Column(Text, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=True)
     context = Column(JSON, nullable=False, default=dict)
     traceback = Column(Text)
     system_info = Column(JSON)
@@ -93,12 +94,12 @@ class PerformanceLog(Base):
     cpu_percent = Column(Float)
     success = Column(Boolean, default=True)
     error_id = Column(String(50), ForeignKey("error_logs.error_id"), nullable=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id"))
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     # Relationships
     error = relationship("ErrorLog", backref="performance_logs")
-    user = relationship("User", back_populates="performance_logs")
+    user = relationship("AuthUser", back_populates="performance_logs")
     
     __table_args__ = (
         Index("idx_perf_operation", "operation", "created_at"),

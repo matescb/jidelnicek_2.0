@@ -73,3 +73,10 @@ class RateLimitError(JidelnicekError):
         if retry_after:
             message += f". Retry after {retry_after} seconds"
         super().__init__(message)
+
+
+class PermissionValidationError(JidelnicekError):
+    """Raised when permission validation fails."""
+    
+    def __init__(self, message: str = "Permission validation failed"):
+        super().__init__(message)

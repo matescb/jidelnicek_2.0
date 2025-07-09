@@ -34,7 +34,7 @@ class ExportJob(Base):
     id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # User reference
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
     
     # Export details
     export_type = Column(Enum(ExportType), nullable=False)
@@ -90,7 +90,7 @@ class ExportPreset(Base):
     id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # User reference (null for system presets)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"))
     
     # Preset details
     name = Column(String(100), nullable=False)
@@ -124,7 +124,7 @@ class ExportQuota(Base):
     __tablename__ = "export_quotas"
     
     # Primary key
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), primary_key=True)
     
     # Daily limits
     exports_today = Column(Integer, default=0)
@@ -166,7 +166,7 @@ class ExportStatistics(Base):
     
     # Composite primary key
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"))
     date = Column(DateTime, nullable=False)
     
     # Export counts

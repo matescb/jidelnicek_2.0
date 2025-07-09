@@ -9,6 +9,7 @@ from sqlalchemy import (
     Column, Integer, String, DateTime, Text, JSON,
     ForeignKey, Enum as SQLEnum, Index, Boolean, Float
 )
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -81,8 +82,8 @@ class Job(Base):
     eta = Column(DateTime(timezone=True))  # Estimated time of arrival
     
     # User association
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
-    user = relationship("User", back_populates="jobs")
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=True, index=True)
+    user = relationship("AuthUser", back_populates="jobs")
     
     # Job parameters and results
     parameters = Column(JSON, default=dict)

@@ -573,3 +573,181 @@ class EmailService:
         await asyncio.sleep(0.1)
         
         return True
+    
+    async def send_admin_created_account(
+        self,
+        user_id: str,
+        temporary_password: str,
+        language: str = "cs"
+    ) -> bool:
+        """
+        Send email when admin creates an account.
+        
+        Args:
+            user_id: User ID
+            temporary_password: Temporary password
+            language: Email language
+            
+        Returns:
+            True if email was sent successfully
+        """
+        # For now, mock implementation
+        logger.info(
+            f"📧 MOCK EMAIL: Admin created account\n"
+            f"User ID: {user_id}\n"
+            f"Temporary password: {temporary_password}"
+        )
+        await asyncio.sleep(0.1)
+        return True
+    
+    async def send_account_status_changed(
+        self,
+        user_id: str,
+        change_type: str,
+        admin_email: str,
+        reason: Optional[str] = None,
+        language: str = "cs"
+    ) -> bool:
+        """
+        Send email when account status changes.
+        
+        Args:
+            user_id: User ID
+            change_type: Type of change (suspended/activated)
+            admin_email: Admin who made the change
+            reason: Reason for change
+            language: Email language
+            
+        Returns:
+            True if email was sent successfully
+        """
+        logger.info(
+            f"📧 MOCK EMAIL: Account status changed\n"
+            f"User ID: {user_id}\n"
+            f"Change: {change_type}\n"
+            f"Admin: {admin_email}\n"
+            f"Reason: {reason}"
+        )
+        await asyncio.sleep(0.1)
+        return True
+    
+    async def send_account_suspended(
+        self,
+        user_id: str,
+        reason: str,
+        admin_email: str,
+        language: str = "cs"
+    ) -> bool:
+        """
+        Send email when account is suspended.
+        
+        Args:
+            user_id: User ID
+            reason: Suspension reason
+            admin_email: Admin who suspended
+            language: Email language
+            
+        Returns:
+            True if email was sent successfully
+        """
+        return await self.send_account_status_changed(
+            user_id=user_id,
+            change_type="suspended",
+            admin_email=admin_email,
+            reason=reason,
+            language=language
+        )
+    
+    async def send_account_activated(
+        self,
+        user_id: str,
+        reason: str,
+        admin_email: str,
+        language: str = "cs"
+    ) -> bool:
+        """
+        Send email when account is activated.
+        
+        Args:
+            user_id: User ID
+            reason: Activation reason
+            admin_email: Admin who activated
+            language: Email language
+            
+        Returns:
+            True if email was sent successfully
+        """
+        return await self.send_account_status_changed(
+            user_id=user_id,
+            change_type="activated",
+            admin_email=admin_email,
+            reason=reason,
+            language=language
+        )
+    
+    async def send_admin_password_reset(
+        self,
+        user_id: str,
+        new_password: str,
+        admin_email: str,
+        reason: str,
+        require_change: bool = True,
+        language: str = "cs"
+    ) -> bool:
+        """
+        Send email when admin resets user password.
+        
+        Args:
+            user_id: User ID
+            new_password: New password
+            admin_email: Admin who reset
+            reason: Reset reason
+            require_change: Whether user must change password
+            language: Email language
+            
+        Returns:
+            True if email was sent successfully
+        """
+        logger.info(
+            f"📧 MOCK EMAIL: Admin password reset\n"
+            f"User ID: {user_id}\n"
+            f"Admin: {admin_email}\n"
+            f"Reason: {reason}\n"
+            f"Require change: {require_change}"
+        )
+        await asyncio.sleep(0.1)
+        return True
+    
+    async def send_admin_alert(
+        self,
+        admin_id: str,
+        alert_type: str,
+        title: str,
+        message: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        language: str = "cs"
+    ) -> bool:
+        """
+        Send alert email to admin.
+        
+        Args:
+            admin_id: Admin user ID
+            alert_type: Type of alert
+            title: Alert title
+            message: Alert message
+            metadata: Additional data
+            language: Email language
+            
+        Returns:
+            True if email was sent successfully
+        """
+        logger.info(
+            f"📧 MOCK EMAIL: Admin alert\n"
+            f"Admin ID: {admin_id}\n"
+            f"Type: {alert_type}\n"
+            f"Title: {title}\n"
+            f"Message: {message}\n"
+            f"Metadata: {metadata}"
+        )
+        await asyncio.sleep(0.1)
+        return True

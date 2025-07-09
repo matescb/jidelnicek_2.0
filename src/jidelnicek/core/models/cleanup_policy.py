@@ -10,10 +10,11 @@ from sqlalchemy import (
     ForeignKey, Float, Date, Index, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.sql import func
 from datetime import datetime
 
-from jidelnicek.db.base import Base
+from jidelnicek.core.database import Base
 
 
 class CleanupPolicy(Base):
@@ -105,8 +106,8 @@ class CleanupAuditLog(Base):
     policy = relationship("CleanupPolicy", back_populates="audit_logs")
     
     # User association
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    user = relationship("User", backref="cleanup_audit_logs")
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id"), index=True)
+    user = relationship("AuthUser", backref="cleanup_audit_logs")
     
     # Recovery information
     recovered = Column(Boolean, default=False)
@@ -192,8 +193,8 @@ class DeletionQueue(Base):
     grace_period_hours = Column(Integer, default=24)
     
     # User association
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    user = relationship("User", backref="deletion_queue")
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False, index=True)
+    user = relationship("AuthUser", backref="deletion_queue")
     
     # Audit log reference
     audit_log_id = Column(Integer, ForeignKey("cleanup_audit_logs.id"))
@@ -234,8 +235,8 @@ class UserCleanupPreference(Base):
     id = Column(Integer, primary_key=True, index=True)
     
     # User association
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-    user = relationship("User", backref="cleanup_preferences")
+    user_id = Column(PostgresUUID(as_uuid=True), ForeignKey("auth_users.id"), unique=True, nullable=False)
+    user = relationship("AuthUser", backref="cleanup_preferences")
     
     # File type preferences
     shopping_list_retention_days = Column(Integer)
