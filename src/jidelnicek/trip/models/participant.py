@@ -93,7 +93,7 @@ class TripParticipant(Base):
     __table_args__ = (
         CheckConstraint('(name IS NOT NULL AND number IS NULL) OR (name IS NULL AND number IS NOT NULL)', 
                        name='participant_name_or_number_check'),
-        CheckConstraint('coefficient >= 0.01 AND coefficient <= 999.99', 
+        CheckConstraint('coefficient >= 10 AND coefficient <= 300', 
                        name='participant_coefficient_check'),
         UniqueConstraint('trip_id', 'name', name='unique_participant_name_per_trip'),
         UniqueConstraint('trip_id', 'number', name='unique_participant_number_per_trip'),
@@ -122,8 +122,8 @@ class TripParticipant(Base):
     @validates('coefficient')
     def validate_coefficient(self, key, coefficient):
         """Validate coefficient is within allowed range."""
-        if coefficient < Decimal('0.01') or coefficient > Decimal('999.99'):
-            raise ValueError("Coefficient must be between 0.01 and 999.99")
+        if coefficient < Decimal('10') or coefficient > Decimal('300'):
+            raise ValueError("Coefficient must be between 10 and 300")
         return coefficient
     
     @validates('email')
@@ -147,8 +147,8 @@ class TripParticipant(Base):
             
             try:
                 coef_decimal = Decimal(str(coefficient))
-                if coef_decimal < Decimal('0.01') or coef_decimal > Decimal('999.99'):
-                    raise ValueError(f"Meal coefficient for {meal_type} must be between 0.01 and 999.99")
+                if coef_decimal < Decimal('10') or coef_decimal > Decimal('300'):
+                    raise ValueError(f"Meal coefficient for {meal_type} must be between 10 and 300")
             except (ValueError, TypeError):
                 raise ValueError(f"Invalid coefficient value for {meal_type}: {coefficient}")
                 

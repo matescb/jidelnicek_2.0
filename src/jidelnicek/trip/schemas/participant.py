@@ -14,10 +14,10 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator, model_valida
 
 class MealCoefficients(BaseModel):
     """Schema for meal-specific coefficients."""
-    breakfast: Optional[Decimal] = Field(None, ge=Decimal('0.01'), le=Decimal('999.99'))
-    lunch: Optional[Decimal] = Field(None, ge=Decimal('0.01'), le=Decimal('999.99'))
-    dinner: Optional[Decimal] = Field(None, ge=Decimal('0.01'), le=Decimal('999.99'))
-    snack: Optional[Decimal] = Field(None, ge=Decimal('0.01'), le=Decimal('999.99'))
+    breakfast: Optional[Decimal] = Field(None, ge=Decimal('10'), le=Decimal('300'))
+    lunch: Optional[Decimal] = Field(None, ge=Decimal('10'), le=Decimal('300'))
+    dinner: Optional[Decimal] = Field(None, ge=Decimal('10'), le=Decimal('300'))
+    snack: Optional[Decimal] = Field(None, ge=Decimal('10'), le=Decimal('300'))
 
 
 class ParticipantBase(BaseModel):
@@ -27,8 +27,8 @@ class ParticipantBase(BaseModel):
     email: Optional[str] = Field(None, max_length=255)
     coefficient: Decimal = Field(
         default=Decimal('100.00'),
-        ge=Decimal('0.01'),
-        le=Decimal('999.99'),
+        ge=Decimal('10'),
+        le=Decimal('300'),
         description="Default meal coefficient as percentage (100 = 1.0)"
     )
     meal_coefficients: Optional[Dict[str, Decimal]] = Field(
@@ -58,8 +58,8 @@ class ParticipantBase(BaseModel):
         for meal_type, coefficient in v.items():
             if meal_type not in valid_meal_types:
                 raise ValueError(f"Invalid meal type: {meal_type}")
-            if coefficient < Decimal('0.01') or coefficient > Decimal('999.99'):
-                raise ValueError(f"Meal coefficient for {meal_type} must be between 0.01 and 999.99")
+            if coefficient < Decimal('10') or coefficient > Decimal('300'):
+                raise ValueError(f"Meal coefficient for {meal_type} must be between 10 and 300")
                 
         return v
     
@@ -120,8 +120,8 @@ class ParticipantUpdate(BaseModel):
         for meal_type, coefficient in v.items():
             if meal_type not in valid_meal_types:
                 raise ValueError(f"Invalid meal type: {meal_type}")
-            if coefficient < Decimal('0.01') or coefficient > Decimal('999.99'):
-                raise ValueError(f"Meal coefficient for {meal_type} must be between 0.01 and 999.99")
+            if coefficient < Decimal('10') or coefficient > Decimal('300'):
+                raise ValueError(f"Meal coefficient for {meal_type} must be between 10 and 300")
                 
         return v
 

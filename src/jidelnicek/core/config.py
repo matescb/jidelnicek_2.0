@@ -185,6 +185,28 @@ class Settings(BaseSettings):
         "env_file_encoding": "utf-8",
         "case_sensitive": False
     }
+    
+    def __init__(self, **kwargs):
+        # Load environment-specific config file if ENVIRONMENT is set
+        environment = os.environ.get("ENVIRONMENT", "development")
+        if environment == "test":
+            self.model_config["env_file"] = "config/test.env"
+        elif environment == "staging":
+            self.model_config["env_file"] = "config/staging.env"
+        elif environment == "production":
+            self.model_config["env_file"] = "config/production.env"
+        else:
+            self.model_config["env_file"] = "config/development.env"
+        
+        super().__init__(**kwargs)
+        
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS origins from comma-separated string or list."""
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",")]
+        return v
         
     @field_validator("database_url", mode="before")
     @classmethod

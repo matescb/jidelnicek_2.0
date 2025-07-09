@@ -24,8 +24,8 @@ class TripParticipantBase(BaseModel):
     number: Optional[int] = Field(None, ge=1, description="Participant number (if not using name)")
     coefficient: Decimal = Field(
         Decimal("100.00"), 
-        ge=Decimal("0.01"), 
-        le=Decimal("999.99"),
+        ge=Decimal("10"), 
+        le=Decimal("300"),
         description="Portion coefficient percentage (100 = 100%)"
     )
 
@@ -48,7 +48,7 @@ class TripParticipantUpdate(BaseModel):
     """Schema for updating trip participants."""
     name: Optional[str] = Field(None, max_length=100)
     number: Optional[int] = Field(None, ge=1)
-    coefficient: Optional[Decimal] = Field(None, ge=Decimal("0.01"), le=Decimal("999.99"))
+    coefficient: Optional[Decimal] = Field(None, ge=Decimal("10"), le=Decimal("300"))
 
 
 class TripParticipantResponse(TripParticipantBase):
@@ -64,6 +64,11 @@ class TripParticipantResponse(TripParticipantBase):
 class TripBase(BaseModel):
     """Base schema for trips."""
     name: str = Field(..., min_length=1, max_length=100, description="Trip name")
+    description: Optional[str] = Field(None, max_length=2000, description="Trip description and notes")
+    status: str = Field(
+        default="planned",
+        description="Trip status: planned, active, completed, cancelled"
+    )
     start_date: date = Field(..., description="Trip start date")
     end_date: date = Field(..., description="Trip end date")
     meal_slots: List[str] = Field(
@@ -83,6 +88,22 @@ class TripBase(BaseModel):
         if not v.strip():
             raise ValueError("Trip name cannot be empty")
         return v.strip()
+    
+    @validator('description')
+    def validate_description(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) > 2000:
+                raise ValueError("Trip description cannot exceed 2000 characters")
+            return v if v else None
+        return None
+    
+    @validator('status')
+    def validate_status(cls, v):
+        valid_statuses = {'planned', 'active', 'completed', 'cancelled'}
+        if v not in valid_statuses:
+            raise ValueError(f"Trip status must be one of: {', '.join(valid_statuses)}")
+        return v
 
     @validator('meal_slots')
     def validate_meal_slots(cls, v):

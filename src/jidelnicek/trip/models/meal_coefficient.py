@@ -99,7 +99,7 @@ class TripMealCoefficient(Base):
     
     # Table constraints
     __table_args__ = (
-        CheckConstraint('coefficient >= 0.01 AND coefficient <= 999.99', 
+        CheckConstraint('coefficient >= 10 AND coefficient <= 300', 
                        name='meal_coefficient_check'),
         UniqueConstraint('participant_id', 'meal_slot', 
                         name='unique_participant_meal_coefficient'),
@@ -115,8 +115,8 @@ class TripMealCoefficient(Base):
     @validates('coefficient')
     def validate_coefficient(self, key, coefficient):
         """Validate coefficient is within allowed range."""
-        if coefficient < Decimal('0.01') or coefficient > Decimal('999.99'):
-            raise ValueError("Coefficient must be between 0.01 and 999.99")
+        if coefficient < Decimal('10') or coefficient > Decimal('300'):
+            raise ValueError("Coefficient must be between 10 and 300")
         return coefficient
     
     def __repr__(self):

@@ -19,6 +19,12 @@ from sqlalchemy.pool import NullPool
 from redis.asyncio import Redis
 from unittest.mock import AsyncMock, MagicMock
 
+# Set environment to test before importing config
+os.environ["ENVIRONMENT"] = "test"
+os.environ["DB_PASSWORD"] = "test_password"
+os.environ["SENTRY_DSN"] = "https://test@sentry.io/123456"
+os.environ["CORS_ORIGINS"] = '["http://testserver"]'
+
 from jidelnicek.main import app
 from jidelnicek.core.database import Base
 from jidelnicek.core.dependencies import get_db, get_redis_client

@@ -67,6 +67,17 @@ class Trip(Base):
         String(100), 
         nullable=False
     )
+    description: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Trip description and notes"
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        server_default=text("'planned'"),
+        comment="Trip status: planned, active, completed, cancelled"
+    )
     start_date: Mapped[date] = mapped_column(
         Date, 
         nullable=False
@@ -164,6 +175,7 @@ class Trip(Base):
     __table_args__ = (
         CheckConstraint('end_date >= start_date', name='trip_dates_check'),
         CheckConstraint('LENGTH(name) > 0', name='trip_name_not_empty'),
+        CheckConstraint("status IN ('planned', 'active', 'completed', 'cancelled')", name='trip_status_check'),
         Index('idx_trips_user', 'user_id', postgresql_where=text('NOT is_archived')),
         Index('idx_trips_dates', 'start_date', 'end_date', postgresql_where=text('NOT is_archived')),
     )
@@ -174,6 +186,24 @@ class Trip(Base):
         if not name or not name.strip():
             raise ValueError("Trip name cannot be empty")
         return name.strip()
+    
+    @validates('description')
+    def validate_description(self, key, description):
+        """Validate trip description."""
+        if description is not None:
+            description = description.strip()
+            if len(description) > 2000:
+                raise ValueError("Trip description cannot exceed 2000 characters")
+            return description if description else None
+        return None
+    
+    @validates('status')
+    def validate_status(self, key, status):
+        """Validate trip status."""
+        valid_statuses = {'planned', 'active', 'completed', 'cancelled'}
+        if status not in valid_statuses:
+            raise ValueError(f"Trip status must be one of: {', '.join(valid_statuses)}")
+        return status
     
     @validates('start_date', 'end_date')
     def validate_dates(self, key, value):
