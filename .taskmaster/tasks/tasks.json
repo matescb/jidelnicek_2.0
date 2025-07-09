@@ -781,7 +781,7 @@
             "description": "Implement asynchronous job queue for handling export operations",
             "dependencies": [],
             "details": "Configure Celery or similar job queue system, create task definitions for each export type, implement job scheduling and prioritization, add retry logic for failed jobs, set up result backend for job status tracking",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -792,7 +792,7 @@
               5
             ],
             "details": "Implement local file storage with organized directory structure, add support for cloud storage (S3, Azure Blob), create file naming conventions with timestamps and user IDs, implement file compression for storage optimization",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T18:50:42.013Z",
+      "updated": "2025-07-09T19:05:59.260Z",
       "description": "Tasks for master context"
     }
   }

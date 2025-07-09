@@ -174,6 +174,30 @@ class Settings(BaseSettings):
     backup_s3_region: str = Field(default="eu-central-1")
     backup_encryption_enabled: bool = Field(default=True)
     
+    # Storage
+    storage_backend: str = Field(default="local", pattern="^(local|s3|azure)$")
+    storage_local_path: str = Field(default="/var/lib/jidelnicek/storage")
+    storage_compression: str = Field(default="gzip", pattern="^(none|gzip|bzip2|xz|zip)$")
+    storage_max_file_size: int = Field(default=104857600, ge=1)  # 100MB
+    
+    # S3 Storage
+    storage_s3_bucket: Optional[str] = None
+    storage_s3_region: str = Field(default="eu-central-1")
+    storage_s3_access_key: Optional[str] = None
+    storage_s3_secret_key: Optional[str] = None
+    storage_s3_endpoint_url: Optional[str] = None  # For S3-compatible services
+    storage_s3_storage_class: str = Field(default="STANDARD")
+    storage_s3_encryption: Optional[str] = Field(default=None, pattern="^(AES256|aws:kms)?$")
+    storage_s3_kms_key_id: Optional[str] = None
+    
+    # Azure Storage
+    storage_azure_connection_string: Optional[str] = None
+    storage_azure_container: Optional[str] = None
+    storage_azure_account_name: Optional[str] = None
+    storage_azure_account_key: Optional[str] = None
+    storage_azure_sas_token: Optional[str] = None
+    storage_azure_tier: str = Field(default="Hot", pattern="^(Hot|Cool|Archive)$")
+    
     # Performance
     cache_ttl_seconds: int = Field(default=300, ge=0)
     query_timeout_seconds: int = Field(default=30, ge=1)
@@ -424,6 +448,20 @@ class Settings(BaseSettings):
         if self.backup_enabled and self.backup_s3_bucket:
             if not self.backup_s3_access_key or not self.backup_s3_secret_key:
                 warnings.append("S3 credentials required when S3 backup is configured")
+        
+        # Storage configuration
+        if self.storage_backend == "s3":
+            if not self.storage_s3_bucket:
+                warnings.append("S3 bucket name required when using S3 storage backend")
+            if not self.storage_s3_access_key or not self.storage_s3_secret_key:
+                warnings.append("S3 credentials required when using S3 storage backend")
+        elif self.storage_backend == "azure":
+            if not self.storage_azure_container:
+                warnings.append("Azure container name required when using Azure storage backend")
+            if not self.storage_azure_connection_string:
+                if not (self.storage_azure_account_name and 
+                       (self.storage_azure_account_key or self.storage_azure_sas_token)):
+                    warnings.append("Azure credentials required when using Azure storage backend")
         
         return warnings
 
