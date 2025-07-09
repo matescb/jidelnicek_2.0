@@ -69,6 +69,10 @@ unit-tests:
     TESTING: "true"
     ENVIRONMENT: "test"
     DB_PASSWORD: "test_password"
+    DB_HOST: "postgres"
+    DB_PORT: "5432"
+    DB_USER: "test_user"
+    DB_NAME: "test_jidelnicek"
     SENTRY_DSN: "https://test@sentry.io/123456"
     CORS_ORIGINS: '["http://testserver"]'
   before_script:
@@ -126,6 +130,10 @@ integration-tests:
     TESTING: "true"
     ENVIRONMENT: "test"
     DB_PASSWORD: "test_password"
+    DB_HOST: "postgres"
+    DB_PORT: "5432"
+    DB_USER: "test_user"
+    DB_NAME: "test_jidelnicek"
     PERFORMANCE_THRESHOLD_MS: "200"
   before_script:
     - apt-get update && apt-get install -y curl build-essential libpq-dev
@@ -238,6 +246,11 @@ performance-tests:
     SECRET_KEY: "test-secret-key-for-ci"
     TESTING: "true"
     ENVIRONMENT: "test"
+    DB_PASSWORD: "test_password"
+    DB_HOST: "postgres"
+    DB_PORT: "5432"
+    DB_USER: "test_user"
+    DB_NAME: "test_jidelnicek"
     PERFORMANCE_THRESHOLD_MS: "200"
   before_script:
     - apt-get update && apt-get install -y curl build-essential libpq-dev
