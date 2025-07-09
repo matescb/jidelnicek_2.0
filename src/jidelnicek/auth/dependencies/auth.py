@@ -205,12 +205,15 @@ async def get_current_verified_user(
 
 
 async def get_current_admin_user(
-    current_user: Annotated[AuthUser, Depends(get_current_user)]
+    current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+    redis_client: Optional[Redis] = Depends(get_redis_client)
 ) -> AuthUser:
     """
     Get current user with admin role (required).
     
     This dependency requires the user to have admin privileges.
+    For new code, prefer using RequirePermissions from admin.dependencies.rbac
     
     Args:
         current_user: Current authenticated user
@@ -221,18 +224,32 @@ async def get_current_admin_user(
     Raises:
         HTTPException: If user is not an admin
     """
-    if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
+    # Check if user has admin role through RBAC system
+    from jidelnicek.admin.services.rbac_service import RBACService
     
-    return current_user
+    rbac_service = RBACService(db, redis_client)
+    user_permissions = await rbac_service.get_user_permissions(current_user.id)
+    
+    # Check for admin permissions - either wildcard (*) or specific admin permissions
+    if "*" in user_permissions or any(perm.startswith("admin:") for perm in user_permissions):
+        return current_user
+    
+    # Fallback to legacy role check
+    if current_user.is_admin:
+        return current_user
+    
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Admin access required"
+    )
 
 
 class RequirePermission:
     """
     Dependency class for permission-based access control.
+    
+    This class integrates with the RBAC system to check permissions.
+    For new code, prefer using RequirePermissions from admin.dependencies.rbac
     
     Usage:
         @router.get("/admin/users", dependencies=[Depends(RequirePermission("users:read"))])
@@ -249,7 +266,9 @@ class RequirePermission:
     
     async def __call__(
         self,
-        current_user: Annotated[AuthUser, Depends(get_current_user)]
+        current_user: Annotated[AuthUser, Depends(get_current_user)],
+        db: AsyncSession = Depends(get_db),
+        redis_client: Optional[Redis] = Depends(get_redis_client)
     ) -> AuthUser:
         """
         Check if user has required permission.
@@ -263,12 +282,24 @@ class RequirePermission:
         Raises:
             HTTPException: If permission denied
         """
-        # For now, we have a simple role-based system
+        # Use RBAC system to check permissions
+        from jidelnicek.admin.services.rbac_service import RBACService
+        
+        rbac_service = RBACService(db, redis_client)
+        has_permission = await rbac_service.check_permission(
+            user=current_user,
+            permission=self.permission
+        )
+        
+        if has_permission:
+            return current_user
+        
+        # Fallback to legacy permission check for backward compatibility
         # Admin has all permissions
         if current_user.is_admin:
             return current_user
         
-        # Map permissions to roles
+        # Map permissions to roles (legacy support)
         user_permissions = {
             "recipes:read": True,
             "recipes:write": True,
