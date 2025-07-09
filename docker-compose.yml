@@ -1,0 +1,161 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: jidelnicek_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-jidelnicek}
+      POSTGRES_USER: ${DB_USER:-jidelnicek}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/00_init.sql:ro
+      - ./docker/postgres/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./docker/postgres/02_functions.sql:/docker-entrypoint-initdb.d/02_functions.sql:ro
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-jidelnicek} -d ${DB_NAME:-jidelnicek}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 512M
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: jidelnicek_redis
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # FastAPI Application
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: jidelnicek:latest
+    container_name: jidelnicek_app
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${DB_USER:-jidelnicek}:${DB_PASSWORD}@db:5432/${DB_NAME:-jidelnicek}
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      # Application
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      # Environment
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DEBUG: ${DEBUG:-false}
+      # CORS
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    volumes:
+      - ./logs:/app/logs
+      - ./static:/app/static
+      - ./media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 512M
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: jidelnicek_nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+      - "${NGINX_MONITOR_PORT:-8080}:8080"  # Monitoring port
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./static:/var/www/static:ro
+      - ./media:/var/www/media:ro
+      - nginx_logs:/var/log/nginx
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - ./letsencrypt-webroot:/var/www/letsencrypt:ro
+      - letsencrypt_data:/etc/letsencrypt:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/nginx-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+networks:
+  backend:
+    driver: bridge
+    name: jidelnicek_network
+
+volumes:
+  postgres_data:
+    name: jidelnicek_postgres_data
+  redis_data:
+    name: jidelnicek_redis_data
+  nginx_logs:
+    name: jidelnicek_nginx_logs
+  letsencrypt_data:
+    name: jidelnicek_letsencrypt_data

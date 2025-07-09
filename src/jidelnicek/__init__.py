@@ -1,0 +1,1 @@
+"""Jidelnicek 2.0 - Meal planning application for outdoor expeditions."""

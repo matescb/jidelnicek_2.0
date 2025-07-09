@@ -101,6 +101,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -159,6 +161,10 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+# Static and media files
+media/
+staticfiles/
+
 # Database files
 *.db
 *.sqlite
@@ -175,6 +181,9 @@ temp/
 
 # Docker volumes
 docker-volumes/
+docker-compose.override.yml
+backups/
+nginx_logs/
 
 # Node artifacts (in case of mixed stack)
 node_modules/
@@ -198,3 +207,4 @@ settings.local.py
 # Task Master generated files (keep tracked)
 # .taskmaster/tasks/
 # .taskmaster/reports/ 
+.venv/

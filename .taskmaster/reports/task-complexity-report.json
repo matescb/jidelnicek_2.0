@@ -1,0 +1,93 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-08T22:03:17.202Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Initialize Project Infrastructure",
+			"complexityScore": 6,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Break down the infrastructure setup into Docker configuration, database setup, Poetry configuration, directory structure creation, Git setup, and environment configuration. Each component requires specific configuration files and validation steps.",
+			"reasoning": "Moderate complexity involving multiple technologies (Docker, PostgreSQL, Redis, Nginx, Poetry) and configuration files. Well-defined scope but requires coordination between different infrastructure components."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement Authentication System",
+			"complexityScore": 8,
+			"recommendedSubtasks": 12,
+			"expansionPrompt": "Divide into user models, registration endpoints, login/logout, JWT implementation, email verification, password reset, session management, rate limiting, database schema, and security testing. Each authentication flow requires careful security considerations.",
+			"reasoning": "High complexity due to security requirements, multiple authentication flows, JWT implementation, email verification, rate limiting, and database design. Critical system component requiring thorough testing."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Create Recipe Management Core",
+			"complexityScore": 7,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Split into recipe models, ingredient database, nutritional calculations, image handling, CRUD operations, validation, categories/tags, and database relationships. Focus on the 99.9% accuracy requirement for nutritional calculations.",
+			"reasoning": "Complex domain logic with nutritional calculations, image handling, multiple database relationships, and strict accuracy requirements. Core business logic requiring comprehensive validation."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Build Trip Planning System",
+			"complexityScore": 6,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Break down into trip models, participant management, meal slot configuration, recipe assignment, day-by-day organization, participant coefficients, and trip templates. Focus on the flexible meal structure and coefficient calculations.",
+			"reasoning": "Moderate complexity with clear business logic for trip planning, participant management, and meal organization. Well-defined requirements but involves multiple interrelated components."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Implement Calorie-Based Scaling",
+			"complexityScore": 7,
+			"recommendedSubtasks": 9,
+			"expansionPrompt": "Divide into scaling algorithm implementation, calorie calculations, participant coefficient integration, rounding rules, scaling constraints, UI preview, validation, and edge case handling. Focus on maintaining 99.9% accuracy.",
+			"reasoning": "Complex mathematical calculations with multiple variables, rounding rules, and accuracy requirements. Critical business logic that affects all recipe quantities and requires extensive testing."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Generate Shopping and Packing Lists",
+			"complexityScore": 6,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Split into ingredient aggregation, rounding rules implementation, categorization, packing list generation, weight/volume calculations, custom items, export preparation, and container suggestions.",
+			"reasoning": "Moderate complexity involving aggregation logic, categorization, and practical rounding rules. Clear requirements but needs careful implementation of business rules."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Create Export System",
+			"complexityScore": 7,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "Break down into PDF generation, Excel export, text/markdown export, QR code generation, background job processing, file storage, cleanup jobs, error handling, and progress tracking. Each export format requires different libraries and approaches.",
+			"reasoning": "Complex integration of multiple export formats, background processing, file management, and different libraries (ReportLab, openpyxl). Requires robust error handling and performance optimization."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Admin Dashboard",
+			"complexityScore": 5,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Divide into user management interface, statistics dashboard, ingredient database management, audit logging, role system, content moderation, and permission boundaries. Focus on security and proper access controls.",
+			"reasoning": "Moderate complexity with clear admin functionality requirements. Well-defined scope but requires careful security implementation and proper permission handling."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Add Frontend UI Components",
+			"complexityScore": 8,
+			"recommendedSubtasks": 14,
+			"expansionPrompt": "Break down into authentication pages, recipe management UI, trip planning interface, participant management, real-time calculations, list views, responsive design, dark mode, form validation, state management, routing, and internationalization. Each UI component requires different React patterns and integrations.",
+			"reasoning": "High complexity involving modern React ecosystem, multiple UI components, real-time updates, responsive design, internationalization, and state management. Large scope with many interconnected components."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Deploy and Monitor Production",
+			"complexityScore": 8,
+			"recommendedSubtasks": 12,
+			"expansionPrompt": "Divide into VPS configuration, Nginx setup, SSL configuration, database setup, Redis configuration, monitoring setup, backup implementation, CI/CD pipeline, security hardening, health checks, documentation, and disaster recovery procedures.",
+			"reasoning": "High complexity DevOps task involving multiple production services, monitoring, security, backup strategies, and CI/CD. Critical for system reliability and requires extensive testing and documentation."
+		}
+	]
+}

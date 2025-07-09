@@ -1,54 +1,30 @@
 # Git
-.git/
+.git
 .gitignore
 .gitattributes
 
-# CI
-.github/
-.gitlab-ci.yml
-.travis.yml
-
-# Docker
-docker-compose*.yml
-Dockerfile*
-.dockerignore
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
+# Python
+__pycache__
 *.py[cod]
 *$py.class
-*.pyc
-*.pyo
-*.pyd
-
-# C extensions
 *.so
-
-# Unit test / coverage reports
-htmlcov/
+.Python
+env/
+venv/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
 .tox/
-.nox/
 .coverage
 .coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
-test-results/
-pytest_cache/
-
-# Virtual environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+.mypy_cache/
+.ruff_cache/
 
 # IDEs
 .vscode/
@@ -58,10 +34,8 @@ venv.bak/
 *~
 .project
 .pydevproject
-.settings
-.classpath
 
-# OS generated files
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -70,75 +44,54 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Python egg files
-*.egg-info/
-.eggs/
-
-# Docs
-docs/
-*.md
-README*
-LICENSE*
-CONTRIBUTING*
-
-# Logs
+# Project specific
 logs/
 *.log
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite3
+media/
+staticfiles/
+
+# Docker
+docker-compose.override.yml
+Dockerfile
+.dockerignore
+
+# Documentation
+docs/
+Documentation/
+*.md
+!README.md
+
+# Tests
+tests/
+test_*.py
+*_test.py
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Taskmaster
+.taskmaster/
+
+# Node (if frontend is added later)
+node_modules/
+npm-debug.log
+yarn-error.log
 
 # Temporary files
-tmp/
-temp/
 *.tmp
 *.temp
 *.bak
 *.backup
-*.old
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Development files
-.editorconfig
-.eslintrc*
-.prettierrc*
-
-# Task Master files (development only)
-.taskmaster/
-CLAUDE.md
-
-# Local configuration
-local_settings.py
-config.local.py
-settings.local.py
+*.orig
 
 # Build artifacts
-build/
 dist/
-
-# Node modules (if any frontend)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Static files that will be collected
-staticfiles/
-media/
-
-# Secret files
-secrets/
-*.key
-*.pem
-*.cert
-*.crt
-
-# Development data
-*.sql
-*.dump
-fixtures/
-
-# Documentation build artifacts
-Documentation/output.xml
-docs/_build/
+build/
+*.egg-info/

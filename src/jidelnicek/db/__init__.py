@@ -1,0 +1,1 @@
+"""Database package for Jídelníček 2.0."""

@@ -1,0 +1,55 @@
+# AppArmor profile for jidelnicek-dev user
+# This provides additional sandboxing for the development user
+
+#include <tunables/global>
+
+/home/jidelnicek-dev/** {
+  #include <abstractions/base>
+  #include <abstractions/bash>
+  #include <abstractions/python>
+  
+  # Allow reading system libraries
+  /usr/lib/** r,
+  /lib/** r,
+  
+  # Python and development tools
+  /usr/bin/python3* ix,
+  /usr/bin/pip* ix,
+  /usr/bin/poetry ix,
+  /usr/local/bin/** ix,
+  
+  # Allow access to project directory
+  /mnt/data/WORK/Jidelnicek_2.0/** rwk,
+  
+  # Home directory access
+  owner /home/jidelnicek-dev/** rw,
+  owner /home/jidelnicek-dev/.** rw,
+  
+  # Temporary files
+  /tmp/** rw,
+  /var/tmp/** rw,
+  
+  # Package management (limited)
+  /usr/bin/apt-get rix,
+  /usr/bin/dpkg rix,
+  
+  # Network access for package installation
+  network inet stream,
+  network inet6 stream,
+  
+  # Deny access to other users' home directories
+  deny /home/*/,
+  deny /root/,
+  
+  # Deny access to sensitive system files
+  deny /etc/shadow r,
+  deny /etc/gshadow r,
+  deny /etc/passwd w,
+  deny /etc/group w,
+  
+  # Allow reading certain config files
+  /etc/hosts r,
+  /etc/resolv.conf r,
+  /etc/nsswitch.conf r,
+  /etc/ld.so.cache r,
+}

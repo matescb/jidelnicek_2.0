@@ -1,0 +1,89 @@
+[tool.poetry]
+name = "jidelnicek"
+version = "0.1.0"
+description = "School cafeteria meal ordering system that empowers students to choose their meals conveniently while providing schools with efficient management tools."
+authors = ["School Cafeteria Team <admin@jidelnicek.cz>"]
+readme = "README.md"
+packages = [{include = "jidelnicek", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = {extras = ["all"], version = "^0.115.0"}
+sqlalchemy = "^2.0.35"
+alembic = "^1.14.0"
+psycopg2-binary = "^2.9.10"
+redis = "^5.2.1"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.17"
+email-validator = "^2.2.0"
+python-dotenv = "^1.0.1"
+pydantic = "^2.10.4"
+pydantic-settings = "^2.7.0"
+bcrypt = "^4.3.0"
+aiosqlite = "^0.21.0"
+user-agents = "^2.2.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.0"
+pytest-cov = "^6.0.0"
+black = "^24.10.0"
+flake8 = "^7.1.1"
+mypy = "^1.14.1"
+pre-commit = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/migrations/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
