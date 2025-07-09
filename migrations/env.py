@@ -15,7 +15,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 load_dotenv()
 
 # Import your models' Base
-from src.jidelnicek.db.base import Base  # noqa: E402
+from src.jidelnicek.core.database import Base  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
