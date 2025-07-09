@@ -80,3 +80,52 @@ class PermissionValidationError(JidelnicekError):
     
     def __init__(self, message: str = "Permission validation failed"):
         super().__init__(message)
+
+
+# Security-specific exceptions for admin module
+
+class SecurityException(JidelnicekError):
+    """Base exception for security violations."""
+    pass
+
+
+class SessionExpiredException(SecurityException):
+    """Raised when a session has expired."""
+    
+    def __init__(self, message: str = "Session has expired"):
+        super().__init__(message)
+
+
+class ConcurrentSessionLimitException(SecurityException):
+    """Raised when concurrent session limit is exceeded."""
+    
+    def __init__(self, message: str = "Maximum concurrent sessions exceeded"):
+        super().__init__(message)
+
+
+class TwoFactorRequiredException(SecurityException):
+    """Raised when two-factor authentication is required."""
+    
+    def __init__(self, message: str = "Two-factor authentication required"):
+        super().__init__(message)
+
+
+class InvalidCodeException(SecurityException):
+    """Raised when verification code is invalid."""
+    
+    def __init__(self, message: str = "Invalid verification code"):
+        super().__init__(message)
+
+
+class IPBlockedException(SecurityException):
+    """Raised when IP address is blocked."""
+    
+    def __init__(self, message: str = "IP address is blocked"):
+        super().__init__(message)
+
+
+class UnauthorizedLocationException(SecurityException):
+    """Raised when access from location is unauthorized."""
+    
+    def __init__(self, message: str = "Access from this location is not allowed"):
+        super().__init__(message)
