@@ -130,26 +130,13 @@ def upgrade() -> None:
     )
     
     # =====================================================
-    # Create indexes for performance
+    # Create indexes for NEW tables only (existing tables already have indexes from migration 001)
     # =====================================================
     
-    # Trip indexes
-    op.create_index('idx_trips_user', 'trip_trips', ['user_id'], unique=False, postgresql_where=sa.text('NOT is_archived'))
-    op.create_index('idx_trips_dates', 'trip_trips', ['start_date', 'end_date'], unique=False, postgresql_where=sa.text('NOT is_archived'))
+    # Trip indexes - only add NEW indexes not present in migration 001
     op.create_index('idx_trips_created', 'trip_trips', ['created_at'], unique=False)
     
-    # Participant indexes
-    op.create_index('idx_trip_participants_trip', 'trip_participants', ['trip_id'], unique=False)
-    
-    # Day indexes
-    op.create_index('idx_trip_days_trip', 'trip_days', ['trip_id'], unique=False)
-    op.create_index('idx_trip_days_date', 'trip_days', ['date'], unique=False)
-    
-    # Meal indexes
-    op.create_index('idx_trip_meals_day', 'trip_meals', ['trip_day_id'], unique=False)
-    op.create_index('idx_trip_meals_snapshot', 'trip_meals', ['recipe_snapshot_id'], unique=False)
-    
-    # Snack and drink indexes
+    # Indexes for NEW tables created in this migration
     op.create_index('idx_trip_day_snacks_day', 'trip_day_snacks', ['trip_day_id'], unique=False)
     op.create_index('idx_trip_day_drinks_day', 'trip_day_drinks', ['trip_day_id'], unique=False)
     
@@ -254,18 +241,11 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS update_trip_count()")
     op.execute("DROP FUNCTION IF EXISTS check_trip_limit()")
     
-    # Drop indexes
+    # Drop indexes created in this migration only
     op.drop_index('idx_trip_templates_user', table_name='trip_templates')
     op.drop_index('idx_trip_day_drinks_day', table_name='trip_day_drinks')
     op.drop_index('idx_trip_day_snacks_day', table_name='trip_day_snacks')
-    op.drop_index('idx_trip_meals_snapshot', table_name='trip_meals')
-    op.drop_index('idx_trip_meals_day', table_name='trip_meals')
-    op.drop_index('idx_trip_days_date', table_name='trip_days')
-    op.drop_index('idx_trip_days_trip', table_name='trip_days')
-    op.drop_index('idx_trip_participants_trip', table_name='trip_participants')
-    op.drop_index('idx_trips_created', table_name='trip_trips')
-    op.drop_index('idx_trips_dates', table_name='trip_trips')
-    op.drop_index('idx_trips_user', table_name='trip_trips')
+    op.drop_index('idx_trips_created', table_name='trip_trips')  # Only index we actually created
     
     # Drop new tables created in this migration (in reverse order of dependencies)
     op.drop_table('trip_templates')
