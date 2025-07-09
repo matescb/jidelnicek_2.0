@@ -28,6 +28,7 @@ from jidelnicek.core.utils import get_utc_now
 # Import for forward reference
 if TYPE_CHECKING:
     from jidelnicek.trip.models import Trip, TripTemplate
+    from jidelnicek.core.models.job import Job
 
 
 class AuthUser(Base):
@@ -208,6 +209,15 @@ class AuthUser(Base):
         order_by="TripTemplate.created_at.desc()",
         passive_deletes=True,
         foreign_keys="TripTemplate.user_id"
+    )
+    
+    # Job relationships
+    jobs: Mapped[List["Job"]] = relationship(
+        "Job",
+        back_populates="user",
+        lazy="select",
+        order_by="Job.created_at.desc()",
+        passive_deletes=True
     )
     
     # Table constraints
@@ -612,3 +622,7 @@ class AuditLog(Base):
     
     def __repr__(self):
         return f"<AuditLog(id={self.id}, action={self.action}, user_id={self.user_id})>"
+
+
+# Create alias for compatibility
+User = AuthUser

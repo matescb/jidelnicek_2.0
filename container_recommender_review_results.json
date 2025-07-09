@@ -1,0 +1,63 @@
+{
+  "total_tests": 13,
+  "passed": 11,
+  "failed": 2,
+  "performance_tests": [
+    {
+      "test": "Small list (10 items)",
+      "time_seconds": 0.0001437664031982422,
+      "items": 10,
+      "containers": 1
+    },
+    {
+      "test": "Medium list (50 items)",
+      "time_seconds": 0.0006952285766601562,
+      "items": 50,
+      "containers": 4
+    },
+    {
+      "test": "Large list (100 items)",
+      "time_seconds": 0.0012500286102294922,
+      "items": 100,
+      "containers": 19
+    }
+  ],
+  "edge_cases": [
+    {
+      "test": "Missing required fields",
+      "error": "'quantity'",
+      "status": "FAILED"
+    },
+    {
+      "test": "Zero quantities",
+      "error": "[<class 'decimal.DivisionUndefined'>]",
+      "status": "FAILED"
+    }
+  ],
+  "accuracy_tests": [
+    {
+      "ingredient": "Small liquid",
+      "quantity": "250 ml",
+      "expected_container": "Small jar",
+      "actual_container": "Small box",
+      "fill_percentage": 0.5,
+      "match": false
+    },
+    {
+      "ingredient": "Medium liquid",
+      "quantity": "750 ml",
+      "expected_container": "Medium box",
+      "actual_container": "Medium box",
+      "fill_percentage": 0.75,
+      "match": true
+    },
+    {
+      "ingredient": "Large solid",
+      "quantity": "2 kg",
+      "expected_container": "Large box",
+      "actual_container": "XL box",
+      "fill_percentage": 0.625,
+      "match": false
+    }
+  ]
+}

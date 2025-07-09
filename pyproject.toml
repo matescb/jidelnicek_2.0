@@ -23,6 +23,8 @@ pydantic-settings = "^2.7.0"
 bcrypt = "^4.3.0"
 aiosqlite = "^0.21.0"
 user-agents = "^2.2.0"
+celery = {extras = ["redis"], version = "^5.4.0"}
+flower = "^2.0.1"
 
 [tool.poetry.dependencies.qrcode]
 version = "^8.0"
