@@ -396,7 +396,7 @@
         "dependencies": [
           3
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -487,7 +487,7 @@
               4
             ],
             "details": "Create trip cloning service that copies all trip data (participants, meal slots, recipes) with options to adjust dates and exclude specific components",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T13:24:16.857Z",
+      "updated": "2025-07-09T15:07:03.622Z",
       "description": "Tasks for master context"
     }
   }
