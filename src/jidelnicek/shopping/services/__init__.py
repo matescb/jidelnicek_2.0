@@ -10,6 +10,13 @@ from .shopping_list_generator import (
     ListFormat
 )
 from .export_manager import ExportManager
+from .container_recommender import (
+    ContainerRecommender,
+    ContainerType,
+    ContainerSize,
+    ContainerRecommendation,
+    PackingPlan
+)
 
 __all__ = [
     'ShoppingListGenerator',
@@ -17,5 +24,10 @@ __all__ = [
     'ShoppingListSection',
     'ShoppingListItem',
     'ListFormat',
-    'ExportManager'
+    'ExportManager',
+    'ContainerRecommender',
+    'ContainerType',
+    'ContainerSize',
+    'ContainerRecommendation',
+    'PackingPlan'
 ]
