@@ -688,7 +688,7 @@
               2
             ],
             "details": "Create calculation engine that estimates weight/volume based on ingredient quantities, uses standard density tables for common ingredients, and provides total estimates for logistics planning.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T17:43:04.294Z",
+      "updated": "2025-07-09T17:49:46.214Z",
       "description": "Tasks for master context"
     }
   }
