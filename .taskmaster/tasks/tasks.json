@@ -699,7 +699,7 @@
               3
             ],
             "details": "Implement interface for adding custom items like utensils, napkins, cleaning supplies. Support categorization of custom items and quantity specification with appropriate units.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -711,7 +711,7 @@
               6
             ],
             "details": "Implement PDF generation with professional formatting, Excel export with formulas for quantities, plain text for mobile apps, and printable formats with proper page breaks.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -722,7 +722,7 @@
               5
             ],
             "details": "Create recommendation engine that suggests container sizes based on ingredient volumes, considers different container types (boxes, bags, coolers), and provides packing optimization suggestions.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           }
         ]
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T17:50:42.484Z",
+      "updated": "2025-07-09T18:09:44.470Z",
       "description": "Tasks for master context"
     }
   }
