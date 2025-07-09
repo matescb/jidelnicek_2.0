@@ -72,6 +72,20 @@ class TripExportManager:
         except ImportError:
             logger.warning("Excel export not available - openpyxl not installed")
             
+        # Text exporter
+        try:
+            from .text_exporter import TripTextExporter
+            self._exporters[ExportFormat.TEXT] = TripTextExporter
+        except ImportError as e:
+            logger.warning(f"Text export not available: {e}")
+            
+        # Markdown exporter
+        try:
+            from .markdown_exporter import TripMarkdownExporter
+            self._exporters[ExportFormat.MARKDOWN] = TripMarkdownExporter
+        except ImportError as e:
+            logger.warning(f"Markdown export not available: {e}")
+            
     def export(
         self,
         trip_data: Dict[str, Any],

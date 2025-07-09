@@ -745,7 +745,7 @@
             "description": "Implement PDF export functionality using ReportLab library with support for tables, charts, and custom styling",
             "dependencies": [],
             "details": "Install and configure ReportLab, create PDF template system, implement table layouts for meal data, add chart generation for nutritional information, ensure proper Unicode support for Czech characters",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -754,7 +754,7 @@
             "description": "Create Excel export functionality with formatted worksheets, formulas, and charts",
             "dependencies": [],
             "details": "Set up openpyxl, design worksheet templates with multiple sheets (meals, shopping lists, nutrition), implement cell formatting and styling, add formulas for automatic calculations, create charts for visual data representation",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -763,7 +763,7 @@
             "description": "Develop plain text and markdown export options with customizable templates",
             "dependencies": [],
             "details": "Design flexible template system for text exports, implement markdown formatting with tables and lists, add configuration options for output format (plain text, markdown, structured text), ensure proper encoding and line endings",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T18:16:57.770Z",
+      "updated": "2025-07-09T18:32:34.189Z",
       "description": "Tasks for master context"
     }
   }
