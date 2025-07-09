@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 from datetime import datetime
 import enum
 
-from jidelnicek.db.base import Base
+from jidelnicek.core.database import Base
 
 
 class JobStatus(str, enum.Enum):
@@ -197,7 +197,7 @@ class JobNotification(Base):
     delivery_error = Column(Text)
     
     # Metadata
-    metadata = Column(JSON, default=dict)
+    job_metadata = Column(JSON, default=dict)
     
     def __repr__(self):
         return f"<JobNotification(id={self.id}, job_id={self.job_id}, type={self.notification_type})>"

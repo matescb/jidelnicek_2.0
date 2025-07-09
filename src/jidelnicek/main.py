@@ -28,6 +28,7 @@ from jidelnicek.trip.routers import trips_router
 from jidelnicek.core.routers.jobs import router as jobs_router, export_router
 from jidelnicek.core.routers.cleanup import router as cleanup_router
 from jidelnicek.core.routers.progress import router as progress_router
+from jidelnicek.api.v1.endpoints.exports import router as unified_export_router
 from jidelnicek.core.middleware.security import (
     SecurityMiddleware,
     CSRFProtectMiddleware,
@@ -320,6 +321,9 @@ app.include_router(trips_router, prefix="/api/v1")
 # Job and export routers
 app.include_router(jobs_router)
 app.include_router(export_router)
+
+# Unified export API router
+app.include_router(unified_export_router, prefix="/api/v1")
 
 # Progress tracking router
 app.include_router(progress_router)

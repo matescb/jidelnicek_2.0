@@ -1,0 +1,745 @@
+openapi: 3.0.3
+info:
+  title: Jidelnicek Export API
+  description: |
+    Unified API for exporting trips, recipes, and shopping lists to various formats.
+    
+    ## Features
+    - **Multiple Export Types**: Trips, Recipes, Shopping Lists
+    - **Multiple Formats**: PDF, Excel, CSV, JSON, HTML, Text, Markdown
+    - **Sync/Async Processing**: Choose between immediate response or background jobs
+    - **Batch Exports**: Export multiple items at once
+    - **Export History**: Track all exports with download links
+    - **Presets**: Save and reuse export configurations
+    - **Rate Limiting**: Fair usage limits to ensure system stability
+    
+    ## Authentication
+    All endpoints require authentication via Bearer token in the Authorization header.
+    
+    ## Rate Limits
+    - Single exports: 100 per hour
+    - Batch exports: 10 per hour
+    
+  version: 1.0.0
+  contact:
+    name: Jidelnicek Support
+    email: support@jidelnicek.cz
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.jidelnicek.cz/api/v1
+    description: Production server
+  - url: http://localhost:8000/api/v1
+    description: Development server
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: exports
+    description: Export operations
+  - name: export-management
+    description: Export history and management
+  - name: export-configuration
+    description: Export presets and options
+
+paths:
+  /exports/single:
+    post:
+      tags:
+        - exports
+      summary: Export a single item
+      description: |
+        Export a single trip, recipe, or shopping list to the specified format.
+        Can be processed synchronously (immediate download) or asynchronously (background job).
+      operationId: exportSingleItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SingleExportRequest'
+            examples:
+              syncPdfExport:
+                summary: Synchronous PDF export
+                value:
+                  export_type: trip
+                  export_format: pdf
+                  item_id: "123"
+                  async_export: false
+                  options:
+                    pdf_options:
+                      page_size: A4
+                      orientation: portrait
+              asyncExcelExport:
+                summary: Asynchronous Excel export
+                value:
+                  export_type: recipe
+                  export_format: excel
+                  item_id: "456"
+                  async_export: true
+                  options:
+                    excel_options:
+                      include_charts: true
+      responses:
+        '200':
+          description: |
+            Successful export. Returns either:
+            - File content (sync mode)
+            - Job details (async mode)
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /exports/batch:
+    post:
+      tags:
+        - exports
+      summary: Export multiple items in batch
+      description: |
+        Export multiple items of same or different types. Batch exports are always
+        processed asynchronously and can optionally merge results into a single file.
+      operationId: exportBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchExportRequest'
+            example:
+              exports:
+                - export_type: trip
+                  export_format: pdf
+                  item_ids: ["123", "124", "125"]
+                  merge_into_single_file: true
+                - export_type: recipe
+                  export_format: json
+                  item_ids: ["456", "457"]
+                  merge_into_single_file: false
+      responses:
+        '200':
+          description: Batch export job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchExportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /exports/status/{job_id}:
+    get:
+      tags:
+        - export-management
+      summary: Get export job status
+      description: Check the status of an asynchronous export job
+      operationId: getExportStatus
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Export job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJobResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /exports/download/{job_id}:
+    get:
+      tags:
+        - export-management
+      summary: Download completed export
+      description: Download the file from a completed export job
+      operationId: downloadExport
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Export file content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Filename for download
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /exports/history:
+    get:
+      tags:
+        - export-management
+      summary: Get export history
+      description: Retrieve user's export history with optional filtering
+      operationId: getExportHistory
+      parameters:
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: export_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ExportType'
+        - name: export_format
+          in: query
+          schema:
+            $ref: '#/components/schemas/ExportFormat'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ExportStatus'
+      responses:
+        '200':
+          description: Export history list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExportHistoryResponse'
+
+  /exports/history/{job_id}:
+    delete:
+      tags:
+        - export-management
+      summary: Delete export
+      description: Delete an export job and its associated files
+      operationId: deleteExport
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Export deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Export deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /exports/formats:
+    get:
+      tags:
+        - export-configuration
+      summary: Get supported formats
+      description: Get supported export formats for each export type
+      operationId: getSupportedFormats
+      security: []  # No auth required
+      responses:
+        '200':
+          description: Supported formats by type
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+              example:
+                trip: ["pdf", "excel", "text", "markdown", "json"]
+                recipe: ["pdf", "excel", "csv", "json", "html", "text", "markdown"]
+                shopping_list: ["pdf", "excel", "csv", "json", "html", "text"]
+
+  /exports/options/{export_format}:
+    get:
+      tags:
+        - export-configuration
+      summary: Get format options
+      description: Get available configuration options for a specific export format
+      operationId: getFormatOptions
+      security: []  # No auth required
+      parameters:
+        - name: export_format
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ExportFormat'
+      responses:
+        '200':
+          description: Format-specific options
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example:
+                page_size: ["A4", "letter", "legal"]
+                orientation: ["portrait", "landscape"]
+                margin:
+                  min: 10
+                  max: 50
+                  default: 25
+
+  /exports/presets:
+    get:
+      tags:
+        - export-configuration
+      summary: Get export presets
+      description: Get user's saved export presets
+      operationId: getExportPresets
+      responses:
+        '200':
+          description: Export presets list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExportPresetResponse'
+    
+    post:
+      tags:
+        - export-configuration
+      summary: Create export preset
+      description: Save an export configuration as a reusable preset
+      operationId: createExportPreset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportPresetRequest'
+      responses:
+        '200':
+          description: Preset created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPresetResponse'
+
+  /exports/preview/{export_format}:
+    post:
+      tags:
+        - exports
+      summary: Preview export
+      description: Generate a preview of the export (limited pages/rows)
+      operationId: previewExport
+      parameters:
+        - name: export_format
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ExportFormat'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SingleExportRequest'
+      responses:
+        '200':
+          description: Export preview
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      description: Export job ID
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    ExportType:
+      type: string
+      enum:
+        - trip
+        - recipe
+        - shopping_list
+      description: Type of item to export
+
+    ExportFormat:
+      type: string
+      enum:
+        - pdf
+        - excel
+        - csv
+        - json
+        - html
+        - text
+        - markdown
+      description: Export file format
+
+    ExportStatus:
+      type: string
+      enum:
+        - pending
+        - processing
+        - completed
+        - failed
+        - cancelled
+      description: Status of export job
+
+    ExportOptions:
+      type: object
+      properties:
+        include_metadata:
+          type: boolean
+          default: true
+        include_timestamps:
+          type: boolean
+          default: true
+        include_user_info:
+          type: boolean
+          default: false
+        compression:
+          type: string
+          enum: [gzip, zip]
+          nullable: true
+        language:
+          type: string
+          default: cs
+        timezone:
+          type: string
+          default: Europe/Prague
+        pdf_options:
+          type: object
+          additionalProperties: true
+        excel_options:
+          type: object
+          additionalProperties: true
+        csv_options:
+          type: object
+          additionalProperties: true
+        json_options:
+          type: object
+          additionalProperties: true
+        html_options:
+          type: object
+          additionalProperties: true
+        text_options:
+          type: object
+          additionalProperties: true
+        markdown_options:
+          type: object
+          additionalProperties: true
+
+    SingleExportRequest:
+      type: object
+      required:
+        - export_type
+        - export_format
+        - item_id
+      properties:
+        export_type:
+          $ref: '#/components/schemas/ExportType'
+        export_format:
+          $ref: '#/components/schemas/ExportFormat'
+        item_id:
+          type: string
+          description: ID of the item to export
+        options:
+          $ref: '#/components/schemas/ExportOptions'
+        async_export:
+          type: boolean
+          default: false
+          description: Process export asynchronously
+
+    BatchExportItem:
+      type: object
+      required:
+        - export_type
+        - export_format
+        - item_ids
+      properties:
+        export_type:
+          $ref: '#/components/schemas/ExportType'
+        export_format:
+          $ref: '#/components/schemas/ExportFormat'
+        item_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        options:
+          type: object
+          additionalProperties: true
+        merge_into_single_file:
+          type: boolean
+          default: false
+
+    BatchExportRequest:
+      type: object
+      required:
+        - exports
+      properties:
+        exports:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchExportItem'
+          minItems: 1
+        notification_email:
+          type: string
+          format: email
+          nullable: true
+        webhook_url:
+          type: string
+          format: uri
+          nullable: true
+
+    ExportJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ExportStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        export_type:
+          $ref: '#/components/schemas/ExportType'
+        export_format:
+          $ref: '#/components/schemas/ExportFormat'
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        result_url:
+          type: string
+          format: uri
+          nullable: true
+        file_size:
+          type: integer
+          nullable: true
+
+    BatchExportResponse:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        job_count:
+          type: integer
+        status:
+          $ref: '#/components/schemas/ExportStatus'
+        created_at:
+          type: string
+          format: date-time
+
+    ExportHistoryResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        export_type:
+          $ref: '#/components/schemas/ExportType'
+        export_format:
+          $ref: '#/components/schemas/ExportFormat'
+        status:
+          $ref: '#/components/schemas/ExportStatus'
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        file_size:
+          type: integer
+          nullable: true
+        filename:
+          type: string
+          nullable: true
+        download_count:
+          type: integer
+          default: 0
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ExportPresetRequest:
+      type: object
+      required:
+        - name
+        - export_type
+        - export_format
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+        export_type:
+          $ref: '#/components/schemas/ExportType'
+        export_format:
+          $ref: '#/components/schemas/ExportFormat'
+        options:
+          type: object
+          additionalProperties: true
+        is_public:
+          type: boolean
+          default: false
+
+    ExportPresetResponse:
+      allOf:
+        - $ref: '#/components/schemas/ExportPresetRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+              nullable: true
+            usage_count:
+              type: integer
+              default: 0
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Invalid export format specified
+            code: INVALID_FORMAT
+            timestamp: "2024-01-15T10:30:00Z"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Authentication credentials were not provided
+            code: UNAUTHORIZED
+            timestamp: "2024-01-15T10:30:00Z"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Export job not found
+            code: NOT_FOUND
+            timestamp: "2024-01-15T10:30:00Z"
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Export rate limit exceeded. Please try again later.
+            code: RATE_LIMIT_EXCEEDED
+            timestamp: "2024-01-15T10:30:00Z"
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per hour
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Time when the rate limit resets (Unix timestamp)
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: An unexpected error occurred
+            code: INTERNAL_ERROR
+            timestamp: "2024-01-15T10:30:00Z"

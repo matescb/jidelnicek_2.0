@@ -113,7 +113,7 @@ class CleanupAuditLog(Base):
     recovery_info = Column(JSON)  # Store recovery path, timestamp, etc.
     
     # Metadata
-    metadata = Column(JSON, default=dict)  # Additional information about the file
+    file_metadata = Column(JSON, default=dict)  # Additional information about the file
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
