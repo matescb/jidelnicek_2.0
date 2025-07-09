@@ -325,8 +325,7 @@ def upgrade():
     op.create_index(
         'idx_session_cleanup',
         'auth_sessions',
-        ['expires_at', 'last_accessed'],
-        postgresql_where=sa.text('expires_at > now()')
+        ['expires_at', 'last_accessed']
     )
     
     # Token validation
@@ -363,8 +362,7 @@ def upgrade():
     op.create_index(
         'idx_audit_cleanup',
         'audit_log',
-        ['created_at', 'action'],
-        postgresql_where=sa.text('created_at > (now() - interval \'1 year\')')
+        ['created_at', 'action']
     )
     
     # Audit log entity tracking

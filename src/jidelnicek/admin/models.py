@@ -51,6 +51,19 @@ class AdminAction(str, Enum):
     DATA_CLEANUP = "data_cleanup"
     DATA_EXPORT = "data_export"
     DATA_IMPORT = "data_import"
+    
+    # Ingredient management
+    INGREDIENT_VIEW = "ingredient_view"
+    INGREDIENT_LIST = "ingredient_list"
+    INGREDIENT_CREATE = "ingredient_create"
+    INGREDIENT_UPDATE = "ingredient_update"
+    INGREDIENT_DELETE = "ingredient_delete"
+    INGREDIENT_MERGE = "ingredient_merge"
+    INGREDIENT_APPROVE = "ingredient_approve"
+    INGREDIENT_REJECT = "ingredient_reject"
+    INGREDIENT_BULK_IMPORT = "ingredient_bulk_import"
+    INGREDIENT_BULK_EXPORT = "ingredient_bulk_export"
+    INGREDIENT_QUALITY_CHECK = "ingredient_quality_check"
 
 
 class AdminAuditLog(Base):
@@ -212,3 +225,133 @@ class AdminNotification(Base):
     
     def __repr__(self):
         return f"<AdminNotification(id={self.id}, type={self.type}, severity={self.severity})>"
+
+
+class IngredientModerationStatus(str, Enum):
+    """Status for ingredient moderation."""
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+
+
+class IngredientModeration(Base):
+    """
+    Moderation queue for user-submitted ingredients.
+    
+    Tracks ingredients that need admin approval before becoming global.
+    """
+    __tablename__ = "admin_ingredient_moderation"
+    
+    # Primary key
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), 
+        primary_key=True, 
+        server_default=text("gen_random_uuid()")
+    )
+    
+    # Ingredient being moderated
+    ingredient_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("common_ingredients.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+    
+    # Submission details
+    submitted_by: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("auth_users.id", ondelete="SET NULL"),
+        nullable=False,
+        index=True
+    )
+    
+    submitted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=get_utc_now,
+        nullable=False,
+        index=True
+    )
+    
+    # Moderation status
+    status: Mapped[IngredientModerationStatus] = mapped_column(
+        SQLEnum(IngredientModerationStatus),
+        default=IngredientModerationStatus.PENDING,
+        nullable=False,
+        index=True
+    )
+    
+    # Review details
+    reviewed_by: Mapped[Optional[UUID]] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("auth_users.id", ondelete="SET NULL"),
+        index=True
+    )
+    
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        index=True
+    )
+    
+    # Review feedback
+    review_notes: Mapped[Optional[str]] = mapped_column(String(1000))
+    rejection_reason: Mapped[Optional[str]] = mapped_column(String(500))
+    
+    # Quality checks
+    quality_score: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        comment="Quality score 0-100"
+    )
+    quality_issues: Mapped[Optional[List[str]]] = mapped_column(JSON)
+    
+    # Suggested changes
+    suggested_changes: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSON,
+        comment="Admin-suggested modifications"
+    )
+    
+    # Auto-moderation results
+    auto_check_passed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+    auto_check_issues: Mapped[Optional[List[str]]] = mapped_column(JSON)
+    
+    # Priority for review
+    priority: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+        index=True,
+        comment="Higher priority = review sooner"
+    )
+    
+    # Relationships
+    ingredient: Mapped["Ingredient"] = relationship(
+        "Ingredient",
+        foreign_keys=[ingredient_id],
+        lazy="select"
+    )
+    
+    submitter: Mapped["AuthUser"] = relationship(
+        "AuthUser",
+        foreign_keys=[submitted_by],
+        lazy="select"
+    )
+    
+    reviewer: Mapped[Optional["AuthUser"]] = relationship(
+        "AuthUser",
+        foreign_keys=[reviewed_by],
+        lazy="select"
+    )
+    
+    # Indexes for common queries
+    __table_args__ = (
+        Index('idx_moderation_status_priority', 'status', 'priority'),
+        Index('idx_moderation_submitted', 'submitted_at'),
+    )
+    
+    def __repr__(self):
+        return f"<IngredientModeration(id={self.id}, ingredient_id={self.ingredient_id}, status={self.status})>"
