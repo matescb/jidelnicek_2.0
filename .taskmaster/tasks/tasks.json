@@ -763,7 +763,7 @@
             "description": "Develop plain text and markdown export options with customizable templates",
             "dependencies": [],
             "details": "Design flexible template system for text exports, implement markdown formatting with tables and lists, add configuration options for output format (plain text, markdown, structured text), ensure proper encoding and line endings",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -772,7 +772,7 @@
             "description": "Add QR code generation for sharing meal plans and shopping lists",
             "dependencies": [],
             "details": "Integrate qrcode library, create QR codes for meal plan URLs, shopping list data, and recipe links, implement size and error correction level options, add QR codes to PDF exports",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T18:32:34.189Z",
+      "updated": "2025-07-09T18:42:28.498Z",
       "description": "Tasks for master context"
     }
   }

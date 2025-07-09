@@ -7,6 +7,7 @@ Provides comprehensive PDF export with:
 - Shopping lists with categories
 - Nutritional charts and analysis
 - Czech language support
+- QR codes for sharing and data access
 """
 
 import io
@@ -14,6 +15,9 @@ from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime, date
 from decimal import Decimal
 import logging
+from io import BytesIO
+
+from .qr_generator import QRCodeGenerator, QRCodeConfig, QRErrorCorrection
 
 try:
     from reportlab.lib import colors
@@ -90,6 +94,16 @@ class TripPDFExporter:
         
         # Try to register Czech fonts if available
         self._register_fonts()
+        
+        # Initialize QR code generator
+        self.qr_generator = QRCodeGenerator(
+            QRCodeConfig(
+                size=8,  # Smaller size for PDF embedding
+                error_correction=QRErrorCorrection.MEDIUM,
+                border=2,
+            )
+        )
+        self.base_url = self.options.get('base_url', 'https://jidelnicek.cz')
         
     def export(self, trip_data: Dict[str, Any]) -> bytes:
         """
@@ -327,6 +341,31 @@ class TripPDFExporter:
                 ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
             ]))
             elements.append(info_table)
+            
+        # Add QR code for trip sharing (if enabled)
+        if self.options.get('include_qr', True) and trip.get('id'):
+            elements.append(Spacer(1, 1*cm))
+            
+            # Generate QR code for trip share link
+            qr_bytes = self.qr_generator.generate_trip_share_qr(
+                str(trip['id']), 
+                self.base_url
+            )
+            
+            if qr_bytes:
+                # Create a table to center the QR code and add caption
+                qr_image = Image(BytesIO(qr_bytes), width=3*cm, height=3*cm)
+                qr_table = Table(
+                    [[qr_image], [Paragraph("Sdílet výlet", self.styles['Caption'])]],
+                    colWidths=[3*cm]
+                )
+                qr_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+                
+                # Center the QR code table
+                elements.append(qr_table)
             
         # Description if available
         if trip.get('description'):
@@ -578,6 +617,26 @@ class TripPDFExporter:
                 self.styles['BodyText']
             ))
             return elements
+            
+        # Add QR code for shopping list (if enabled)
+        if self.options.get('include_shopping_qr', True):
+            qr_bytes = self.qr_generator.generate_shopping_list_qr(shopping_list)
+            
+            if qr_bytes:
+                # Create a small QR code in the top right corner
+                qr_image = Image(BytesIO(qr_bytes), width=2.5*cm, height=2.5*cm)
+                qr_table = Table(
+                    [[Paragraph("Nákupní seznam", self.styles['SectionHeader']), qr_image]],
+                    colWidths=[14*cm, 3*cm]
+                )
+                qr_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+                    ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ]))
+                
+                # Replace the header with the table containing QR code
+                elements[-2] = qr_table  # Replace the header paragraph
             
         # Group items by category
         categories = shopping_list.get('categories', {})

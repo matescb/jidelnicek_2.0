@@ -24,6 +24,14 @@ bcrypt = "^4.3.0"
 aiosqlite = "^0.21.0"
 user-agents = "^2.2.0"
 
+[tool.poetry.dependencies.qrcode]
+version = "^8.0"
+extras = ["pil"]
+optional = true
+
+[tool.poetry.extras]
+qr = ["qrcode"]
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
 pytest-asyncio = "^0.25.0"
