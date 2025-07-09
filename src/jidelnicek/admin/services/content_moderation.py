@@ -1,68 +1,97 @@
 """
-Content moderation service for managing user-generated content.
+Content moderation service for managing reports and moderation actions.
 
-This service provides functionality for content moderation, including
-report handling, automated filtering, sanction management, and appeal processing.
+This service provides functionality for content moderation including report
+management, automated moderation, and audit logging.
 """
 
-import re
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
+import json
+import re
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_, desc
-from redis import Redis
-import logging
+from sqlalchemy import and_, or_, func
+from sqlalchemy.exc import IntegrityError
 
-from jidelnicek.admin.models.moderation import (
-    ContentReport, ModerationActionLog, UserSanction, UserAppeal,
-    ModerationTemplate, ContentFilter, ModerationQueue,
-    ContentType, ReportReason, ModerationStatus, ModerationAction,
-    SanctionType, AppealStatus
+from jidelnicek.common.models.user import User
+from jidelnicek.common.exceptions import (
+    NotFoundException, ValidationException, ForbiddenException
 )
-from jidelnicek.core.models.user import User
-from jidelnicek.core.services.audit import AuditService
-from jidelnicek.common.exceptions import ValidationError, AuthorizationError
-from jidelnicek.common.utils.text import sanitize_text
-
-
-logger = logging.getLogger(__name__)
+from jidelnicek.admin.models.moderation import (
+    ContentReport, ModerationLog, AutoModerationRule,
+    BannedContent, ModerationQueue, ReportStatus,
+    ReportReason, ModerationAction
+)
+from jidelnicek.recipe.models.recipe import Recipe
+from jidelnicek.recipe.models.review import Review
+from jidelnicek.common.services.cache import CacheService
+from jidelnicek.common.services.notification import NotificationService
+from jidelnicek.common.utils.security import sanitize_html
 
 
 class ContentModerationService:
     """Service for content moderation operations."""
     
-    def __init__(self, db: Session, redis_client: Redis, audit_service: AuditService):
-        self.db = db
-        self.redis = redis_client
-        self.audit = audit_service
+    def __init__(
+        self,
+        session: Session,
+        cache_service: Optional[CacheService] = None,
+        notification_service: Optional[NotificationService] = None
+    ):
+        """
+        Initialize content moderation service.
         
+        Args:
+            session: Database session
+            cache_service: Optional cache service
+            notification_service: Optional notification service
+        """
+        self.session = session
+        self.cache = cache_service
+        self.notifications = notification_service
+    
     # Report Management
     
     def create_report(
         self,
         reporter_id: int,
-        content_type: ContentType,
+        content_type: str,
         content_id: int,
         reason: ReportReason,
         description: Optional[str] = None
     ) -> ContentReport:
-        """Create a new content report."""
-        # Check for existing report from same user
-        existing = self.db.query(ContentReport).filter(
+        """
+        Create a new content report.
+        
+        Args:
+            reporter_id: ID of user making the report
+            content_type: Type of content being reported
+            content_id: ID of content being reported
+            reason: Reason for report
+            description: Optional detailed description
+            
+        Returns:
+            Created report
+            
+        Raises:
+            ValidationException: If report is invalid
+        """
+        # Check if content exists
+        if not self._content_exists(content_type, content_id):
+            raise ValidationException(f"Content {content_type}:{content_id} not found")
+        
+        # Check for duplicate report
+        existing = self.session.query(ContentReport).filter(
             and_(
                 ContentReport.reporter_id == reporter_id,
                 ContentReport.content_type == content_type,
-                ContentReport.content_id == content_id
+                ContentReport.content_id == content_id,
+                ContentReport.status.in_([ReportStatus.PENDING, ReportStatus.INVESTIGATING])
             )
         ).first()
         
         if existing:
-            raise ValidationError("You have already reported this content")
-        
-        # Calculate priority score
-        priority_score = self._calculate_report_priority(
-            reporter_id, content_type, reason
-        )
+            raise ValidationException("You have already reported this content")
         
         # Create report
         report = ContentReport(
@@ -70,756 +99,733 @@ class ContentModerationService:
             content_type=content_type,
             content_id=content_id,
             reason=reason,
-            description=sanitize_text(description) if description else None,
-            priority_score=priority_score
+            description=sanitize_html(description) if description else None,
+            priority=self._calculate_priority(reason, content_type)
         )
         
-        self.db.add(report)
-        self.db.commit()
+        self.session.add(report)
+        self.session.commit()
         
-        # Add to moderation queue if high priority
-        if priority_score >= 7:
-            self._add_to_queue(content_type, content_id, priority_score)
+        # Check auto-moderation rules
+        self._check_auto_moderation(report)
         
-        # Log audit event
-        self.audit.log_event(
-            "content_reported",
-            reporter_id,
-            {
-                "report_id": report.id,
-                "content_type": content_type.value,
-                "content_id": content_id,
-                "reason": reason.value
-            }
-        )
+        # Notify moderators if high priority
+        if report.priority >= 7:
+            self._notify_moderators(report)
         
         return report
     
-    def get_pending_reports(
-        self,
-        moderator_id: int,
-        limit: int = 20,
-        content_type: Optional[ContentType] = None
-    ) -> List[ContentReport]:
-        """Get pending reports for moderation."""
-        query = self.db.query(ContentReport).filter(
-            ContentReport.status == ModerationStatus.PENDING
-        )
+    def get_report(self, report_id: int) -> ContentReport:
+        """
+        Get a specific report.
         
+        Args:
+            report_id: Report ID
+            
+        Returns:
+            Report
+            
+        Raises:
+            NotFoundException: If report not found
+        """
+        report = self.session.query(ContentReport).filter_by(id=report_id).first()
+        if not report:
+            raise NotFoundException("Report not found")
+        return report
+    
+    def list_reports(
+        self,
+        status: Optional[ReportStatus] = None,
+        content_type: Optional[str] = None,
+        assigned_to: Optional[int] = None,
+        limit: int = 50,
+        offset: int = 0
+    ) -> Tuple[List[ContentReport], int]:
+        """
+        List content reports with filtering.
+        
+        Args:
+            status: Filter by status
+            content_type: Filter by content type
+            assigned_to: Filter by assigned moderator
+            limit: Maximum number of results
+            offset: Number of results to skip
+            
+        Returns:
+            Tuple of (reports, total_count)
+        """
+        query = self.session.query(ContentReport)
+        
+        if status:
+            query = query.filter(ContentReport.status == status)
         if content_type:
             query = query.filter(ContentReport.content_type == content_type)
+        if assigned_to:
+            query = query.filter(ContentReport.assigned_to_id == assigned_to)
         
-        # Order by priority and age
+        total = query.count()
+        
         reports = query.order_by(
-            desc(ContentReport.priority_score),
-            ContentReport.created_at
-        ).limit(limit).all()
+            ContentReport.priority.desc(),
+            ContentReport.created_at.desc()
+        ).limit(limit).offset(offset).all()
         
-        # Mark as in review
-        for report in reports:
-            report.status = ModerationStatus.IN_REVIEW
-            report.assigned_to = moderator_id
+        return reports, total
+    
+    def assign_report(
+        self,
+        report_id: int,
+        moderator_id: int
+    ) -> ContentReport:
+        """
+        Assign a report to a moderator.
         
-        self.db.commit()
+        Args:
+            report_id: Report ID
+            moderator_id: Moderator user ID
+            
+        Returns:
+            Updated report
+        """
+        report = self.get_report(report_id)
         
-        return reports
+        report.assigned_to_id = moderator_id
+        report.status = ReportStatus.INVESTIGATING
+        report.updated_at = datetime.utcnow()
+        
+        self.session.commit()
+        
+        return report
+    
+    def resolve_report(
+        self,
+        report_id: int,
+        moderator_id: int,
+        action: Optional[ModerationAction] = None,
+        notes: Optional[str] = None,
+        dismiss: bool = False
+    ) -> ContentReport:
+        """
+        Resolve a content report.
+        
+        Args:
+            report_id: Report ID
+            moderator_id: Moderator resolving the report
+            action: Action taken (if any)
+            notes: Resolution notes
+            dismiss: Whether to dismiss the report
+            
+        Returns:
+            Updated report
+        """
+        report = self.get_report(report_id)
+        
+        if dismiss:
+            report.status = ReportStatus.DISMISSED
+        else:
+            report.status = ReportStatus.RESOLVED
+            
+        report.resolved_at = datetime.utcnow()
+        report.resolution_notes = notes
+        report.action_taken = action
+        
+        # Create moderation log if action taken
+        if action:
+            self._log_moderation_action(
+                moderator_id=moderator_id,
+                action=action,
+                target_type=report.content_type,
+                target_id=report.content_id,
+                reason=f"Report #{report_id}: {report.reason.value}",
+                report_id=report_id
+            )
+            
+            # Execute the action
+            self._execute_moderation_action(
+                action=action,
+                content_type=report.content_type,
+                content_id=report.content_id
+            )
+        
+        self.session.commit()
+        
+        return report
     
     # Moderation Actions
     
     def moderate_content(
         self,
         moderator_id: int,
-        report_id: int,
+        content_type: str,
+        content_id: int,
         action: ModerationAction,
         reason: str,
-        template_id: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> ModerationActionLog:
-        """Take moderation action on reported content."""
-        # Get report
-        report = self.db.query(ContentReport).filter(
-            ContentReport.id == report_id
-        ).first()
+        details: Optional[str] = None
+    ) -> ModerationLog:
+        """
+        Take a moderation action on content.
         
-        if not report:
-            raise ValidationError("Report not found")
+        Args:
+            moderator_id: Moderator taking action
+            content_type: Type of content
+            content_id: ID of content
+            action: Action to take
+            reason: Reason for action
+            details: Optional additional details
+            
+        Returns:
+            Moderation log entry
+        """
+        # Verify content exists
+        if not self._content_exists(content_type, content_id):
+            raise ValidationException(f"Content {content_type}:{content_id} not found")
         
-        if report.assigned_to != moderator_id:
-            raise AuthorizationError("Report not assigned to you")
+        # Execute action
+        self._execute_moderation_action(action, content_type, content_id)
         
-        # Create action log
-        action_log = ModerationActionLog(
-            report_id=report_id,
+        # Log action
+        log = self._log_moderation_action(
             moderator_id=moderator_id,
             action=action,
-            content_type=report.content_type,
-            content_id=report.content_id,
+            target_type=content_type,
+            target_id=content_id,
             reason=reason,
-            template_id=template_id,
-            metadata=metadata
+            details=details
         )
         
-        self.db.add(action_log)
+        self.session.commit()
         
-        # Update report status
-        report.status = self._get_report_status_for_action(action)
-        report.reviewed_at = datetime.utcnow()
-        report.resolution = reason
-        
-        # Apply the action
-        self._apply_moderation_action(
-            report.content_type,
-            report.content_id,
-            action,
-            metadata
-        )
-        
-        # Update template usage count
-        if template_id:
-            template = self.db.query(ModerationTemplate).filter(
-                ModerationTemplate.id == template_id
-            ).first()
-            if template:
-                template.usage_count += 1
-        
-        self.db.commit()
-        
-        # Clear from queue
-        self._remove_from_queue(report.content_type, report.content_id)
-        
-        # Log audit event
-        self.audit.log_event(
-            "content_moderated",
-            moderator_id,
-            {
-                "report_id": report_id,
-                "action": action.value,
-                "content_type": report.content_type.value,
-                "content_id": report.content_id
-            }
-        )
-        
-        return action_log
+        return log
     
-    def bulk_moderate(
+    def reverse_moderation(
         self,
+        log_id: int,
         moderator_id: int,
-        report_ids: List[int],
-        action: ModerationAction,
-        template_id: int
-    ) -> List[ModerationActionLog]:
-        """Apply bulk moderation action using template."""
-        template = self.db.query(ModerationTemplate).filter(
-            ModerationTemplate.id == template_id
-        ).first()
-        
-        if not template:
-            raise ValidationError("Template not found")
-        
-        action_logs = []
-        
-        for report_id in report_ids:
-            try:
-                log = self.moderate_content(
-                    moderator_id=moderator_id,
-                    report_id=report_id,
-                    action=action,
-                    reason=template.response_text,
-                    template_id=template_id
-                )
-                action_logs.append(log)
-            except Exception as e:
-                logger.error(f"Failed to moderate report {report_id}: {e}")
-        
-        return action_logs
-    
-    # Sanction Management
-    
-    def issue_sanction(
-        self,
-        issuer_id: int,
-        user_id: int,
-        sanction_type: SanctionType,
-        reason: str,
-        duration_days: Optional[int] = None,
-        evidence: Optional[Dict[str, Any]] = None
-    ) -> UserSanction:
-        """Issue a sanction against a user."""
-        # Check for active sanctions
-        active_sanctions = self.db.query(UserSanction).filter(
-            and_(
-                UserSanction.user_id == user_id,
-                UserSanction.is_active == True
-            )
-        ).all()
-        
-        # Escalate if user has recent sanctions
-        if sanction_type == SanctionType.WARNING and len(active_sanctions) >= 2:
-            sanction_type = SanctionType.TEMPORARY_BAN
-            duration_days = duration_days or 7
-        
-        # Calculate expiration
-        expires_at = None
-        if duration_days and sanction_type != SanctionType.PERMANENT_BAN:
-            expires_at = datetime.utcnow() + timedelta(days=duration_days)
-        
-        # Create sanction
-        sanction = UserSanction(
-            user_id=user_id,
-            issued_by=issuer_id,
-            type=sanction_type,
-            reason=reason,
-            evidence=evidence,
-            expires_at=expires_at
-        )
-        
-        self.db.add(sanction)
-        self.db.commit()
-        
-        # Apply sanction effects
-        self._apply_sanction_effects(user_id, sanction_type)
-        
-        # Log audit event
-        self.audit.log_event(
-            "sanction_issued",
-            issuer_id,
-            {
-                "sanction_id": sanction.id,
-                "user_id": user_id,
-                "type": sanction_type.value,
-                "duration_days": duration_days
-            }
-        )
-        
-        return sanction
-    
-    def lift_sanction(
-        self,
-        lifter_id: int,
-        sanction_id: int,
         reason: str
-    ) -> UserSanction:
-        """Lift an active sanction."""
-        sanction = self.db.query(UserSanction).filter(
-            UserSanction.id == sanction_id
-        ).first()
+    ) -> ModerationLog:
+        """
+        Reverse a previous moderation action.
         
-        if not sanction:
-            raise ValidationError("Sanction not found")
-        
-        if not sanction.is_active:
-            raise ValidationError("Sanction is already inactive")
-        
-        # Lift sanction
-        sanction.is_active = False
-        sanction.lifted_at = datetime.utcnow()
-        sanction.lifted_by = lifter_id
-        sanction.lift_reason = reason
-        
-        self.db.commit()
-        
-        # Remove sanction effects
-        self._remove_sanction_effects(sanction.user_id, sanction.type)
-        
-        # Log audit event
-        self.audit.log_event(
-            "sanction_lifted",
-            lifter_id,
-            {
-                "sanction_id": sanction_id,
-                "user_id": sanction.user_id,
-                "reason": reason
-            }
-        )
-        
-        return sanction
-    
-    # Appeal Processing
-    
-    def create_appeal(
-        self,
-        user_id: int,
-        sanction_id: Optional[int],
-        reason: str,
-        evidence: Optional[Dict[str, Any]] = None
-    ) -> UserAppeal:
-        """Create an appeal against a sanction or moderation decision."""
-        # Validate sanction if provided
-        if sanction_id:
-            sanction = self.db.query(UserSanction).filter(
-                and_(
-                    UserSanction.id == sanction_id,
-                    UserSanction.user_id == user_id
-                )
-            ).first()
+        Args:
+            log_id: ID of moderation log to reverse
+            moderator_id: Moderator reversing the action
+            reason: Reason for reversal
             
-            if not sanction:
-                raise ValidationError("Sanction not found or not yours")
-            
-            # Check for existing appeal
-            existing = self.db.query(UserAppeal).filter(
-                and_(
-                    UserAppeal.sanction_id == sanction_id,
-                    UserAppeal.status.in_([
-                        AppealStatus.PENDING,
-                        AppealStatus.IN_REVIEW
-                    ])
-                )
-            ).first()
-            
-            if existing:
-                raise ValidationError("Appeal already pending for this sanction")
+        Returns:
+            Updated moderation log
+        """
+        log = self.session.query(ModerationLog).filter_by(id=log_id).first()
+        if not log:
+            raise NotFoundException("Moderation log not found")
         
-        # Create appeal with 30-day expiration
-        appeal = UserAppeal(
-            user_id=user_id,
-            sanction_id=sanction_id,
-            reason=sanitize_text(reason),
-            evidence=evidence,
-            expires_at=datetime.utcnow() + timedelta(days=30)
-        )
+        if log.reversed:
+            raise ValidationException("Action has already been reversed")
         
-        self.db.add(appeal)
-        self.db.commit()
-        
-        # Log audit event
-        self.audit.log_event(
-            "appeal_created",
-            user_id,
-            {
-                "appeal_id": appeal.id,
-                "sanction_id": sanction_id
-            }
-        )
-        
-        return appeal
-    
-    def review_appeal(
-        self,
-        reviewer_id: int,
-        appeal_id: int,
-        approved: bool,
-        decision: str
-    ) -> UserAppeal:
-        """Review and decide on an appeal."""
-        appeal = self.db.query(UserAppeal).filter(
-            UserAppeal.id == appeal_id
-        ).first()
-        
-        if not appeal:
-            raise ValidationError("Appeal not found")
-        
-        if appeal.status != AppealStatus.PENDING:
-            raise ValidationError("Appeal is not pending review")
-        
-        # Update appeal
-        appeal.status = AppealStatus.APPROVED if approved else AppealStatus.REJECTED
-        appeal.reviewed_by = reviewer_id
-        appeal.reviewed_at = datetime.utcnow()
-        appeal.decision = decision
-        
-        # If approved and has sanction, lift it
-        if approved and appeal.sanction_id:
-            self.lift_sanction(
-                reviewer_id,
-                appeal.sanction_id,
-                f"Appeal approved: {decision}"
+        # Reverse the action
+        reverse_action = self._get_reverse_action(log.action)
+        if reverse_action:
+            self._execute_moderation_action(
+                reverse_action,
+                log.target_type,
+                log.target_id
             )
         
-        self.db.commit()
+        # Update log
+        log.reversed = True
+        log.reversed_by_id = moderator_id
+        log.reversed_at = datetime.utcnow()
+        log.reversal_reason = reason
         
-        # Log audit event
-        self.audit.log_event(
-            "appeal_reviewed",
-            reviewer_id,
-            {
-                "appeal_id": appeal_id,
-                "approved": approved,
-                "user_id": appeal.user_id
-            }
-        )
+        self.session.commit()
         
-        return appeal
+        return log
     
-    # Content Filtering
+    # Auto-moderation
     
-    def create_filter(
+    def create_auto_rule(
         self,
-        creator_id: int,
         name: str,
-        filter_type: str,
-        pattern: str,
+        rule_type: str,
+        rule_config: Dict[str, Any],
         action: ModerationAction,
-        content_type: Optional[ContentType] = None,
-        severity: int = 1,
-        auto_report: bool = False
-    ) -> ContentFilter:
-        """Create a new content filter rule."""
-        # Validate pattern based on type
-        if filter_type == "regex":
-            try:
-                re.compile(pattern)
-            except re.error:
-                raise ValidationError("Invalid regex pattern")
+        created_by: int,
+        content_type: Optional[str] = None,
+        description: Optional[str] = None,
+        severity: int = 5
+    ) -> AutoModerationRule:
+        """
+        Create an auto-moderation rule.
         
-        filter_rule = ContentFilter(
+        Args:
+            name: Rule name
+            rule_type: Type of rule (keyword, pattern, threshold)
+            rule_config: Rule configuration
+            action: Action to take when rule matches
+            created_by: User creating the rule
+            content_type: Optional specific content type
+            description: Rule description
+            severity: Rule severity (1-10)
+            
+        Returns:
+            Created rule
+        """
+        rule = AutoModerationRule(
             name=name,
+            description=description,
             content_type=content_type,
-            filter_type=filter_type,
-            pattern=pattern,
+            rule_type=rule_type,
+            rule_config=json.dumps(rule_config),
             action=action,
             severity=severity,
-            auto_report=auto_report,
-            created_by=creator_id
+            created_by_id=created_by
         )
         
-        self.db.add(filter_rule)
-        self.db.commit()
+        self.session.add(rule)
+        self.session.commit()
         
-        # Cache filter for fast access
-        self._cache_filter(filter_rule)
-        
-        return filter_rule
+        return rule
     
     def check_content(
         self,
-        content_type: ContentType,
-        content: str,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Tuple[bool, Optional[ContentFilter], Optional[ModerationAction]]:
-        """Check content against active filters."""
-        # Get active filters
-        filters = self._get_active_filters(content_type)
+        content_type: str,
+        content: Dict[str, Any]
+    ) -> List[AutoModerationRule]:
+        """
+        Check content against auto-moderation rules.
         
-        for filter_rule in filters:
-            if self._apply_filter(filter_rule, content, metadata):
-                return False, filter_rule, filter_rule.action
-        
-        return True, None, None
-    
-    def auto_moderate(
-        self,
-        content_type: ContentType,
-        content_id: int,
-        content: str,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Optional[ModerationActionLog]:
-        """Automatically moderate content based on filters."""
-        passed, filter_rule, action = self.check_content(
-            content_type, content, metadata
-        )
-        
-        if not passed and filter_rule:
-            # Create auto-generated report if configured
-            if filter_rule.auto_report:
-                report = ContentReport(
-                    reporter_id=1,  # System user
-                    content_type=content_type,
-                    content_id=content_id,
-                    reason=ReportReason.OTHER,
-                    description=f"Auto-flagged by filter: {filter_rule.name}",
-                    priority_score=filter_rule.severity
-                )
-                self.db.add(report)
-                self.db.commit()
-                
-                # Add to moderation queue
-                self._add_to_queue(
-                    content_type,
-                    content_id,
-                    filter_rule.severity,
-                    auto_flagged=True
-                )
+        Args:
+            content_type: Type of content
+            content: Content data to check
             
-            # Apply immediate action if configured
-            if action in [ModerationAction.DELETE, ModerationAction.HIDE]:
-                action_log = ModerationActionLog(
-                    moderator_id=1,  # System user
-                    action=action,
-                    content_type=content_type,
-                    content_id=content_id,
-                    reason=f"Automated action by filter: {filter_rule.name}"
-                )
-                self.db.add(action_log)
-                
-                self._apply_moderation_action(
-                    content_type, content_id, action, {}
-                )
-                
-                self.db.commit()
-                return action_log
+        Returns:
+            List of matched rules
+        """
+        # Get active rules
+        rules = self.session.query(AutoModerationRule).filter(
+            AutoModerationRule.enabled == True,
+            or_(
+                AutoModerationRule.content_type == None,
+                AutoModerationRule.content_type == content_type
+            )
+        ).all()
         
-        return None
+        matched_rules = []
+        
+        for rule in rules:
+            if self._check_rule(rule, content):
+                matched_rules.append(rule)
+                rule.matches_count += 1
+        
+        if matched_rules:
+            self.session.commit()
+        
+        return matched_rules
     
-    # Analytics and Metrics
+    # Banned Content
     
-    def get_moderation_stats(
+    def add_banned_pattern(
         self,
-        start_date: datetime,
-        end_date: datetime,
-        moderator_id: Optional[int] = None
-    ) -> Dict[str, Any]:
-        """Get moderation statistics for a date range."""
-        # Base query
-        query = self.db.query(ModerationActionLog).filter(
-            ModerationActionLog.created_at.between(start_date, end_date)
+        pattern_type: str,
+        pattern_value: str,
+        reason: str,
+        added_by: int,
+        severity: int = 5,
+        expires_at: Optional[datetime] = None
+    ) -> BannedContent:
+        """
+        Add a banned content pattern.
+        
+        Args:
+            pattern_type: Type of pattern (keyword, domain, etc.)
+            pattern_value: Pattern value
+            reason: Reason for ban
+            added_by: User adding the pattern
+            severity: Severity level (1-10)
+            expires_at: Optional expiration date
+            
+        Returns:
+            Created banned content entry
+        """
+        banned = BannedContent(
+            pattern_type=pattern_type,
+            pattern_value=pattern_value,
+            reason=reason,
+            severity=severity,
+            added_by_id=added_by,
+            expires_at=expires_at
         )
         
-        if moderator_id:
-            query = query.filter(ModerationActionLog.moderator_id == moderator_id)
+        self.session.add(banned)
+        self.session.commit()
         
-        # Get action counts
-        action_counts = {}
-        for action in ModerationAction:
-            count = query.filter(
-                ModerationActionLog.action == action
-            ).count()
-            action_counts[action.value] = count
-        
-        # Get report stats
-        report_query = self.db.query(ContentReport).filter(
-            ContentReport.created_at.between(start_date, end_date)
-        )
-        
-        if moderator_id:
-            report_query = report_query.filter(
-                ContentReport.assigned_to == moderator_id
-            )
-        
-        total_reports = report_query.count()
-        resolved_reports = report_query.filter(
-            ContentReport.status.in_([
-                ModerationStatus.APPROVED,
-                ModerationStatus.REJECTED
-            ])
-        ).count()
-        
-        # Average resolution time
-        avg_resolution_time = self.db.query(
-            func.avg(
-                func.extract(
-                    'epoch',
-                    ContentReport.reviewed_at - ContentReport.created_at
-                )
-            )
-        ).filter(
-            and_(
-                ContentReport.reviewed_at.isnot(None),
-                ContentReport.created_at.between(start_date, end_date)
-            )
-        ).scalar()
-        
-        # Sanction stats
-        sanction_query = self.db.query(UserSanction).filter(
-            UserSanction.created_at.between(start_date, end_date)
-        )
-        
-        if moderator_id:
-            sanction_query = sanction_query.filter(
-                UserSanction.issued_by == moderator_id
-            )
-        
-        sanction_counts = {}
-        for sanction_type in SanctionType:
-            count = sanction_query.filter(
-                UserSanction.type == sanction_type
-            ).count()
-            sanction_counts[sanction_type.value] = count
-        
-        return {
-            "period": {
-                "start": start_date.isoformat(),
-                "end": end_date.isoformat()
-            },
-            "reports": {
-                "total": total_reports,
-                "resolved": resolved_reports,
-                "resolution_rate": (resolved_reports / total_reports * 100) 
-                                 if total_reports > 0 else 0,
-                "avg_resolution_time_seconds": avg_resolution_time or 0
-            },
-            "actions": action_counts,
-            "sanctions": sanction_counts,
-            "moderator_id": moderator_id
-        }
+        return banned
     
-    # Helper methods
-    
-    def _calculate_report_priority(
+    def check_banned_content(
         self,
-        reporter_id: int,
-        content_type: ContentType,
-        reason: ReportReason
-    ) -> int:
-        """Calculate priority score for a report."""
-        score = 0
+        content: Dict[str, Any]
+    ) -> List[BannedContent]:
+        """
+        Check if content contains banned patterns.
         
-        # Base score by reason
-        reason_scores = {
-            ReportReason.SPAM: 3,
-            ReportReason.INAPPROPRIATE: 5,
-            ReportReason.OFFENSIVE: 7,
-            ReportReason.MISINFORMATION: 6,
-            ReportReason.COPYRIGHT: 8,
-            ReportReason.PRIVACY: 9,
-            ReportReason.OTHER: 2
-        }
-        score += reason_scores.get(reason, 0)
+        Args:
+            content: Content to check
+            
+        Returns:
+            List of matched banned patterns
+        """
+        # Get active banned patterns
+        patterns = self.session.query(BannedContent).filter(
+            BannedContent.active == True,
+            or_(
+                BannedContent.expires_at == None,
+                BannedContent.expires_at > datetime.utcnow()
+            )
+        ).all()
         
-        # Boost for trusted reporters
-        reporter = self.db.query(User).filter(User.id == reporter_id).first()
-        if reporter and reporter.reputation_score > 100:
-            score += 2
+        matched = []
         
-        # Boost for sensitive content types
-        if content_type in [ContentType.USER_PROFILE, ContentType.IMAGE]:
-            score += 1
+        for pattern in patterns:
+            if self._check_banned_pattern(pattern, content):
+                matched.append(pattern)
         
-        return min(score, 10)  # Cap at 10
+        return matched
     
-    def _get_report_status_for_action(
-        self,
-        action: ModerationAction
-    ) -> ModerationStatus:
-        """Map moderation action to report status."""
-        status_map = {
-            ModerationAction.APPROVE: ModerationStatus.APPROVED,
-            ModerationAction.REJECT: ModerationStatus.REJECTED,
-            ModerationAction.DELETE: ModerationStatus.REJECTED,
-            ModerationAction.HIDE: ModerationStatus.REJECTED,
-            ModerationAction.ESCALATE: ModerationStatus.ESCALATED
-        }
-        return status_map.get(action, ModerationStatus.APPROVED)
+    # Moderation Queue
     
-    def _apply_moderation_action(
+    def add_to_queue(
         self,
-        content_type: ContentType,
+        content_type: str,
         content_id: int,
-        action: ModerationAction,
-        metadata: Optional[Dict[str, Any]]
-    ):
-        """Apply the moderation action to the content."""
-        # This would integrate with specific content services
-        # For now, we'll just cache the action
-        cache_key = f"moderation:{content_type.value}:{content_id}"
-        self.redis.setex(
-            cache_key,
-            86400,  # 24 hours
-            action.value
-        )
-    
-    def _apply_sanction_effects(
-        self,
-        user_id: int,
-        sanction_type: SanctionType
-    ):
-        """Apply the effects of a sanction."""
-        cache_key = f"user:sanctions:{user_id}"
-        sanctions = self.redis.get(cache_key) or []
-        if isinstance(sanctions, bytes):
-            sanctions = []
-        sanctions.append(sanction_type.value)
-        self.redis.setex(cache_key, 86400 * 30, str(sanctions))
-    
-    def _remove_sanction_effects(
-        self,
-        user_id: int,
-        sanction_type: SanctionType
-    ):
-        """Remove the effects of a sanction."""
-        cache_key = f"user:sanctions:{user_id}"
-        sanctions = self.redis.get(cache_key) or []
-        if isinstance(sanctions, bytes):
-            sanctions = eval(sanctions.decode())
-        if sanction_type.value in sanctions:
-            sanctions.remove(sanction_type.value)
-        self.redis.setex(cache_key, 86400 * 30, str(sanctions))
-    
-    def _add_to_queue(
-        self,
-        content_type: ContentType,
-        content_id: int,
-        priority: int,
-        auto_flagged: bool = False
-    ):
-        """Add content to moderation queue."""
+        reason: str,
+        priority: int = 0,
+        auto_flagged: bool = False,
+        rule_id: Optional[int] = None
+    ) -> ModerationQueue:
+        """
+        Add content to moderation queue.
+        
+        Args:
+            content_type: Type of content
+            content_id: ID of content
+            reason: Reason for queuing
+            priority: Priority level
+            auto_flagged: Whether auto-flagged
+            rule_id: ID of rule that flagged it
+            
+        Returns:
+            Queue entry
+        """
         # Check if already in queue
-        existing = self.db.query(ModerationQueue).filter(
+        existing = self.session.query(ModerationQueue).filter(
             and_(
                 ModerationQueue.content_type == content_type,
-                ModerationQueue.content_id == content_id
+                ModerationQueue.content_id == content_id,
+                ModerationQueue.reviewed == False
             )
         ).first()
         
-        if not existing:
-            queue_item = ModerationQueue(
-                content_type=content_type,
-                content_id=content_id,
-                priority=priority,
-                auto_flagged=auto_flagged
-            )
-            self.db.add(queue_item)
-            self.db.commit()
+        if existing:
+            # Update priority if higher
+            if priority > existing.priority:
+                existing.priority = priority
+            return existing
+        
+        queue_item = ModerationQueue(
+            content_type=content_type,
+            content_id=content_id,
+            reason=reason,
+            priority=priority,
+            auto_flagged=auto_flagged,
+            rule_id=rule_id
+        )
+        
+        self.session.add(queue_item)
+        self.session.commit()
+        
+        return queue_item
     
-    def _remove_from_queue(
+    def get_queue_item(self, queue_id: int) -> ModerationQueue:
+        """Get a specific queue item."""
+        item = self.session.query(ModerationQueue).filter_by(id=queue_id).first()
+        if not item:
+            raise NotFoundException("Queue item not found")
+        return item
+    
+    def review_queue_item(
         self,
-        content_type: ContentType,
+        queue_id: int,
+        moderator_id: int
+    ) -> ModerationQueue:
+        """
+        Mark a queue item as reviewed.
+        
+        Args:
+            queue_id: Queue item ID
+            moderator_id: Moderator reviewing
+            
+        Returns:
+            Updated queue item
+        """
+        item = self.get_queue_item(queue_id)
+        
+        item.reviewed = True
+        item.reviewed_at = datetime.utcnow()
+        item.assigned_to_id = moderator_id
+        
+        self.session.commit()
+        
+        return item
+    
+    # Statistics
+    
+    def get_moderation_stats(
+        self,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ) -> Dict[str, Any]:
+        """
+        Get moderation statistics.
+        
+        Args:
+            start_date: Start date for stats
+            end_date: End date for stats
+            
+        Returns:
+            Dictionary of statistics
+        """
+        if not start_date:
+            start_date = datetime.utcnow() - timedelta(days=30)
+        if not end_date:
+            end_date = datetime.utcnow()
+        
+        # Report stats
+        report_query = self.session.query(ContentReport).filter(
+            ContentReport.created_at.between(start_date, end_date)
+        )
+        
+        total_reports = report_query.count()
+        pending_reports = report_query.filter(
+            ContentReport.status == ReportStatus.PENDING
+        ).count()
+        resolved_reports = report_query.filter(
+            ContentReport.status == ReportStatus.RESOLVED
+        ).count()
+        
+        # Action stats
+        action_query = self.session.query(ModerationLog).filter(
+            ModerationLog.created_at.between(start_date, end_date)
+        )
+        
+        total_actions = action_query.count()
+        
+        # Queue stats
+        queue_pending = self.session.query(ModerationQueue).filter(
+            ModerationQueue.reviewed == False
+        ).count()
+        
+        return {
+            "reports": {
+                "total": total_reports,
+                "pending": pending_reports,
+                "resolved": resolved_reports,
+                "resolution_rate": resolved_reports / total_reports if total_reports > 0 else 0
+            },
+            "actions": {
+                "total": total_actions,
+                "by_type": self._get_actions_by_type(start_date, end_date)
+            },
+            "queue": {
+                "pending": queue_pending
+            },
+            "period": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
+            }
+        }
+    
+    # Private helper methods
+    
+    def _content_exists(self, content_type: str, content_id: int) -> bool:
+        """Check if content exists."""
+        if content_type == "recipe":
+            return self.session.query(Recipe).filter_by(id=content_id).count() > 0
+        elif content_type == "review":
+            return self.session.query(Review).filter_by(id=content_id).count() > 0
+        # Add more content types as needed
+        return False
+    
+    def _calculate_priority(self, reason: ReportReason, content_type: str) -> int:
+        """Calculate report priority based on reason and content type."""
+        base_priority = {
+            ReportReason.SPAM: 3,
+            ReportReason.INAPPROPRIATE: 5,
+            ReportReason.COPYRIGHT: 7,
+            ReportReason.MISINFORMATION: 6,
+            ReportReason.OFFENSIVE: 8,
+            ReportReason.OTHER: 2
+        }.get(reason, 2)
+        
+        # Adjust based on content type
+        if content_type == "recipe":
+            base_priority += 1
+        
+        return min(base_priority, 10)
+    
+    def _check_auto_moderation(self, report: ContentReport):
+        """Check if report triggers auto-moderation."""
+        # Count recent reports for same content
+        recent_count = self.session.query(ContentReport).filter(
+            and_(
+                ContentReport.content_type == report.content_type,
+                ContentReport.content_id == report.content_id,
+                ContentReport.created_at > datetime.utcnow() - timedelta(hours=24)
+            )
+        ).count()
+        
+        # Auto-flag if multiple reports
+        if recent_count >= 3:
+            self.add_to_queue(
+                content_type=report.content_type,
+                content_id=report.content_id,
+                reason=f"Multiple reports ({recent_count}) in 24 hours",
+                priority=8,
+                auto_flagged=True
+            )
+    
+    def _notify_moderators(self, report: ContentReport):
+        """Notify moderators of high-priority report."""
+        if self.notifications:
+            # Get moderator IDs (implement based on your role system)
+            moderator_ids = []  # TODO: Get moderator IDs
+            
+            for mod_id in moderator_ids:
+                self.notifications.send_notification(
+                    user_id=mod_id,
+                    type="high_priority_report",
+                    data={
+                        "report_id": report.id,
+                        "content_type": report.content_type,
+                        "reason": report.reason.value
+                    }
+                )
+    
+    def _log_moderation_action(
+        self,
+        moderator_id: int,
+        action: ModerationAction,
+        target_type: str,
+        target_id: int,
+        reason: str,
+        details: Optional[str] = None,
+        report_id: Optional[int] = None
+    ) -> ModerationLog:
+        """Create moderation log entry."""
+        log = ModerationLog(
+            moderator_id=moderator_id,
+            action=action,
+            target_type=target_type,
+            target_id=target_id,
+            reason=reason,
+            details=details,
+            report_id=report_id
+        )
+        
+        self.session.add(log)
+        return log
+    
+    def _execute_moderation_action(
+        self,
+        action: ModerationAction,
+        content_type: str,
         content_id: int
     ):
-        """Remove content from moderation queue."""
-        self.db.query(ModerationQueue).filter(
-            and_(
-                ModerationQueue.content_type == content_type,
-                ModerationQueue.content_id == content_id
-            )
-        ).delete()
-        self.db.commit()
-    
-    def _cache_filter(self, filter_rule: ContentFilter):
-        """Cache filter for fast access."""
-        cache_key = f"filter:{filter_rule.id}"
-        self.redis.setex(
-            cache_key,
-            3600,  # 1 hour
-            filter_rule.pattern
-        )
-    
-    def _get_active_filters(
-        self,
-        content_type: ContentType
-    ) -> List[ContentFilter]:
-        """Get active filters for content type."""
-        filters = self.db.query(ContentFilter).filter(
-            and_(
-                ContentFilter.is_active == True,
-                or_(
-                    ContentFilter.content_type == content_type,
-                    ContentFilter.content_type.is_(None)
-                )
-            )
-        ).order_by(desc(ContentFilter.severity)).all()
+        """Execute a moderation action on content."""
+        if content_type == "recipe":
+            recipe = self.session.query(Recipe).filter_by(id=content_id).first()
+            if recipe:
+                if action == ModerationAction.REMOVE:
+                    recipe.is_active = False
+                elif action == ModerationAction.HIDE:
+                    recipe.is_visible = False
+                elif action == ModerationAction.RESTORE:
+                    recipe.is_active = True
+                    recipe.is_visible = True
+        elif content_type == "review":
+            review = self.session.query(Review).filter_by(id=content_id).first()
+            if review:
+                if action == ModerationAction.REMOVE:
+                    self.session.delete(review)
+                # Add more actions as needed
         
-        return filters
+        # Clear cache if applicable
+        if self.cache:
+            self.cache.delete(f"{content_type}:{content_id}")
     
-    def _apply_filter(
-        self,
-        filter_rule: ContentFilter,
-        content: str,
-        metadata: Optional[Dict[str, Any]]
-    ) -> bool:
-        """Apply a filter rule to content."""
-        if filter_rule.filter_type == "keyword":
-            return filter_rule.pattern.lower() in content.lower()
+    def _get_reverse_action(self, action: ModerationAction) -> Optional[ModerationAction]:
+        """Get the reverse of a moderation action."""
+        reverses = {
+            ModerationAction.REMOVE: ModerationAction.RESTORE,
+            ModerationAction.HIDE: ModerationAction.RESTORE,
+            ModerationAction.BAN: ModerationAction.UNBAN,
+            ModerationAction.FLAG: None,
+            ModerationAction.WARN: None
+        }
+        return reverses.get(action)
+    
+    def _check_rule(self, rule: AutoModerationRule, content: Dict[str, Any]) -> bool:
+        """Check if content matches an auto-moderation rule."""
+        config = json.loads(rule.rule_config)
         
-        elif filter_rule.filter_type == "regex":
-            try:
-                return bool(re.search(filter_rule.pattern, content, re.IGNORECASE))
-            except:
-                return False
-        
-        elif filter_rule.filter_type == "ml_model":
-            # Placeholder for ML-based filtering
-            # Would integrate with ML service
-            return False
+        if rule.rule_type == "keyword":
+            keywords = config.get("keywords", [])
+            text = " ".join(str(v) for v in content.values() if isinstance(v, str))
+            text_lower = text.lower()
+            
+            for keyword in keywords:
+                if keyword.lower() in text_lower:
+                    return True
+                    
+        elif rule.rule_type == "pattern":
+            pattern = config.get("pattern")
+            if pattern:
+                text = " ".join(str(v) for v in content.values() if isinstance(v, str))
+                if re.search(pattern, text, re.IGNORECASE):
+                    return True
+                    
+        elif rule.rule_type == "threshold":
+            # Implement threshold-based rules (e.g., spam score)
+            pass
         
         return False
+    
+    def _check_banned_pattern(
+        self,
+        pattern: BannedContent,
+        content: Dict[str, Any]
+    ) -> bool:
+        """Check if content matches a banned pattern."""
+        if pattern.pattern_type == "keyword":
+            text = " ".join(str(v) for v in content.values() if isinstance(v, str))
+            return pattern.pattern_value.lower() in text.lower()
+            
+        elif pattern.pattern_type == "domain":
+            # Check for domain in URLs
+            text = " ".join(str(v) for v in content.values() if isinstance(v, str))
+            return pattern.pattern_value in text
+            
+        return False
+    
+    def _get_actions_by_type(
+        self,
+        start_date: datetime,
+        end_date: datetime
+    ) -> Dict[str, int]:
+        """Get count of actions by type."""
+        results = self.session.query(
+            ModerationLog.action,
+            func.count(ModerationLog.id)
+        ).filter(
+            ModerationLog.created_at.between(start_date, end_date)
+        ).group_by(ModerationLog.action).all()
+        
+        return {action.value: count for action, count in results}

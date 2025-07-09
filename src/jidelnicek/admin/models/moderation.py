@@ -1,339 +1,273 @@
 """
-Moderation models for content review and management.
+Moderation models for content moderation system.
 
-This module defines models for content moderation, including reports,
-moderation actions, sanctions, and appeals.
+This module defines database models for content moderation features including
+reports, moderation actions, and audit logs.
 """
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-from enum import Enum
+from typing import Optional
 from sqlalchemy import (
-    Column, String, Text, Integer, Boolean, DateTime, ForeignKey,
-    Enum as SQLEnum, JSON, Index, UniqueConstraint, CheckConstraint
+    Column, Integer, String, Text, DateTime, ForeignKey, Boolean,
+    Enum as SQLEnum, Index, CheckConstraint
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy.ext.declarative import declarative_base
+import enum
 
-from jidelnicek.core.database import Base
-
-
-class ContentType(str, Enum):
-    """Types of content that can be moderated."""
-    RECIPE = "recipe"
-    COMMENT = "comment"
-    REVIEW = "review"
-    USER_PROFILE = "user_profile"
-    IMAGE = "image"
+from jidelnicek.common.models.base import Base
 
 
-class ReportReason(str, Enum):
+class ReportStatus(str, enum.Enum):
+    """Status of content reports."""
+    PENDING = "pending"
+    INVESTIGATING = "investigating"
+    RESOLVED = "resolved"
+    DISMISSED = "dismissed"
+    ESCALATED = "escalated"
+
+
+class ReportReason(str, enum.Enum):
     """Reasons for reporting content."""
     SPAM = "spam"
     INAPPROPRIATE = "inappropriate"
-    OFFENSIVE = "offensive"
-    MISINFORMATION = "misinformation"
     COPYRIGHT = "copyright"
-    PRIVACY = "privacy"
+    MISINFORMATION = "misinformation"
+    OFFENSIVE = "offensive"
     OTHER = "other"
 
 
-class ModerationStatus(str, Enum):
-    """Status of moderation review."""
-    PENDING = "pending"
-    IN_REVIEW = "in_review"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    ESCALATED = "escalated"
-    AUTO_APPROVED = "auto_approved"
-    AUTO_REJECTED = "auto_rejected"
-
-
-class ModerationAction(str, Enum):
-    """Actions that can be taken on content."""
-    APPROVE = "approve"
-    REJECT = "reject"
-    DELETE = "delete"
-    EDIT = "edit"
+class ModerationAction(str, enum.Enum):
+    """Types of moderation actions."""
+    REMOVE = "remove"
     HIDE = "hide"
     FLAG = "flag"
-    ESCALATE = "escalate"
-
-
-class SanctionType(str, Enum):
-    """Types of user sanctions."""
-    WARNING = "warning"
-    TEMPORARY_BAN = "temporary_ban"
-    PERMANENT_BAN = "permanent_ban"
-    CONTENT_RESTRICTION = "content_restriction"
-    RATE_LIMIT = "rate_limit"
-
-
-class AppealStatus(str, Enum):
-    """Status of user appeals."""
-    PENDING = "pending"
-    IN_REVIEW = "in_review"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    EXPIRED = "expired"
+    WARN = "warn"
+    BAN = "ban"
+    UNBAN = "unban"
+    EDIT = "edit"
+    RESTORE = "restore"
 
 
 class ContentReport(Base):
-    """Model for content reports submitted by users."""
+    """Model for user reports on content."""
     
     __tablename__ = "content_reports"
     
-    id = Column(Integer, primary_key=True, index=True)
-    reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    content_type = Column(SQLEnum(ContentType), nullable=False)
+    id = Column(Integer, primary_key=True)
+    
+    # Content being reported
+    content_type = Column(String(50), nullable=False)  # 'recipe', 'review', 'comment', etc.
     content_id = Column(Integer, nullable=False)
+    content_url = Column(String(255))  # Optional URL to content
+    
+    # Reporter information
+    reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    reporter = relationship("User", foreign_keys=[reporter_id], backref="reports_made")
+    
+    # Report details
     reason = Column(SQLEnum(ReportReason), nullable=False)
     description = Column(Text)
-    priority_score = Column(Integer, default=0)  # Calculated based on various factors
     
-    # Status tracking
-    status = Column(SQLEnum(ModerationStatus), default=ModerationStatus.PENDING)
-    assigned_to = Column(Integer, ForeignKey("users.id"))
-    reviewed_at = Column(DateTime)
-    resolution = Column(Text)
+    # Processing status
+    status = Column(SQLEnum(ReportStatus), default=ReportStatus.PENDING, nullable=False)
+    priority = Column(Integer, default=0)  # Higher number = higher priority
+    
+    # Moderator handling the report
+    assigned_to_id = Column(Integer, ForeignKey("users.id"))
+    assigned_to = relationship("User", foreign_keys=[assigned_to_id], backref="assigned_reports")
     
     # Timestamps
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    resolved_at = Column(DateTime)
     
-    # Relationships
-    reporter = relationship("User", foreign_keys=[reporter_id], backref="submitted_reports")
-    moderator = relationship("User", foreign_keys=[assigned_to], backref="assigned_reports")
-    moderation_actions = relationship("ModerationActionLog", back_populates="report")
+    # Resolution details
+    resolution_notes = Column(Text)
+    action_taken = Column(SQLEnum(ModerationAction))
     
-    # Indexes
+    # Indexes for performance
     __table_args__ = (
-        Index('idx_content_reports_status_priority', 'status', 'priority_score'),
-        Index('idx_content_reports_content', 'content_type', 'content_id'),
-        Index('idx_content_reports_reporter', 'reporter_id'),
-        UniqueConstraint('reporter_id', 'content_type', 'content_id', 
-                        name='uq_reporter_content'),
+        Index("idx_content_reports_status", "status"),
+        Index("idx_content_reports_content", "content_type", "content_id"),
+        Index("idx_content_reports_reporter", "reporter_id"),
+        Index("idx_content_reports_assigned", "assigned_to_id"),
+        Index("idx_content_reports_created", "created_at"),
+        CheckConstraint("priority >= 0", name="check_priority_non_negative"),
     )
+    
+    def __repr__(self):
+        return f"<ContentReport(id={self.id}, content={self.content_type}:{self.content_id}, status={self.status})>"
 
 
-class ModerationActionLog(Base):
-    """Log of all moderation actions taken."""
+class ModerationLog(Base):
+    """Audit log for all moderation actions."""
     
-    __tablename__ = "moderation_action_logs"
+    __tablename__ = "moderation_logs"
     
-    id = Column(Integer, primary_key=True, index=True)
-    report_id = Column(Integer, ForeignKey("content_reports.id"))
+    id = Column(Integer, primary_key=True)
+    
+    # Who performed the action
     moderator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    moderator = relationship("User", foreign_keys=[moderator_id], backref="moderation_actions")
+    
+    # What action was taken
     action = Column(SQLEnum(ModerationAction), nullable=False)
     
-    # Content details
-    content_type = Column(SQLEnum(ContentType), nullable=False)
-    content_id = Column(Integer, nullable=False)
+    # Target of the action
+    target_type = Column(String(50), nullable=False)  # 'user', 'recipe', 'review', etc.
+    target_id = Column(Integer, nullable=False)
     
-    # Action details
-    reason = Column(Text)
-    notes = Column(Text)
-    metadata = Column(JSON)  # Additional action-specific data
+    # Related report (if applicable)
+    report_id = Column(Integer, ForeignKey("content_reports.id"))
+    report = relationship("ContentReport", backref="moderation_logs")
     
-    # Response template used (if any)
-    template_id = Column(Integer, ForeignKey("moderation_templates.id"))
-    
-    # Timestamp
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    
-    # Relationships
-    report = relationship("ContentReport", back_populates="moderation_actions")
-    moderator = relationship("User", foreign_keys=[moderator_id])
-    template = relationship("ModerationTemplate")
-    
-    # Indexes
-    __table_args__ = (
-        Index('idx_moderation_logs_moderator', 'moderator_id'),
-        Index('idx_moderation_logs_content', 'content_type', 'content_id'),
-        Index('idx_moderation_logs_created', 'created_at'),
-    )
-
-
-class UserSanction(Base):
-    """Sanctions applied to users for policy violations."""
-    
-    __tablename__ = "user_sanctions"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    issued_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    
-    # Sanction details
-    type = Column(SQLEnum(SanctionType), nullable=False)
+    # Details
     reason = Column(Text, nullable=False)
-    evidence = Column(JSON)  # Links to reports, content, etc.
+    details = Column(Text)  # Additional context or changes made
     
-    # Duration (null for permanent sanctions)
-    starts_at = Column(DateTime, default=func.now(), nullable=False)
-    expires_at = Column(DateTime)
-    
-    # Status
-    is_active = Column(Boolean, default=True)
-    lifted_at = Column(DateTime)
-    lifted_by = Column(Integer, ForeignKey("users.id"))
-    lift_reason = Column(Text)
+    # Reversal information
+    reversed = Column(Boolean, default=False)
+    reversed_by_id = Column(Integer, ForeignKey("users.id"))
+    reversed_by = relationship("User", foreign_keys=[reversed_by_id])
+    reversed_at = Column(DateTime)
+    reversal_reason = Column(Text)
     
     # Timestamps
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
-    # Relationships
-    user = relationship("User", foreign_keys=[user_id], backref="sanctions")
-    issuer = relationship("User", foreign_keys=[issued_by])
-    lifter = relationship("User", foreign_keys=[lifted_by])
-    appeals = relationship("UserAppeal", back_populates="sanction")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Indexes
     __table_args__ = (
-        Index('idx_user_sanctions_user_active', 'user_id', 'is_active'),
-        Index('idx_user_sanctions_expires', 'expires_at'),
-        CheckConstraint('expires_at IS NULL OR expires_at > starts_at', 
-                       name='check_sanction_duration'),
+        Index("idx_moderation_logs_moderator", "moderator_id"),
+        Index("idx_moderation_logs_target", "target_type", "target_id"),
+        Index("idx_moderation_logs_report", "report_id"),
+        Index("idx_moderation_logs_created", "created_at"),
+        Index("idx_moderation_logs_action", "action"),
     )
+    
+    def __repr__(self):
+        return f"<ModerationLog(id={self.id}, action={self.action}, target={self.target_type}:{self.target_id})>"
 
 
-class UserAppeal(Base):
-    """Appeals submitted by users against sanctions or moderation decisions."""
+class AutoModerationRule(Base):
+    """Rules for automatic content moderation."""
     
-    __tablename__ = "user_appeals"
+    __tablename__ = "auto_moderation_rules"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    sanction_id = Column(Integer, ForeignKey("user_sanctions.id"))
+    id = Column(Integer, primary_key=True)
     
-    # Appeal details
-    reason = Column(Text, nullable=False)
-    evidence = Column(JSON)  # Supporting documentation
-    
-    # Review process
-    status = Column(SQLEnum(AppealStatus), default=AppealStatus.PENDING)
-    reviewed_by = Column(Integer, ForeignKey("users.id"))
-    reviewed_at = Column(DateTime)
-    decision = Column(Text)
-    
-    # Timestamps
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    expires_at = Column(DateTime)  # Appeal deadline
-    
-    # Relationships
-    user = relationship("User", foreign_keys=[user_id], backref="appeals")
-    sanction = relationship("UserSanction", back_populates="appeals")
-    reviewer = relationship("User", foreign_keys=[reviewed_by])
-    
-    # Indexes
-    __table_args__ = (
-        Index('idx_user_appeals_status', 'status'),
-        Index('idx_user_appeals_user', 'user_id'),
-    )
-
-
-class ModerationTemplate(Base):
-    """Templates for common moderation responses."""
-    
-    __tablename__ = "moderation_templates"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False, unique=True)
-    category = Column(String(50), nullable=False)
-    
-    # Template content
-    action = Column(SQLEnum(ModerationAction), nullable=False)
-    response_text = Column(Text, nullable=False)
-    internal_notes = Column(Text)
-    
-    # Usage tracking
-    usage_count = Column(Integer, default=0)
-    is_active = Column(Boolean, default=True)
-    
-    # Metadata
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
-    # Relationships
-    creator = relationship("User", foreign_keys=[created_by])
-    
-    # Indexes
-    __table_args__ = (
-        Index('idx_moderation_templates_category', 'category'),
-        Index('idx_moderation_templates_action', 'action'),
-    )
-
-
-class ContentFilter(Base):
-    """Automated content filtering rules."""
-    
-    __tablename__ = "content_filters"
-    
-    id = Column(Integer, primary_key=True, index=True)
+    # Rule details
     name = Column(String(100), nullable=False, unique=True)
     description = Column(Text)
     
-    # Filter configuration
-    content_type = Column(SQLEnum(ContentType))  # Null for all types
-    filter_type = Column(String(50), nullable=False)  # keyword, regex, ml_model
-    pattern = Column(Text, nullable=False)
+    # Rule configuration
+    content_type = Column(String(50))  # Optional: specific content type
+    rule_type = Column(String(50), nullable=False)  # 'keyword', 'pattern', 'threshold'
+    rule_config = Column(Text, nullable=False)  # JSON configuration
     
-    # Action configuration
+    # Action to take
     action = Column(SQLEnum(ModerationAction), nullable=False)
     severity = Column(Integer, default=1)  # 1-10 scale
-    auto_report = Column(Boolean, default=False)
     
     # Status
-    is_active = Column(Boolean, default=True)
-    effectiveness_score = Column(Integer, default=0)  # Based on accuracy
+    enabled = Column(Boolean, default=True)
     
-    # Metadata
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    # Statistics
+    matches_count = Column(Integer, default=0)
+    false_positives = Column(Integer, default=0)
     
-    # Relationships
-    creator = relationship("User", foreign_keys=[created_by])
+    # Audit
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Indexes
     __table_args__ = (
-        Index('idx_content_filters_type_active', 'content_type', 'is_active'),
+        Index("idx_auto_moderation_rules_enabled", "enabled"),
+        Index("idx_auto_moderation_rules_content_type", "content_type"),
+        CheckConstraint("severity >= 1 AND severity <= 10", name="check_severity_range"),
     )
+    
+    def __repr__(self):
+        return f"<AutoModerationRule(id={self.id}, name={self.name}, enabled={self.enabled})>"
+
+
+class BannedContent(Base):
+    """Track banned or flagged content patterns."""
+    
+    __tablename__ = "banned_content"
+    
+    id = Column(Integer, primary_key=True)
+    
+    # Pattern details
+    pattern_type = Column(String(50), nullable=False)  # 'keyword', 'domain', 'email', 'ip'
+    pattern_value = Column(String(255), nullable=False)
+    
+    # Reason and context
+    reason = Column(Text, nullable=False)
+    severity = Column(Integer, default=5)  # 1-10 scale
+    
+    # Status
+    active = Column(Boolean, default=True)
+    
+    # Audit
+    added_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    added_by = relationship("User", foreign_keys=[added_by_id])
+    added_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Expiration (optional)
+    expires_at = Column(DateTime)
+    
+    # Indexes
+    __table_args__ = (
+        Index("idx_banned_content_pattern", "pattern_type", "pattern_value"),
+        Index("idx_banned_content_active", "active"),
+        Index("idx_banned_content_expires", "expires_at"),
+        CheckConstraint("severity >= 1 AND severity <= 10", name="check_banned_severity_range"),
+    )
+    
+    def __repr__(self):
+        return f"<BannedContent(id={self.id}, type={self.pattern_type}, value={self.pattern_value[:20]}...)>"
 
 
 class ModerationQueue(Base):
-    """Priority queue for content requiring moderation."""
+    """Queue for content awaiting moderation."""
     
     __tablename__ = "moderation_queue"
     
-    id = Column(Integer, primary_key=True, index=True)
-    content_type = Column(SQLEnum(ContentType), nullable=False)
+    id = Column(Integer, primary_key=True)
+    
+    # Content to moderate
+    content_type = Column(String(50), nullable=False)
     content_id = Column(Integer, nullable=False)
     
-    # Priority and routing
-    priority = Column(Integer, default=0, nullable=False)
-    category = Column(String(50))  # For specialized routing
+    # Why it's in the queue
+    reason = Column(Text, nullable=False)
     auto_flagged = Column(Boolean, default=False)
+    rule_id = Column(Integer, ForeignKey("auto_moderation_rules.id"))
+    rule = relationship("AutoModerationRule")
     
-    # Assignment
-    assigned_to = Column(Integer, ForeignKey("users.id"))
-    assigned_at = Column(DateTime)
+    # Priority and assignment
+    priority = Column(Integer, default=0)
+    assigned_to_id = Column(Integer, ForeignKey("users.id"))
+    assigned_to = relationship("User")
     
     # Status
-    status = Column(SQLEnum(ModerationStatus), default=ModerationStatus.PENDING)
+    reviewed = Column(Boolean, default=False)
     
     # Timestamps
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
-    # Relationships
-    moderator = relationship("User", foreign_keys=[assigned_to])
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    reviewed_at = Column(DateTime)
     
     # Indexes
     __table_args__ = (
-        Index('idx_moderation_queue_priority', 'status', 'priority'),
-        Index('idx_moderation_queue_assigned', 'assigned_to', 'status'),
-        UniqueConstraint('content_type', 'content_id', name='uq_queue_content'),
+        Index("idx_moderation_queue_content", "content_type", "content_id"),
+        Index("idx_moderation_queue_reviewed", "reviewed"),
+        Index("idx_moderation_queue_priority", "priority"),
+        Index("idx_moderation_queue_created", "created_at"),
+        CheckConstraint("priority >= 0", name="check_queue_priority_non_negative"),
     )
+    
+    def __repr__(self):
+        return f"<ModerationQueue(id={self.id}, content={self.content_type}:{self.content_id}, reviewed={self.reviewed})>"
