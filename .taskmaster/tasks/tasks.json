@@ -654,7 +654,7 @@
               1
             ],
             "details": "Create configurable rounding rules that round up small quantities (e.g., 1.1 eggs → 2), round to nearest practical unit for larger quantities, and consider ingredient type (liquid vs solid, countable vs measurable).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T17:29:59.235Z",
+      "updated": "2025-07-09T17:34:11.940Z",
       "description": "Tasks for master context"
     }
   }
