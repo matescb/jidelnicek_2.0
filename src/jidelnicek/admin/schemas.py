@@ -295,3 +295,91 @@ class AdminDashboard(BaseModel):
     recent_registrations: List[AdminUserSummary]
     recent_admin_actions: List[AuditLogEntry]
     system_alerts: List[Dict[str, Any]]
+
+
+# Advanced audit schemas
+class AuditIntegrityStatus(str, Enum):
+    """Audit log integrity status."""
+    INTACT = "intact"
+    COMPROMISED = "compromised"
+    UNKNOWN = "unknown"
+
+
+class AuditIntegrityResult(BaseModel):
+    """Result of audit log integrity verification."""
+    integrity_status: AuditIntegrityStatus
+    total_checked: int
+    verified: int
+    issues_found: int
+    issues: List[Dict[str, Any]]
+    verification_timestamp: datetime
+
+
+class AuditAlert(BaseModel):
+    """Security alert from audit system."""
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: UUID
+    alert_type: str
+    severity: str
+    title: str
+    description: str
+    admin_id: Optional[UUID]
+    related_audit_logs: List[str]
+    detection_metadata: Optional[Dict[str, Any]]
+    status: str
+    created_at: datetime
+    acknowledged_by: Optional[UUID]
+    acknowledged_at: Optional[datetime]
+    resolution_notes: Optional[str]
+
+
+class AuditPattern(BaseModel):
+    """Detected unusual activity pattern."""
+    pattern_type: str
+    description: str
+    severity: str
+    admin_id: Optional[str]
+    timestamp: Optional[datetime]
+    metadata: Dict[str, Any]
+
+
+class AuditMetricsPeriod(BaseModel):
+    """Performance metrics for a time period."""
+    period_start: datetime
+    period_end: datetime
+    total_actions: int
+    success_rate: float
+    unique_admins: int
+    action_breakdown: Dict[str, int]
+    avg_response_time_ms: Optional[float]
+    max_response_time_ms: Optional[float]
+    alerts_generated: int
+
+
+class ComplianceReport(BaseModel):
+    """Comprehensive compliance audit report."""
+    report_metadata: Dict[str, Any]
+    summary: Dict[str, Any]
+    admin_activity: List[Dict[str, Any]]
+    sensitive_operations: List[Dict[str, Any]]
+    security_alerts: List[Dict[str, Any]]
+    integrity_verification: AuditIntegrityResult
+    detailed_logs: Optional[List[Dict[str, Any]]] = None
+
+
+class AuditSearchResult(BaseModel):
+    """Search result from audit logs."""
+    query: str
+    total: int
+    page: int
+    per_page: int
+    pages: int
+    results: List[Dict[str, Any]]
+
+
+class AuditArchiveResult(BaseModel):
+    """Result of audit log archiving operation."""
+    archived: int
+    archive_cutoff_date: datetime
+    permanent_deletion_cutoff: datetime
