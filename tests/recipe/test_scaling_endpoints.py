@@ -1,674 +1,436 @@
 """
 Tests for recipe scaling API endpoints.
-
-This module tests all scaling preview endpoints with various scenarios.
 """
 
 import pytest
-import pytest_asyncio
 from decimal import Decimal
+from uuid import uuid4
 from typing import Dict, Any
-from fastapi import status
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import httpx
 from httpx import AsyncClient
 
-from jidelnicek.recipe.models import Recipe, RecipeIngredient
-from jidelnicek.common.models.ingredient import Ingredient
 from jidelnicek.auth.models import AuthUser
+from jidelnicek.recipe.models.recipe import Recipe
+from jidelnicek.recipe.models.ingredient import Ingredient, RecipeIngredient
+from jidelnicek.common.models.nutritional_value import NutritionalValue
 
 
-@pytest_asyncio.fixture
-async def sample_recipe_with_calories(
-    db_session: AsyncSession,
-    sample_user: AuthUser
-) -> Recipe:
-    """Create a sample recipe with calorie information."""
-    # Create ingredients
-    pasta = Ingredient(
-        name="Pasta",
-        category="grains"
-    )
-    cheese = Ingredient(
-        name="Cheese",
-        category="dairy"
-    )
-    db_session.add_all([pasta, cheese])
-    await db_session.flush()
+pytestmark = pytest.mark.asyncio
+
+
+class TestRecipeScalingEndpoints:
+    """Test recipe scaling preview endpoints."""
     
-    # Create recipe
-    recipe = Recipe(
-        name="Test Pasta",
-        description="A test pasta recipe",
-        prep_time_minutes=10,
-        cooking_time_minutes=20,
-        servings=4,
-        difficulty="easy",
-        calories_per_serving=450,
-        creator_id=sample_user.id,
-        is_public=True,
-        is_pku_friendly=False
-    )
-    db_session.add(recipe)
-    await db_session.flush()
+    @pytest.fixture
+    async def auth_headers(self, async_client: AsyncClient) -> Dict[str, str]:
+        """Create authenticated user and return auth headers."""
+        # Register user
+        register_data = {
+            "email": "scaling_test@example.com",
+            "password": "ScalingTest123!",
+            "password_confirmation": "ScalingTest123!"
+        }
+        await async_client.post("/api/v1/auth/register", json=register_data)
+        
+        # Login
+        login_data = {
+            "email": "scaling_test@example.com",
+            "password": "ScalingTest123!"
+        }
+        response = await async_client.post("/api/v1/auth/login", json=login_data)
+        token = response.json()["access_token"]
+        
+        return {"Authorization": f"Bearer {token}"}
     
-    # Add ingredients
-    ingredients = [
-        RecipeIngredient(
-            recipe_id=recipe.id,
-            ingredient_id=pasta.id,
-            amount=Decimal("400"),
-            unit="g",
-            is_optional=False
-        ),
-        RecipeIngredient(
-            recipe_id=recipe.id,
-            ingredient_id=cheese.id,
-            amount=Decimal("100"),
-            unit="g",
-            is_optional=False
+    @pytest.fixture
+    async def sample_recipe(self, db_session, existing_user) -> Recipe:
+        """Create a sample recipe with ingredients."""
+        # Create nutritional values
+        flour_nutrition = NutritionalValue(
+            calories=Decimal("364"),
+            proteins=Decimal("10.3"),
+            carbohydrates=Decimal("76.3"),
+            fats=Decimal("1.0")
         )
-    ]
-    db_session.add_all(ingredients)
-    await db_session.commit()
-    await db_session.refresh(recipe)
+        db_session.add(flour_nutrition)
+        
+        milk_nutrition = NutritionalValue(
+            calories=Decimal("42"),
+            proteins=Decimal("3.4"),
+            carbohydrates=Decimal("5.0"),
+            fats=Decimal("1.0")
+        )
+        db_session.add(milk_nutrition)
+        
+        egg_nutrition = NutritionalValue(
+            calories=Decimal("155"),
+            proteins=Decimal("13"),
+            carbohydrates=Decimal("1.1"),
+            fats=Decimal("11")
+        )
+        db_session.add(egg_nutrition)
+        
+        # Create ingredients
+        flour = Ingredient(
+            name="Flour",
+            user_id=existing_user.id,
+            nutritional_value=flour_nutrition,
+            is_global=True
+        )
+        db_session.add(flour)
+        
+        milk = Ingredient(
+            name="Milk",
+            user_id=existing_user.id,
+            nutritional_value=milk_nutrition,
+            is_global=True
+        )
+        db_session.add(milk)
+        
+        eggs = Ingredient(
+            name="Eggs",
+            user_id=existing_user.id,
+            nutritional_value=egg_nutrition,
+            is_global=True
+        )
+        db_session.add(eggs)
+        
+        # Create recipe
+        recipe = Recipe(
+            user_id=existing_user.id,
+            title="Pancakes",
+            description="Simple pancake recipe",
+            instructions="Mix and cook",
+            prep_time=10,
+            cook_time=15,
+            servings=4,
+            is_public=True
+        )
+        db_session.add(recipe)
+        await db_session.flush()
+        
+        # Create recipe ingredients
+        recipe_flour = RecipeIngredient(
+            recipe_id=recipe.id,
+            ingredient_id=flour.id,
+            quantity=Decimal("200"),
+            unit="g"
+        )
+        db_session.add(recipe_flour)
+        
+        recipe_milk = RecipeIngredient(
+            recipe_id=recipe.id,
+            ingredient_id=milk.id,
+            quantity=Decimal("250"),
+            unit="ml"
+        )
+        db_session.add(recipe_milk)
+        
+        recipe_eggs = RecipeIngredient(
+            recipe_id=recipe.id,
+            ingredient_id=eggs.id,
+            quantity=Decimal("2"),
+            unit="piece"
+        )
+        db_session.add(recipe_eggs)
+        
+        await db_session.commit()
+        await db_session.refresh(recipe)
+        
+        return recipe
     
-    return recipe
-
-
-@pytest_asyncio.fixture
-async def private_recipe(
-    db_session: AsyncSession,
-    sample_user: AuthUser
-) -> Recipe:
-    """Create a private recipe for permission testing."""
-    recipe = Recipe(
-        name="Private Recipe",
-        description="A private recipe",
-        prep_time_minutes=5,
-        cooking_time_minutes=10,
-        servings=2,
-        difficulty="easy",
-        creator_id=sample_user.id,
-        is_public=False,
-        is_pku_friendly=False
-    )
-    db_session.add(recipe)
-    await db_session.commit()
-    await db_session.refresh(recipe)
-    
-    return recipe
-
-
-class TestBasicScalingEndpoint:
-    """Test the basic recipe scaling preview endpoint."""
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_by_factor(
+    async def test_preview_basic_scaling(
         self,
         async_client: AsyncClient,
         auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
+        sample_recipe: Recipe
     ):
-        """Test scaling a recipe by a factor."""
+        """Test basic recipe scaling preview."""
+        request_data = {
+            "target_servings": 6,
+            "use_rounding": True,
+            "use_constraints": True
+        }
+        
         response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": 2.0},
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview",
+            json=request_data,
             headers=auth_headers
         )
         
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == 200
         data = response.json()
         
-        # Check response structure
-        assert data["recipe_id"] == sample_recipe_with_calories.id
-        assert data["recipe_title"] == "Test Pasta"
-        assert data["scaling_factor"] == 2.0
-        assert data["scaling_method"] == "factor"
-        assert data["errors"] == []
-        assert data["original_participants"] == 4
-        assert data["scaled_participants"] == 8
+        assert data["recipe_id"] == str(sample_recipe.id)
+        assert data["recipe_name"] == "Pancakes"
+        assert data["original_servings"] == 4
+        assert data["target_servings"] == 6
+        assert data["scaling_factor"] == 1.5
+        assert data["constraints_applied"] is True
+        assert data["rounding_applied"] is True
         
         # Check ingredients
-        assert len(data["ingredients"]) == 2
+        assert len(data["ingredients"]) == 3
         
-        # Check pasta scaling
-        pasta = next(i for i in data["ingredients"] if i["name"] == "Pasta")
-        assert pasta["original_quantity"] == 400.0
-        assert pasta["scaled_quantity"] == 800.0
-        assert pasta["rounded_quantity"] == 800.0
+        # Check flour scaling (200g * 1.5 = 300g)
+        flour = next(i for i in data["ingredients"] if i["name"] == "Flour")
+        assert flour["original_quantity"] == 200.0
+        assert flour["scaled_quantity"] == 300.0
+        assert flour["unit"] == "g"
+        assert flour["was_rounded"] is True
         
-        # Check cheese scaling
-        cheese = next(i for i in data["ingredients"] if i["name"] == "Cheese")
-        assert cheese["original_quantity"] == 100.0
-        assert cheese["scaled_quantity"] == 200.0
-        assert cheese["rounded_quantity"] == 200.0
+        # Check eggs scaling (2 * 1.5 = 3, rounded to whole number)
+        eggs = next(i for i in data["ingredients"] if i["name"] == "Eggs")
+        assert eggs["original_quantity"] == 2.0
+        assert eggs["scaled_quantity"] == 3.0
+        assert eggs["unit"] == "piece"
     
-    @pytest.mark.asyncio
-    async def test_scale_recipe_with_rounding(
+    async def test_preview_scaling_without_rounding(
         self,
         async_client: AsyncClient,
         auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
+        sample_recipe: Recipe
     ):
-        """Test scaling with quantity rounding."""
+        """Test scaling preview without rounding."""
+        request_data = {
+            "target_servings": 5,
+            "use_rounding": False,
+            "use_constraints": True
+        }
+        
         response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": 0.75, "round_quantities": True},
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview",
+            json=request_data,
             headers=auth_headers
         )
         
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == 200
         data = response.json()
         
-        # Check pasta - 400 * 0.75 = 300 (no rounding needed)
-        pasta = next(i for i in data["ingredients"] if i["name"] == "Pasta")
-        assert pasta["scaled_quantity"] == 300.0
-        assert pasta["rounded_quantity"] == 300.0
+        assert data["scaling_factor"] == 1.25
+        assert data["rounding_applied"] is False
         
-        # Check cheese - 100 * 0.75 = 75
-        cheese = next(i for i in data["ingredients"] if i["name"] == "Cheese")
-        assert cheese["scaled_quantity"] == 75.0
-        assert cheese["rounded_quantity"] == 75.0
+        # Check eggs without rounding (2 * 1.25 = 2.5)
+        eggs = next(i for i in data["ingredients"] if i["name"] == "Eggs")
+        assert eggs["scaled_quantity"] == 2.5
     
-    @pytest.mark.asyncio
-    async def test_scale_recipe_extreme_factor_warnings(
+    async def test_preview_calorie_scaling(
         self,
         async_client: AsyncClient,
         auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
+        sample_recipe: Recipe
     ):
-        """Test warnings for extreme scaling factors."""
-        # Test very low scaling factor
+        """Test calorie-based scaling preview."""
+        request_data = {
+            "target_calories": 500.0,
+            "target_servings": 1
+        }
+        
         response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": 0.2},
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview/calories",
+            json=request_data,
             headers=auth_headers
         )
         
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == 200
         data = response.json()
-        assert any("very low" in warning for warning in data["warnings"])
         
-        # Test very high scaling factor
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": 15.0},
-            headers=auth_headers
-        )
+        assert data["recipe_id"] == str(sample_recipe.id)
+        assert data["target_calories"] == 500.0
+        assert data["target_servings"] == 1
+        assert "original_calories_total" in data
+        assert "scaled_calories_total" in data
+        assert "scaling_factor" in data
         
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert any("very high" in warning for warning in data["warnings"])
+        # Verify scaled calories are close to target
+        assert abs(data["scaled_calories_per_serving"] - 500.0) < 50  # Within 10%
     
-    @pytest.mark.asyncio
-    async def test_scale_recipe_invalid_factor(
+    async def test_preview_participant_scaling(
         self,
         async_client: AsyncClient,
         auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
+        sample_recipe: Recipe
     ):
-        """Test validation of scaling factor."""
-        # Zero factor
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": 0},
-            headers=auth_headers
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        """Test participant-based scaling preview."""
+        request_data = {
+            "participants": [
+                {"name": "Adult 1", "coefficient": 100},
+                {"name": "Adult 2", "coefficient": 120},
+                {"name": "Child", "coefficient": 75},
+                {"name": "Athlete", "coefficient": 150, "meal_coefficients": {"Breakfast": 175}}
+            ],
+            "meal_type": "Breakfast"
+        }
         
-        # Negative factor
         response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": -1},
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview/participants",
+            json=request_data,
             headers=auth_headers
         )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         
-        # Too high factor
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": 101},
-            headers=auth_headers
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert data["participant_count"] == 4
+        assert data["meal_type"] == "Breakfast"
+        assert len(data["participant_details"]) == 4
+        
+        # Check athlete with meal coefficient
+        athlete = next(p for p in data["participant_details"] if p["name"] == "Athlete")
+        assert athlete["base_coefficient"] == 150
+        assert athlete["meal_coefficient"] == 175
+        assert athlete["effective_coefficient"] > 150  # Should be higher due to meal coefficient
+        
+        # Check effective participants calculation
+        # Adult 1: 100%, Adult 2: 120%, Child: 75%, Athlete: 150% * 175% = 262.5%
+        # Total: 1.0 + 1.2 + 0.75 + 2.625 = 5.575
+        assert abs(data["effective_participants"] - 5.575) < 0.01
     
-    @pytest.mark.asyncio
-    async def test_scale_recipe_not_found(
+    async def test_preview_participant_scaling_with_calories(
+        self,
+        async_client: AsyncClient,
+        auth_headers: Dict[str, str],
+        sample_recipe: Recipe
+    ):
+        """Test participant-based scaling with calorie targets."""
+        request_data = {
+            "participants": [
+                {"name": "Person 1", "coefficient": 100},
+                {"name": "Person 2", "coefficient": 80}
+            ],
+            "target_calories_per_person": 600.0
+        }
+        
+        response = await async_client.post(
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview/participants",
+            json=request_data,
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert data["target_calories_per_person"] == 600.0
+        assert "total_calories" in data
+        assert "calories_per_effective_participant" in data
+        
+        # Check calorie allocation
+        person1 = next(p for p in data["participant_details"] if p["name"] == "Person 1")
+        person2 = next(p for p in data["participant_details"] if p["name"] == "Person 2")
+        
+        assert person1["calories_allocated"] is not None
+        assert person2["calories_allocated"] is not None
+        assert person1["calories_allocated"] > person2["calories_allocated"]  # Due to coefficient
+    
+    async def test_preview_scaling_constraints(
+        self,
+        async_client: AsyncClient,
+        auth_headers: Dict[str, str],
+        sample_recipe: Recipe
+    ):
+        """Test scaling with extreme values triggers constraints."""
+        # Test maximum scaling
+        request_data = {
+            "target_servings": 100,  # 25x scaling from 4 servings
+            "use_constraints": True
+        }
+        
+        response = await async_client.post(
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview",
+            json=request_data,
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should be clamped to max 10x
+        assert data["scaling_factor"] <= 10.0
+        assert len(data["warnings"]) > 0
+        assert any("maximum" in w.lower() for w in data["warnings"])
+    
+    async def test_preview_scaling_validation_errors(
+        self,
+        async_client: AsyncClient,
+        auth_headers: Dict[str, str],
+        sample_recipe: Recipe
+    ):
+        """Test validation errors in scaling requests."""
+        # Test invalid target servings
+        request_data = {
+            "target_servings": 0
+        }
+        
+        response = await async_client.post(
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview",
+            json=request_data,
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 422
+        
+        # Test invalid calorie target
+        request_data = {
+            "target_calories": -100
+        }
+        
+        response = await async_client.post(
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview/calories",
+            json=request_data,
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 422
+        
+        # Test too many participants
+        request_data = {
+            "participants": [
+                {"name": f"Person {i}", "coefficient": 100}
+                for i in range(25)  # Exceeds max 20
+            ]
+        }
+        
+        response = await async_client.post(
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview/participants",
+            json=request_data,
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 422
+    
+    async def test_preview_scaling_unauthorized(
+        self,
+        async_client: AsyncClient,
+        sample_recipe: Recipe
+    ):
+        """Test scaling preview without authentication."""
+        request_data = {
+            "target_servings": 6
+        }
+        
+        response = await async_client.post(
+            f"/api/v1/recipes/{sample_recipe.id}/scaling/preview",
+            json=request_data
+        )
+        
+        assert response.status_code == 401
+    
+    async def test_preview_scaling_nonexistent_recipe(
         self,
         async_client: AsyncClient,
         auth_headers: Dict[str, str]
     ):
-        """Test scaling non-existent recipe."""
+        """Test scaling preview for non-existent recipe."""
+        fake_id = uuid4()
+        request_data = {
+            "target_servings": 6
+        }
+        
         response = await async_client.post(
-            "/api/v1/recipes/99999/scaling/preview",
-            json={"scaling_factor": 2.0},
+            f"/api/v1/recipes/{fake_id}/scaling/preview",
+            json=request_data,
             headers=auth_headers
         )
         
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_permission_denied(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        other_user_headers: Dict[str, str],
-        private_recipe: Recipe
-    ):
-        """Test permission check for private recipes."""
-        # Try to scale another user's private recipe
-        response = await async_client.post(
-            f"/api/v1/recipes/{private_recipe.id}/scaling/preview",
-            json={"scaling_factor": 2.0},
-            headers=other_user_headers
-        )
-        
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_unauthenticated(
-        self,
-        async_client: AsyncClient,
-        sample_recipe_with_calories: Recipe
-    ):
-        """Test scaling requires authentication."""
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview",
-            json={"scaling_factor": 2.0}
-        )
-        
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-
-class TestCalorieScalingEndpoint:
-    """Test the calorie-based scaling preview endpoint."""
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_by_calories(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
-    ):
-        """Test scaling a recipe to achieve target calories."""
-        # Recipe has 450 cal/serving * 4 servings = 1800 total
-        # Target 900 calories = scale by 0.5
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/calories",
-            json={"target_calories": 900},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        
-        # Check response structure
-        assert data["recipe_id"] == sample_recipe_with_calories.id
-        assert data["scaling_factor"] == 0.5
-        assert data["scaling_method"] == "calories"
-        assert data["target_calories"] == 900
-        assert data["total_calories"] == 900.0
-        assert data["calories_per_serving"] == 225.0
-        assert data["effective_participants"] == 4
-        
-        # Check ingredients are scaled by 0.5
-        pasta = next(i for i in data["ingredients"] if i["name"] == "Pasta")
-        assert pasta["scaled_quantity"] == 200.0
-        
-        cheese = next(i for i in data["ingredients"] if i["name"] == "Cheese")
-        assert cheese["scaled_quantity"] == 50.0
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_by_calories_with_participants(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
-    ):
-        """Test scaling by calories with specific participant count."""
-        # 450 cal/serving * 2 participants = 900 total wanted
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/calories",
-            json={"target_calories": 900, "participants": 2},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        
-        # Scaling factor should be 0.5 (to get from 4 to 2 servings)
-        assert data["scaling_factor"] == 0.5
-        assert data["effective_participants"] == 2
-        assert data["total_calories"] == 900.0
-        assert data["calories_per_serving"] == 450.0  # Same per serving
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_no_calorie_info(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        db_session: AsyncSession,
-        sample_user: AuthUser
-    ):
-        """Test error when recipe has no calorie information."""
-        # Create recipe without calories
-        recipe = Recipe(
-            name="No Calories Recipe",
-            description="Recipe without calorie info",
-            prep_time_minutes=10,
-            cooking_time_minutes=20,
-            servings=4,
-            difficulty="easy",
-            creator_id=sample_user.id,
-            is_public=True,
-            is_pku_friendly=False
-        )
-        db_session.add(recipe)
-        await db_session.commit()
-        
-        response = await async_client.post(
-            f"/api/v1/recipes/{recipe.id}/scaling/preview/calories",
-            json={"target_calories": 1000},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert len(data["errors"]) > 0
-        assert "calorie information" in data["errors"][0]
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_invalid_calories(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
-    ):
-        """Test validation of calorie targets."""
-        # Too low
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/calories",
-            json={"target_calories": 50},
-            headers=auth_headers
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        
-        # Too high
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/calories",
-            json={"target_calories": 60000},
-            headers=auth_headers
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-
-class TestParticipantScalingEndpoint:
-    """Test the participant-based scaling preview endpoint."""
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_by_participants(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
-    ):
-        """Test scaling a recipe for different participant count."""
-        # Recipe is for 4, scale to 6 = factor 1.5
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/participants",
-            json={"target_participants": 6},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        
-        # Check response structure
-        assert data["recipe_id"] == sample_recipe_with_calories.id
-        assert data["scaling_factor"] == 1.5
-        assert data["scaling_method"] == "participants"
-        assert data["target_participants"] == 6
-        assert data["original_participants"] == 4
-        assert data["scaled_participants"] == 6
-        
-        # Check total calories calculation
-        assert data["total_calories"] == 2700.0  # 450 * 6
-        
-        # Check ingredients are scaled by 1.5
-        pasta = next(i for i in data["ingredients"] if i["name"] == "Pasta")
-        assert pasta["scaled_quantity"] == 600.0
-        
-        cheese = next(i for i in data["ingredients"] if i["name"] == "Cheese")
-        assert cheese["scaled_quantity"] == 150.0
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_no_participants(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        db_session: AsyncSession,
-        sample_user: AuthUser
-    ):
-        """Test scaling when recipe has no participant info."""
-        # Create recipe without participants
-        recipe = Recipe(
-            name="No Participants Recipe",
-            description="Recipe without participant info",
-            prep_time_minutes=10,
-            cooking_time_minutes=20,
-            servings=None,
-            difficulty="easy",
-            creator_id=sample_user.id,
-            is_public=True,
-            is_pku_friendly=False
-        )
-        db_session.add(recipe)
-        await db_session.flush()
-        
-        # Add an ingredient
-        pasta = Ingredient(name="Pasta", category="grains")
-        db_session.add(pasta)
-        await db_session.flush()
-        
-        ingredient = RecipeIngredient(
-            recipe_id=recipe.id,
-            ingredient_id=pasta.id,
-            amount=Decimal("400"),
-            unit="g"
-        )
-        db_session.add(ingredient)
-        await db_session.commit()
-        
-        response = await async_client.post(
-            f"/api/v1/recipes/{recipe.id}/scaling/preview/participants",
-            json={"target_participants": 6},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        
-        # Should assume 4 participants and warn
-        assert any("assuming 4" in warning for warning in data["warnings"])
-        assert data["scaling_factor"] == 1.5  # 6/4
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_invalid_participants(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
-    ):
-        """Test validation of participant count."""
-        # Zero participants
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/participants",
-            json={"target_participants": 0},
-            headers=auth_headers
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        
-        # Too many participants
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/participants",
-            json={"target_participants": 101},
-            headers=auth_headers
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_single_participant(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        sample_recipe_with_calories: Recipe
-    ):
-        """Test scaling down to single participant."""
-        response = await async_client.post(
-            f"/api/v1/recipes/{sample_recipe_with_calories.id}/scaling/preview/participants",
-            json={"target_participants": 1},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        
-        assert data["scaling_factor"] == 0.25  # 1/4
-        assert data["scaled_participants"] == 1
-        
-        # Check ingredients are scaled by 0.25
-        pasta = next(i for i in data["ingredients"] if i["name"] == "Pasta")
-        assert pasta["scaled_quantity"] == 100.0
-        
-        cheese = next(i for i in data["ingredients"] if i["name"] == "Cheese")
-        assert cheese["scaled_quantity"] == 25.0
-
-
-class TestScalingWithComplexIngredients:
-    """Test scaling with various ingredient scenarios."""
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_with_optional_ingredients(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        db_session: AsyncSession,
-        sample_user: AuthUser
-    ):
-        """Test scaling includes optional ingredients."""
-        # Create recipe with optional ingredient
-        recipe = Recipe(
-            name="Recipe with Optional",
-            description="Has optional ingredients",
-            prep_time_minutes=10,
-            cooking_time_minutes=20,
-            servings=4,
-            difficulty="easy",
-            creator_id=sample_user.id,
-            is_public=True,
-            is_pku_friendly=False
-        )
-        db_session.add(recipe)
-        await db_session.flush()
-        
-        # Create ingredients
-        salt = Ingredient(name="Salt", category="spices")
-        pepper = Ingredient(name="Pepper", category="spices")
-        db_session.add_all([salt, pepper])
-        await db_session.flush()
-        
-        # Add required and optional ingredients
-        ingredients = [
-            RecipeIngredient(
-                recipe_id=recipe.id,
-                ingredient_id=salt.id,
-                amount=Decimal("5"),
-                unit="g",
-                is_optional=False
-            ),
-            RecipeIngredient(
-                recipe_id=recipe.id,
-                ingredient_id=pepper.id,
-                amount=Decimal("2"),
-                unit="g",
-                is_optional=True,
-                notes="To taste"
-            )
-        ]
-        db_session.add_all(ingredients)
-        await db_session.commit()
-        
-        response = await async_client.post(
-            f"/api/v1/recipes/{recipe.id}/scaling/preview",
-            json={"scaling_factor": 2.0},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        
-        # Both ingredients should be scaled
-        assert len(data["ingredients"]) == 2
-        
-        # Check optional ingredient is marked and scaled
-        pepper = next(i for i in data["ingredients"] if i["name"] == "Pepper")
-        assert pepper["is_optional"] is True
-        assert pepper["scaled_quantity"] == 4.0
-        assert pepper["notes"] == "To taste"
-    
-    @pytest.mark.asyncio
-    async def test_scale_recipe_with_no_quantity(
-        self,
-        async_client: AsyncClient,
-        auth_headers: Dict[str, str],
-        db_session: AsyncSession,
-        sample_user: AuthUser
-    ):
-        """Test scaling ingredients without quantities."""
-        # Create recipe
-        recipe = Recipe(
-            name="Recipe with No Quantities",
-            description="Has ingredients without quantities",
-            prep_time_minutes=10,
-            cooking_time_minutes=20,
-            servings=4,
-            difficulty="easy",
-            creator_id=sample_user.id,
-            is_public=True,
-            is_pku_friendly=False
-        )
-        db_session.add(recipe)
-        await db_session.flush()
-        
-        # Create ingredient
-        oil = Ingredient(name="Oil", category="oils")
-        db_session.add(oil)
-        await db_session.flush()
-        
-        # Add ingredient without quantity
-        ingredient = RecipeIngredient(
-            recipe_id=recipe.id,
-            ingredient_id=oil.id,
-            amount=None,
-            unit=None,
-            notes="For frying"
-        )
-        db_session.add(ingredient)
-        await db_session.commit()
-        
-        response = await async_client.post(
-            f"/api/v1/recipes/{recipe.id}/scaling/preview",
-            json={"scaling_factor": 2.0},
-            headers=auth_headers
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        
-        # Ingredient should be included but with None quantities
-        oil_data = data["ingredients"][0]
-        assert oil_data["name"] == "Oil"
-        assert oil_data["original_quantity"] is None
-        assert oil_data["scaled_quantity"] is None
-        assert oil_data["rounded_quantity"] is None
-        assert oil_data["notes"] == "For frying"
+        assert response.status_code == 404
