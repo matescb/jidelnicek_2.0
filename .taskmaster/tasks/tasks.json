@@ -737,7 +737,7 @@
         "dependencies": [
           6
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -849,7 +849,7 @@
               9
             ],
             "details": "Design RESTful API endpoints for export requests, implement format selection and configuration options, create integration tests for all export formats, add performance tests for large datasets, implement API documentation",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T21:09:07.634Z",
+      "updated": "2025-07-09T21:25:22.413Z",
       "description": "Tasks for master context"
     }
   }
