@@ -38,10 +38,6 @@ def upgrade() -> None:
     op.drop_constraint('trip_trips_check', 'trip_trips', type_='check')
     op.create_check_constraint('trip_trips_date_check', 'trip_trips', 'end_date >= start_date')
     
-    # Update foreign key constraint name for consistency  
-    op.drop_constraint('trip_trips_user_id_fkey1', 'trip_trips', type_='foreignkey')
-    op.create_foreign_key('trip_trips_user_id_fkey', 'trip_trips', 'auth_users', ['user_id'], ['id'], ondelete='CASCADE')
-    
     # Create trip_participants table
     op.create_table('trip_participants',
         sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
@@ -307,4 +303,18 @@ def downgrade() -> None:
     op.drop_table('trip_recipe_snapshots')
     op.drop_table('trip_days')
     op.drop_table('trip_participants')
-    op.drop_table('trip_trips')
+    
+    # Remove columns and constraints added to existing trip_trips table (don't drop the table itself)
+    op.drop_constraint('trip_trips_notes_length_check', 'trip_trips', type_='check')
+    op.drop_constraint('trip_trips_storage_mode_check', 'trip_trips', type_='check')
+    op.drop_constraint('trip_trips_date_check', 'trip_trips', type_='check')
+    
+    # Restore original constraint name
+    op.create_check_constraint('trip_trips_check', 'trip_trips', 'end_date >= start_date')
+    
+    # Restore original meal_slots default value
+    op.alter_column('trip_trips', 'meal_slots', server_default='["Snídaně", "Oběd", "Večeře"]')
+    
+    # Remove added columns
+    op.drop_column('trip_trips', 'notes')
+    op.drop_column('trip_trips', 'recipe_storage_mode')
