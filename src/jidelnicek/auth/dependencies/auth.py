@@ -15,7 +15,7 @@ from sqlalchemy import select
 from redis.asyncio import Redis
 
 from jidelnicek.core.dependencies import get_db, get_redis_client
-from jidelnicek.auth.models import AuthUser
+from jidelnicek.auth.models import User as AuthUser
 from jidelnicek.auth.services.token_service import TokenService
 from jidelnicek.auth.exceptions import (
     TokenExpiredError,
@@ -303,3 +303,69 @@ CurrentUser = Annotated[AuthUser, Depends(get_current_user)]
 CurrentUserOptional = Annotated[Optional[AuthUser], Depends(get_current_user_optional)]
 CurrentVerifiedUser = Annotated[AuthUser, Depends(get_current_verified_user)]
 CurrentAdminUser = Annotated[AuthUser, Depends(get_current_admin_user)]
+
+
+async def get_current_user_ws(
+    token: str,
+    db: Optional[AsyncSession] = None,
+    redis_client: Optional[Redis] = None
+) -> Optional[AuthUser]:
+    """
+    Get current user from JWT token for WebSocket connections.
+    
+    WebSockets don't support the standard FastAPI dependency injection,
+    so this function can be called directly with a token string.
+    
+    Args:
+        token: JWT access token
+        db: Database session (will create one if not provided)
+        redis_client: Redis client (will create one if not provided)
+        
+    Returns:
+        User instance or None if authentication fails
+    """
+    from jidelnicek.core.database import AsyncSessionLocal
+    from jidelnicek.core.cache import get_redis_pool
+    
+    # Create database session if not provided
+    if db is None:
+        async with AsyncSessionLocal() as session:
+            return await get_current_user_ws(token, session, redis_client)
+    
+    # Create Redis client if not provided
+    if redis_client is None:
+        pool = await get_redis_pool()
+        if pool:
+            async with Redis(connection_pool=pool) as redis:
+                return await get_current_user_ws(token, db, redis)
+        else:
+            # Continue without Redis (token blacklist won't be checked)
+            pass
+    
+    try:
+        # Initialize token service
+        token_service = TokenService(db, redis_client)
+        
+        # Validate token
+        payload = token_service.validate_token(token, "access")
+        
+        # Check if token is blacklisted (if Redis available)
+        if redis_client and await token_service.is_token_blacklisted(token):
+            return None
+        
+        # Get user ID from token
+        user_id = UUID(payload.get("sub"))
+        
+        # Fetch user from database
+        result = await db.execute(
+            select(AuthUser).where(AuthUser.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user or not user.is_active or user.is_archived:
+            return None
+        
+        return user
+        
+    except (TokenExpiredError, TokenInvalidError, ValueError):
+        return None

@@ -819,7 +819,7 @@
               5
             ],
             "details": "Create custom exception classes for export errors, implement graceful degradation for missing dependencies, add detailed error logging and user-friendly error messages, create fallback options for failed exports",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -830,7 +830,7 @@
               5
             ],
             "details": "Implement WebSocket or SSE for real-time updates, create progress calculation for multi-step exports, add estimated time remaining calculations, design progress UI components, implement cancellation functionality",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T20:44:14.739Z",
+      "updated": "2025-07-09T20:56:56.238Z",
       "description": "Tasks for master context"
     }
   }

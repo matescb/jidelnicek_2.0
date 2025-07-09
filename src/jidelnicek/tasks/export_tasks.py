@@ -24,6 +24,7 @@ from jidelnicek.shopping.services.export_manager import ExportManager
 from jidelnicek.trip.services.export.export_manager import TripExportManager
 from jidelnicek.recipe.services.recipe_service import RecipeService
 from jidelnicek.core.config import settings
+from jidelnicek.core.services.progress_tracker import ExportProgressTracker
 
 logger = logging.getLogger(__name__)
 
@@ -133,79 +134,124 @@ async def _export_shopping_list_async(
     task: Task,
 ) -> Dict[str, Any]:
     """Async implementation of shopping list export."""
-    async with DatabaseSession() as db:
-        # Initialize export manager
-        export_manager = ExportManager(db)
-        
-        # Update progress
-        task.update_state(
-            state="PROGRESS",
-            meta={
-                "current": 20,
-                "total": 100,
-                "status": "Loading trip data..."
-            }
-        )
-        
-        # Generate export file
-        output_dir = Path(settings.upload_path) / "exports" / "shopping_lists"
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        filename = f"shopping_list_{trip_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        file_path = output_dir / f"{filename}.{format}"
-        
-        task.update_state(
-            state="PROGRESS",
-            meta={
-                "current": 50,
-                "total": 100,
-                "status": f"Generating {format.upper()} file..."
-            }
-        )
-        
-        # Export the shopping list
-        export_result = await export_manager.export(
-            trip_id=trip_id,
-            format=format,
-            output_path=str(file_path),
-            **options
-        )
-        
-        task.update_state(
-            state="PROGRESS",
-            meta={
-                "current": 90,
-                "total": 100,
-                "status": "Finalizing export..."
-            }
-        )
-        
-        # Store export metadata
-        export_id = str(uuid.uuid4())
-        async with RedisClient() as redis:
-            if redis:
-                export_key = f"export:{export_id}"
-                export_data = {
-                    "id": export_id,
-                    "type": "shopping_list",
-                    "trip_id": trip_id,
-                    "format": format,
-                    "file_path": str(file_path),
-                    "file_size": file_path.stat().st_size,
-                    "created_at": datetime.utcnow().isoformat(),
-                    "created_by": user_id,
-                    "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat(),
+    export_id = str(uuid.uuid4())
+    
+    # Initialize progress tracker
+    progress_tracker = ExportProgressTracker(
+        export_id=export_id,
+        export_type="shopping_list",
+        user_id=user_id or 0
+    )
+    
+    try:
+        async with DatabaseSession() as db:
+            # Initialize export manager
+            export_manager = ExportManager(db)
+            
+            # Initialize progress tracking
+            await progress_tracker.initialize_export(
+                total_items=100,  # Will be updated when we know actual item count
+                export_format=format,
+                include_compression=format in ["zip", "tar.gz"],
+                include_upload=False
+            )
+            
+            # Step 1: Data preparation
+            await progress_tracker.start_step(0, "Loading trip data...")
+            
+            # Update progress
+            task.update_state(
+                state="PROGRESS",
+                meta={
+                    "current": 20,
+                    "total": 100,
+                    "status": "Loading trip data...",
+                    "export_id": export_id
                 }
-                await redis.set(export_key, json.dumps(export_data), ex=604800)  # 7 days
-        
-        return {
-            "export_id": export_id,
-            "file_path": str(file_path),
-            "file_size": file_path.stat().st_size,
-            "format": format,
-            "download_url": f"/api/v1/exports/{export_id}/download",
-            "expires_at": export_data["expires_at"],
-        }
+            )
+            
+            # Simulate data loading with progress updates
+            await progress_tracker.update_step_progress(50, message="Processing shopping items...")
+            await progress_tracker.update_step_progress(100, message="Data preparation complete")
+            await progress_tracker.complete_step()
+            
+            # Step 2: Generate export file
+            output_dir = Path(settings.upload_path) / "exports" / "shopping_lists"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            filename = f"shopping_list_{trip_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            file_path = output_dir / f"{filename}.{format}"
+            
+            await progress_tracker.start_step(1, f"Generating {format.upper()} file...")
+            
+            task.update_state(
+                state="PROGRESS",
+                meta={
+                    "current": 50,
+                    "total": 100,
+                    "status": f"Generating {format.upper()} file...",
+                    "export_id": export_id
+                }
+            )
+            
+            # Export the shopping list with progress callbacks
+            export_result = await export_manager.export(
+                trip_id=trip_id,
+                format=format,
+                output_path=str(file_path),
+                progress_callback=lambda p: asyncio.create_task(
+                    progress_tracker.update_step_progress(p, 100)
+                ),
+                **options
+            )
+            
+            await progress_tracker.complete_step()
+            
+            # Step 3: Finalize export
+            await progress_tracker.start_step(-1, "Finalizing export...")
+            
+            task.update_state(
+                state="PROGRESS",
+                meta={
+                    "current": 90,
+                    "total": 100,
+                    "status": "Finalizing export...",
+                    "export_id": export_id
+                }
+            )
+            
+            # Store export metadata
+            async with RedisClient() as redis:
+                if redis:
+                    export_key = f"export:{export_id}"
+                    export_data = {
+                        "id": export_id,
+                        "type": "shopping_list",
+                        "trip_id": trip_id,
+                        "format": format,
+                        "file_path": str(file_path),
+                        "file_size": file_path.stat().st_size,
+                        "created_at": datetime.utcnow().isoformat(),
+                        "created_by": user_id,
+                        "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat(),
+                    }
+                    await redis.set(export_key, json.dumps(export_data), ex=604800)  # 7 days
+            
+            await progress_tracker.complete_step()
+            await progress_tracker.complete("completed", "Export completed successfully")
+            
+            return {
+                "export_id": export_id,
+                "file_path": str(file_path),
+                "file_size": file_path.stat().st_size,
+                "format": format,
+                "download_url": f"/api/v1/exports/{export_id}/download",
+                "expires_at": export_data["expires_at"],
+            }
+    
+    except Exception as e:
+        await progress_tracker.fail(str(e))
+        raise
 
 
 @app.task(
@@ -275,85 +321,166 @@ async def _export_trip_data_async(
     task: Task,
 ) -> Dict[str, Any]:
     """Async implementation of trip data export."""
-    async with DatabaseSession() as db:
-        # Initialize export manager
-        export_manager = TripExportManager(db)
-        
-        task.update_state(
-            state="PROGRESS",
-            meta={
-                "current": 20,
-                "total": 100,
-                "status": "Loading trip data..."
-            }
-        )
-        
-        # Generate export file
-        output_dir = Path(settings.upload_path) / "exports" / "trips"
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        filename = f"trip_{trip_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        file_path = output_dir / f"{filename}.{format}"
-        
-        task.update_state(
-            state="PROGRESS",
-            meta={
-                "current": 50,
-                "total": 100,
-                "status": f"Generating {format.upper()} file..."
-            }
-        )
-        
-        # Export the trip data
-        export_result = await export_manager.export_trip(
-            trip_id=trip_id,
-            format=format,
-            output_path=str(file_path),
-            include_shopping_list=include_shopping_list,
-            include_meal_plans=include_meal_plans,
-            include_participants=include_participants,
-        )
-        
-        task.update_state(
-            state="PROGRESS",
-            meta={
-                "current": 90,
-                "total": 100,
-                "status": "Finalizing export..."
-            }
-        )
-        
-        # Store export metadata
-        export_id = str(uuid.uuid4())
-        async with RedisClient() as redis:
-            if redis:
-                export_key = f"export:{export_id}"
-                export_data = {
-                    "id": export_id,
-                    "type": "trip_data",
-                    "trip_id": trip_id,
+    export_id = str(uuid.uuid4())
+    
+    # Initialize progress tracker
+    progress_tracker = ExportProgressTracker(
+        export_id=export_id,
+        export_type="trip_data",
+        user_id=user_id or 0
+    )
+    
+    try:
+        async with DatabaseSession() as db:
+            # Initialize export manager
+            export_manager = TripExportManager(db)
+            
+            # Calculate number of components to export
+            components = []
+            if include_shopping_list:
+                components.append("shopping_list")
+            if include_meal_plans:
+                components.append("meal_plans")
+            if include_participants:
+                components.append("participants")
+            
+            # Initialize progress tracking with dynamic steps
+            steps = [{"name": "Loading trip data", "weight": 0.2}]
+            
+            for component in components:
+                steps.append({
+                    "name": f"Processing {component.replace('_', ' ')}",
+                    "weight": 0.6 / len(components) if components else 0.6
+                })
+            
+            steps.extend([
+                {"name": f"Generating {format.upper()} file", "weight": 0.15},
+                {"name": "Finalizing export", "weight": 0.05}
+            ])
+            
+            await progress_tracker.initialize(
+                steps=steps,
+                total_items=len(components),
+                metadata={
                     "format": format,
-                    "file_path": str(file_path),
-                    "file_size": file_path.stat().st_size,
-                    "created_at": datetime.utcnow().isoformat(),
-                    "created_by": user_id,
-                    "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat(),
-                    "options": {
-                        "include_shopping_list": include_shopping_list,
-                        "include_meal_plans": include_meal_plans,
-                        "include_participants": include_participants,
-                    }
+                    "components": components
                 }
-                await redis.set(export_key, json.dumps(export_data), ex=604800)  # 7 days
-        
-        return {
-            "export_id": export_id,
-            "file_path": str(file_path),
-            "file_size": file_path.stat().st_size,
-            "format": format,
-            "download_url": f"/api/v1/exports/{export_id}/download",
-            "expires_at": export_data["expires_at"],
-        }
+            )
+            
+            # Step 1: Load trip data
+            await progress_tracker.start_step(0, "Loading trip data...")
+            
+            task.update_state(
+                state="PROGRESS",
+                meta={
+                    "current": 20,
+                    "total": 100,
+                    "status": "Loading trip data...",
+                    "export_id": export_id
+                }
+            )
+            
+            await progress_tracker.update_step_progress(100)
+            await progress_tracker.complete_step()
+            
+            # Process each component
+            step_index = 1
+            for component in components:
+                await progress_tracker.start_step(
+                    step_index,
+                    f"Processing {component.replace('_', ' ')}..."
+                )
+                
+                # Simulate component processing
+                await progress_tracker.update_step_progress(50)
+                await progress_tracker.update_step_progress(100)
+                await progress_tracker.complete_step()
+                step_index += 1
+            
+            # Generate export file
+            output_dir = Path(settings.upload_path) / "exports" / "trips"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            filename = f"trip_{trip_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            file_path = output_dir / f"{filename}.{format}"
+            
+            await progress_tracker.start_step(step_index, f"Generating {format.upper()} file...")
+            
+            task.update_state(
+                state="PROGRESS",
+                meta={
+                    "current": 50,
+                    "total": 100,
+                    "status": f"Generating {format.upper()} file...",
+                    "export_id": export_id
+                }
+            )
+            
+            # Export the trip data with progress callback
+            export_result = await export_manager.export_trip(
+                trip_id=trip_id,
+                format=format,
+                output_path=str(file_path),
+                include_shopping_list=include_shopping_list,
+                include_meal_plans=include_meal_plans,
+                include_participants=include_participants,
+                progress_callback=lambda p: asyncio.create_task(
+                    progress_tracker.update_step_progress(p, 100)
+                ),
+            )
+            
+            await progress_tracker.complete_step()
+            
+            # Finalize export
+            await progress_tracker.start_step(step_index + 1, "Finalizing export...")
+            
+            task.update_state(
+                state="PROGRESS",
+                meta={
+                    "current": 90,
+                    "total": 100,
+                    "status": "Finalizing export...",
+                    "export_id": export_id
+                }
+            )
+            
+            # Store export metadata
+            async with RedisClient() as redis:
+                if redis:
+                    export_key = f"export:{export_id}"
+                    export_data = {
+                        "id": export_id,
+                        "type": "trip_data",
+                        "trip_id": trip_id,
+                        "format": format,
+                        "file_path": str(file_path),
+                        "file_size": file_path.stat().st_size,
+                        "created_at": datetime.utcnow().isoformat(),
+                        "created_by": user_id,
+                        "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat(),
+                        "options": {
+                            "include_shopping_list": include_shopping_list,
+                            "include_meal_plans": include_meal_plans,
+                            "include_participants": include_participants,
+                        }
+                    }
+                    await redis.set(export_key, json.dumps(export_data), ex=604800)  # 7 days
+            
+            await progress_tracker.complete_step()
+            await progress_tracker.complete("completed", "Export completed successfully")
+            
+            return {
+                "export_id": export_id,
+                "file_path": str(file_path),
+                "file_size": file_path.stat().st_size,
+                "format": format,
+                "download_url": f"/api/v1/exports/{export_id}/download",
+                "expires_at": export_data["expires_at"],
+            }
+    
+    except Exception as e:
+        await progress_tracker.fail(str(e))
+        raise
 
 
 @app.task(

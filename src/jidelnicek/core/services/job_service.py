@@ -361,6 +361,26 @@ class JobService(BaseService[Job]):
         
         await self.db.commit()
         
+        # Update progress tracker if it's an export job
+        if job.job_type in [JobType.EXPORT_SHOPPING_LIST, JobType.EXPORT_TRIP_DATA, 
+                           JobType.EXPORT_RECIPES, JobType.EXPORT_DATASET]:
+            from jidelnicek.core.services.progress_tracker import ProgressTracker
+            
+            # Get export ID from result or parameters
+            export_id = None
+            if job.result and isinstance(job.result, dict):
+                export_id = job.result.get("export_id")
+            elif job.parameters and isinstance(job.parameters, dict):
+                export_id = job.parameters.get("export_id")
+            
+            if export_id:
+                tracker = ProgressTracker(
+                    operation_id=export_id,
+                    operation_type=f"export_{job.job_type.value.replace('export_', '')}",
+                    user_id=job.user_id or 0
+                )
+                await tracker.cancel()
+        
         logger.info(f"Cancelled job {job.id}")
         return job
     

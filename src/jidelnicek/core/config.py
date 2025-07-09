@@ -204,6 +204,12 @@ class Settings(BaseSettings):
     request_timeout_seconds: int = Field(default=60, ge=1)
     worker_timeout_seconds: int = Field(default=120, ge=1)
     
+    # WebSocket settings
+    websocket_heartbeat_interval: int = Field(default=30, description="WebSocket heartbeat interval in seconds")
+    websocket_heartbeat_timeout: int = Field(default=60, description="WebSocket heartbeat timeout in seconds")
+    websocket_max_connections_per_user: int = Field(default=5, description="Max WebSocket connections per user")
+    websocket_message_size_limit: int = Field(default=65536, description="Max WebSocket message size in bytes")
+    
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
