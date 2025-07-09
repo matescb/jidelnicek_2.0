@@ -792,7 +792,7 @@
               5
             ],
             "details": "Implement local file storage with organized directory structure, add support for cloud storage (S3, Azure Blob), create file naming conventions with timestamps and user IDs, implement file compression for storage optimization",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -804,7 +804,7 @@
               6
             ],
             "details": "Design cleanup policies based on file age and user preferences, implement scheduled cleanup jobs, add configuration for retention periods, create audit log for deleted files, ensure user notification before deletion",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T19:05:59.260Z",
+      "updated": "2025-07-09T20:30:40.154Z",
       "description": "Tasks for master context"
     }
   }

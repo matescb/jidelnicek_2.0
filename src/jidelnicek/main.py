@@ -26,6 +26,7 @@ from jidelnicek.auth.tasks import start_session_cleanup_background_task
 from jidelnicek.recipe.routers import categories_router, tags_router, recipes_router, search_router, scaling_router
 from jidelnicek.trip.routers import trips_router
 from jidelnicek.core.routers.jobs import router as jobs_router, export_router
+from jidelnicek.core.routers.cleanup import router as cleanup_router
 from jidelnicek.core.middleware.security import (
     SecurityMiddleware,
     CSRFProtectMiddleware,
@@ -318,6 +319,9 @@ app.include_router(trips_router, prefix="/api/v1")
 # Job and export routers
 app.include_router(jobs_router)
 app.include_router(export_router)
+
+# Cleanup management router
+app.include_router(cleanup_router, prefix="/api/v1")
 
 # Additional routers will be added here as they are implemented:
 # app.include_router(users.router)

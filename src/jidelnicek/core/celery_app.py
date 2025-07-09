@@ -97,6 +97,7 @@ app.conf.task_routes = {
     "jidelnicek.tasks.export_tasks.export_recipes": {"queue": "low"},
     "jidelnicek.tasks.export_tasks.export_large_dataset": {"queue": "low"},
     "jidelnicek.tasks.export_tasks.cleanup_*": {"queue": "maintenance"},
+    "jidelnicek.tasks.cleanup_tasks.*": {"queue": "maintenance"},
 }
 
 # Task annotations for retry configuration
