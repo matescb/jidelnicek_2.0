@@ -1,1 +1,1 @@
-"""Admin tests package."""
+"""Admin tests module."""

@@ -15,7 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from jidelnicek.common.database import Base
+from jidelnicek.core.database import Base
 
 
 class ContentType(str, Enum):

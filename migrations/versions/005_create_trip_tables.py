@@ -23,25 +23,24 @@ def upgrade() -> None:
     # Trip Module (trip_*)
     # =====================================================
     
-    # Create trip_trips table
-    op.create_table('trip_trips',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('name', sa.String(length=100), nullable=False),
-        sa.Column('start_date', sa.Date(), nullable=False),
-        sa.Column('end_date', sa.Date(), nullable=False),
-        sa.Column('meal_slots', postgresql.JSONB(astext_type=sa.Text()), server_default='["Breakfast", "Lunch", "Dinner"]', nullable=True),
-        sa.Column('recipe_storage_mode', sa.String(length=20), server_default='snapshot', nullable=False),
-        sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('is_archived', sa.Boolean(), server_default=sa.text('false'), nullable=True),
-        sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-        sa.CheckConstraint('end_date >= start_date', name='trip_trips_date_check'),
-        sa.CheckConstraint("recipe_storage_mode IN ('snapshot', 'track_changes')", name='trip_trips_storage_mode_check'),
-        sa.CheckConstraint('LENGTH(notes) <= 2000', name='trip_trips_notes_length_check'),
-        sa.ForeignKeyConstraint(['user_id'], ['auth_users.id'], name='trip_trips_user_id_fkey', ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id', name='trip_trips_pkey')
-    )
+    # Add missing columns to existing trip_trips table (table already created in migration 001)
+    op.add_column('trip_trips', sa.Column('recipe_storage_mode', sa.String(length=20), server_default='snapshot', nullable=False))
+    op.add_column('trip_trips', sa.Column('notes', sa.Text(), nullable=True))
+    
+    # Update meal_slots default value to English
+    op.alter_column('trip_trips', 'meal_slots', server_default='["Breakfast", "Lunch", "Dinner"]')
+    
+    # Add missing check constraints
+    op.create_check_constraint('trip_trips_storage_mode_check', 'trip_trips', "recipe_storage_mode IN ('snapshot', 'track_changes')")
+    op.create_check_constraint('trip_trips_notes_length_check', 'trip_trips', 'LENGTH(notes) <= 2000')
+    
+    # Update existing constraint name for consistency
+    op.drop_constraint('trip_trips_check', 'trip_trips', type_='check')
+    op.create_check_constraint('trip_trips_date_check', 'trip_trips', 'end_date >= start_date')
+    
+    # Update foreign key constraint name for consistency  
+    op.drop_constraint('trip_trips_user_id_fkey1', 'trip_trips', type_='foreignkey')
+    op.create_foreign_key('trip_trips_user_id_fkey', 'trip_trips', 'auth_users', ['user_id'], ['id'], ondelete='CASCADE')
     
     # Create trip_participants table
     op.create_table('trip_participants',
