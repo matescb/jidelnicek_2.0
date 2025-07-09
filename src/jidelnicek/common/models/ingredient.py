@@ -1,23 +1,24 @@
+
+
 """
 Ingredient model for food items used in recipes.
 """
 
 from datetime import datetime
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import (
-    Boolean, DateTime, String, ForeignKey, 
+from sqlalchemy (
+    Boolean, DateTime, String, ForeignKey,
     UniqueConstraint, text, Index
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB, ARRAY
 from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
 
 from jidelnicek.core.database import Base
 from jidelnicek.core.utils import get_utc_now
 
 if TYPE_CHECKING:
-    from .nutritional_value import NutritionalValue
     from jidelnicek.recipe.models import RecipeIngredient
 
 
@@ -27,17 +28,16 @@ class Ingredient(Base):
     
     Features:
     - User-specific and global ingredients
-    - Nutritional value tracking
-    - Category organization
+    - Nutritional data stored as JSON
+    - Unit conversions and allergen information
     - Soft delete with archival
-    - Multi-language support (name field stores current language)
     """
     __tablename__ = "common_ingredients"
     
     # Primary key
     id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), 
-        primary_key=True, 
+        PG_UUID(as_uuid=True),
+        primary_key=True,
         server_default=text("gen_random_uuid()")
     )
     
@@ -55,12 +55,42 @@ class Ingredient(Base):
         index=True
     )
     
+    brand: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        comment="Brand of the ingredient, if applicable"
+    )
+
+    barcode: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        unique=True,
+        index=True,
+        comment="Barcode (EAN/UPC) of the ingredient"
+    )
+    
     category: Mapped[Optional[str]] = mapped_column(String(50))
     
-    # Nutritional reference
-    nutritional_value_id: Mapped[Optional[UUID]] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("common_nutritional_values.id")
+    # Nutritional data stored as JSON
+    nutritional_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSONB,
+        comment="Nutritional values per 100g (e.g., calories, proteins)"
+    )
+
+    # Unit conversions stored as JSON
+    unit_conversions: Mapped[Optional[Dict[str, float]]] = mapped_column(
+        JSONB,
+        comment="Conversion factors to grams (e.g., {\"cup\": 120, \"tbsp\": 15})"
+    )
+
+    # Allergens stored as an array of strings
+    allergens: Mapped[Optional[List[str]]] = mapped_column(
+        ARRAY(String),
+        comment="List of allergens present in the ingredient"
+    )
+
+    # Dietary flags stored as JSON
+    dietary_flags: Mapped[Optional[Dict[str, bool]]] = mapped_column(
+        JSONB,
+        comment="Dietary flags (e.g., {\"vegan\": true, \"gluten_free\": false})"
     )
     
     # Flags
@@ -92,11 +122,6 @@ class Ingredient(Base):
     )
     
     # Relationships
-    nutritional_value: Mapped[Optional["NutritionalValue"]] = relationship(
-        "NutritionalValue",
-        back_populates="ingredients"
-    )
-    
     recipe_ingredients: Mapped[List["RecipeIngredient"]] = relationship(
         "RecipeIngredient",
         back_populates="ingredient",
@@ -105,11 +130,8 @@ class Ingredient(Base):
     
     # Table constraints
     __table_args__ = (
-        UniqueConstraint('user_id', 'name'),
-        # Index('idx_ingredients_user', 'user_id', postgresql_where=text('NOT is_archived')),  # PostgreSQL-specific
-        # Index('idx_ingredients_global', 'is_global', postgresql_where=text('is_global AND NOT is_archived')),  # PostgreSQL-specific
+        UniqueConstraint('user_id', 'name', name='uq_user_ingredient_name'),
         Index('idx_ingredients_name', 'name'),
-        # Index('idx_ingredient_name_search', text("to_tsvector('simple', name)"), postgresql_using='gin'),  # PostgreSQL-specific
     )
     
     @validates('name')
@@ -127,4 +149,4 @@ class Ingredient(Base):
         return is_global
     
     def __repr__(self):
-        return f"<Ingredient(id={self.id}, name={self.name}, is_global={self.is_global})>"
+        return f"<Ingredient(id={self.id}, name='{self.name}', is_global={self.is_global})>"

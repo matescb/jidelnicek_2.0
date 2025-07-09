@@ -1378,7 +1378,7 @@ class PermissionValidator:
         return True
     
     @staticmethod
-    def validate_recipe_limits(user_recipe_count: int, max_recipes: int = 100) -> bool:
+    def validate_recipe_limits(user_recipe_count: int, max_recipes: int = 500) -> bool:
         """Validate if user can create more recipes."""
         if user_recipe_count >= max_recipes:
             raise PermissionValidationError(

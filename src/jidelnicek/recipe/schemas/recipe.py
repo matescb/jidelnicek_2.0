@@ -147,6 +147,12 @@ class RecipeCreate(RecipeBase):
         
         return v
 
+    @validator('ingredients')
+    def validate_ingredients_length(cls, v):
+        if len(v) > 50:
+            raise ValueError("Maximum 50 ingredients allowed per recipe")
+        return v
+
 
 class RecipeUpdate(BaseModel):
     """Schema for updating recipes."""
@@ -187,6 +193,12 @@ class RecipeUpdate(BaseModel):
             if primary_count > 1:
                 raise ValueError("Only one primary image allowed per recipe")
         
+        return v
+
+    @validator('ingredients')
+    def validate_ingredients_length(cls, v):
+        if v is not None and len(v) > 50:
+            raise ValueError("Maximum 50 ingredients allowed per recipe")
         return v
 
 

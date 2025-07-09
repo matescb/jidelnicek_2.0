@@ -30,6 +30,9 @@ from jidelnicek.recipe.exceptions import (
 )
 from jidelnicek.recipe.utils.nutrition_calculator import NutritionCalculator
 from jidelnicek.common.models import Ingredient
+from jidelnicek.auth.models import AuthUser
+from jidelnicek.core.validators import PermissionValidator
+from jidelnicek.core.exceptions import PermissionValidationError
 
 
 class RecipeService:
@@ -64,8 +67,20 @@ class RecipeService:
             IngredientNotFoundError: If any ingredient ID is invalid
             RecipeValidationError: If recipe data is invalid
             DuplicateIngredientError: If duplicate ingredients are provided
+            RecipePermissionError: If user has reached their recipe limit
         """
         async with self.session.begin():
+            # Validate recipe creation limit for the user
+            user = await self.session.get(AuthUser, user_id)
+            if not user:
+                raise RecipePermissionError("User not found.")
+
+            try:
+                # The validator uses a default of 500 now
+                PermissionValidator.validate_recipe_limits(user.recipe_count)
+            except PermissionValidationError as e:
+                raise RecipePermissionError(str(e))
+
             # Validate ingredients exist
             if recipe_data.ingredients:
                 ingredient_ids = [ing.ingredient_id for ing in recipe_data.ingredients]

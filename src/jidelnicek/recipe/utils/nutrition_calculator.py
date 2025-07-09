@@ -8,6 +8,7 @@ ensuring 99.9% accuracy through careful decimal arithmetic and proper rounding.
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, List, Optional, Union
 from uuid import UUID
+import time
 
 from jidelnicek.common.models import NutritionalValue
 from jidelnicek.recipe.models import RecipeIngredient
@@ -23,8 +24,31 @@ class NutritionCalculator:
     - Provides per-serving calculations
     - Achieves 99.9% accuracy through decimal arithmetic
     - Gracefully handles optional nutrients
+    - In-memory caching for performance
     """
     
+    def __init__(self, cache_ttl_seconds: int = 300):
+        """
+        Initialize the calculator with an in-memory cache.
+        
+        Args:
+            cache_ttl_seconds: Time-to-live for cached results in seconds.
+        """
+        self._cache = {}
+        self.cache_ttl = cache_ttl_seconds
+
+    def _get_cache_key(self, recipe_ingredients: List[RecipeIngredient]) -> str:
+        """Generates a stable cache key from a list of recipe ingredients."""
+        if not recipe_ingredients:
+            return "empty"
+        
+        key_parts = tuple(sorted(
+            (ri.ingredient_id, ri.quantity_g) 
+            for ri in recipe_ingredients if ri.ingredient_id
+        ))
+        
+        return str(hash(key_parts))
+
     # Define all nutritional fields from the NutritionalValue model
     REQUIRED_NUTRIENTS = [
         'calories', 'proteins_g', 'carbohydrates_g', 'fats_g'
@@ -96,50 +120,45 @@ class NutritionCalculator:
         Raises:
             ValueError: If servings is not positive or if required nutrients are missing
         """
+        if self.cache_ttl > 0:
+            cache_key = self._get_cache_key(recipe_ingredients)
+            if cache_key in self._cache:
+                result, timestamp = self._cache[cache_key]
+                if time.time() - timestamp < self.cache_ttl:
+                    return result.copy() # Return a copy to prevent mutation
+
         if servings <= 0:
             raise ValueError("Servings must be greater than 0")
         
-        # Initialize totals with zeros for required nutrients, None for optional
         totals: Dict[str, Optional[Decimal]] = {}
         for nutrient in self.REQUIRED_NUTRIENTS:
             totals[nutrient] = Decimal('0')
         for nutrient in self.OPTIONAL_NUTRIENTS:
             totals[nutrient] = None
             
-        # Process each ingredient
         for recipe_ingredient in recipe_ingredients:
-            if not recipe_ingredient.ingredient:
+            if not recipe_ingredient.ingredient or not recipe_ingredient.ingredient.nutritional_value:
                 continue
                 
-            ingredient = recipe_ingredient.ingredient
-            if not ingredient.nutritional_value:
-                # Skip ingredients without nutritional data
-                continue
-                
-            nutritional_value = ingredient.nutritional_value
+            nutritional_value = recipe_ingredient.ingredient.nutritional_value
             quantity_g = Decimal(str(recipe_ingredient.quantity_g))
-            
-            # Calculate contribution of this ingredient
-            # Nutritional values are per 100g, so we need to scale
             scale_factor = quantity_g / Decimal('100')
             
-            # Process all nutrients
             for nutrient in self.ALL_NUTRIENTS:
                 nutrient_value = getattr(nutritional_value, nutrient, None)
                 if nutrient_value is not None:
-                    # Convert to Decimal for precision
-                    nutrient_decimal = Decimal(str(nutrient_value))
-                    contribution = nutrient_decimal * scale_factor
-                    
-                    if totals[nutrient] is None:
+                    contribution = Decimal(str(nutrient_value)) * scale_factor
+                    if totals.get(nutrient) is None:
                         totals[nutrient] = contribution
                     else:
                         totals[nutrient] += contribution
         
-        # Validate that all required nutrients have values
         for nutrient in self.REQUIRED_NUTRIENTS:
             if totals[nutrient] is None:
                 raise ValueError(f"Required nutrient {nutrient} is missing")
+
+        if self.cache_ttl > 0:
+            self._cache[cache_key] = (totals, time.time())
         
         return totals
     
@@ -150,16 +169,6 @@ class NutritionCalculator:
     ) -> Dict[str, Optional[Decimal]]:
         """
         Calculate per-serving nutritional values from total values.
-        
-        Args:
-            total_nutrition: Total nutritional values for entire recipe
-            servings: Number of servings to divide by
-            
-        Returns:
-            Dict with per-serving nutritional values
-            
-        Raises:
-            ValueError: If servings is not positive
         """
         if servings <= 0:
             raise ValueError("Servings must be greater than 0")
@@ -168,10 +177,7 @@ class NutritionCalculator:
         per_serving = {}
         
         for nutrient, value in total_nutrition.items():
-            if value is None:
-                per_serving[nutrient] = None
-            else:
-                per_serving[nutrient] = value / servings_decimal
+            per_serving[nutrient] = value / servings_decimal if value is not None else None
                 
         return per_serving
     
@@ -181,39 +187,18 @@ class NutritionCalculator:
     ) -> Dict[str, Optional[Union[Decimal, int, float]]]:
         """
         Round nutritional values appropriately for display.
-        
-        Uses specific precision for each nutrient type to balance
-        accuracy with readability.
-        
-        Args:
-            nutrition_dict: Dict of nutritional values to round
-            
-        Returns:
-            Dict with properly rounded values for display
         """
         rounded = {}
-        
         for nutrient, value in nutrition_dict.items():
             if value is None:
                 rounded[nutrient] = None
             else:
-                # Get precision for this nutrient, default to 2 decimal places
                 precision = self.ROUNDING_PRECISION.get(nutrient, 2)
-                
                 if precision == 0:
-                    # Round to integer
-                    rounded[nutrient] = int(value.quantize(
-                        Decimal('1'), 
-                        rounding=ROUND_HALF_UP
-                    ))
+                    rounded[nutrient] = int(value.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
                 else:
-                    # Round to specified decimal places
                     quantizer = Decimal('0.1') ** precision
-                    rounded[nutrient] = float(value.quantize(
-                        quantizer, 
-                        rounding=ROUND_HALF_UP
-                    ))
-                    
+                    rounded[nutrient] = float(value.quantize(quantizer, rounding=ROUND_HALF_UP))
         return rounded
     
     def validate_nutritional_data(
@@ -222,14 +207,6 @@ class NutritionCalculator:
     ) -> Dict[str, List[str]]:
         """
         Validate nutritional data completeness for recipe ingredients.
-        
-        Args:
-            recipe_ingredients: List of RecipeIngredient objects
-            
-        Returns:
-            Dict with validation results:
-            - missing_ingredients: List of ingredient names without nutritional data
-            - incomplete_ingredients: List of ingredient names missing required nutrients
         """
         missing_ingredients = []
         incomplete_ingredients = []
@@ -244,19 +221,15 @@ class NutritionCalculator:
                 missing_ingredients.append(ingredient.name)
                 continue
             
-            # Check if all required nutrients are present
             nutritional_value = ingredient.nutritional_value
             missing_required = []
             
             for nutrient in self.REQUIRED_NUTRIENTS:
-                value = getattr(nutritional_value, nutrient, None)
-                if value is None:
+                if getattr(nutritional_value, nutrient, None) is None:
                     missing_required.append(nutrient)
             
             if missing_required:
-                incomplete_ingredients.append(
-                    f"{ingredient.name} (missing: {', '.join(missing_required)})"
-                )
+                incomplete_ingredients.append(f"{ingredient.name} (missing: {', '.join(missing_required)})")
         
         return {
             'missing_ingredients': missing_ingredients,

@@ -238,10 +238,25 @@ class Settings(BaseSettings):
     @field_validator("allowed_upload_extensions", mode="before")
     @classmethod
     def parse_upload_extensions(cls, v: Any) -> List[str]:
-        """Parse allowed upload extensions from comma-separated string."""
-        if isinstance(v, str):
-            return [ext.strip() for ext in v.split(",") if ext.strip()]
-        return v
+        """Parse allowed upload extensions from comma-separated or JSON string."""
+        if not isinstance(v, str):
+            return v
+        
+        import json
+        
+        # Handle JSON string array e.g. '["jpg", "png"]'
+        if v.strip().startswith('[') and v.strip().endswith(']'):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    # Ensure all items are strings and start with a dot
+                    return [f".{str(ext).lstrip('.')}" for ext in parsed]
+            except json.JSONDecodeError:
+                # Fallback to comma-separated parsing if JSON is invalid
+                pass
+
+        # Handle comma-separated string e.g. '.jpg,.png' or 'jpg, png'
+        return [f".{ext.strip().lstrip('.')}" for ext in v.split(',') if ext.strip()]
     
     @field_validator("secret_key")
     @classmethod
