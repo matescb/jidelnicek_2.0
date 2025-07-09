@@ -8,10 +8,12 @@ from .recipe_service import RecipeService
 from .category_service import CategoryService
 from .tag_service import TagService
 from .recipe_categorization_service import RecipeCategorizationService
+from .scaling_service import ScalingService
 
 __all__ = [
     "RecipeService",
     "CategoryService", 
     "TagService",
-    "RecipeCategorizationService"
+    "RecipeCategorizationService",
+    "ScalingService"
 ]

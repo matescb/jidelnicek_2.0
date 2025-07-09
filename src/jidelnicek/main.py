@@ -23,7 +23,7 @@ from jidelnicek.core.config import settings
 from jidelnicek.core.dependencies import init_db, close_db, init_redis, close_redis
 from jidelnicek.auth.routers import auth_router, monitoring_router
 from jidelnicek.auth.tasks import start_session_cleanup_background_task
-from jidelnicek.recipe.routers import categories_router, tags_router, recipes_router, search_router
+from jidelnicek.recipe.routers import categories_router, tags_router, recipes_router, search_router, scaling_router
 from jidelnicek.trip.routers import trips_router
 from jidelnicek.core.middleware.security import (
     SecurityMiddleware,
@@ -309,6 +309,7 @@ app.include_router(categories_router, prefix="/api/v1/recipes")
 app.include_router(tags_router, prefix="/api/v1/recipes")
 app.include_router(recipes_router, prefix="/api/v1")
 app.include_router(search_router, prefix="/api/v1")
+app.include_router(scaling_router, prefix="/api/v1")
 
 # Trip module routers
 app.include_router(trips_router, prefix="/api/v1")

@@ -502,7 +502,7 @@
         "dependencies": [
           4
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -510,7 +510,7 @@
             "description": "Create core scaling function that calculates recipe multipliers based on participant count",
             "dependencies": [],
             "details": "Implement the fundamental scaling logic that takes original recipe servings and target participant count to calculate the scaling factor. Include decimal precision handling to maintain accuracy throughout calculations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -521,7 +521,7 @@
               1
             ],
             "details": "Calculate total calories per recipe and per serving. Ensure calorie values scale proportionally with ingredient quantities while maintaining precision to support 99.9% accuracy requirement.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -531,8 +531,8 @@
             "dependencies": [
               1
             ],
-            "details": "Create a flexible coefficient system that allows different scaling factors for various participant categories. Support custom coefficients and ensure they properly integrate with the base scaling algorithm.",
-            "status": "pending",
+            "details": "Create a flexible coefficient system that allows different scaling factors for various participant categories. Support custom coefficients and ensure they properly integrate with the base scaling algorithm.\n<info added on 2025-07-09T15:40:31.310Z>\nCompleted integration of participant coefficient system with recipe scaling module.\n\nImplementation details:\n- Created ParticipantScaler class that extends CalorieScaler\n- Added calculate_effective_participants() method that supports:\n  - Basic participant coefficients (e.g., children 75%, athletes 150%)\n  - Meal-specific coefficients (different coefficients for breakfast/lunch/dinner)\n  - Attendance factors for partial trip participation\n- Added calculate_attendance_factor() for partial attendance scenarios\n- Added scale_recipe_for_participants() for basic participant-based scaling\n- Added scale_recipe_for_participant_calories() that combines calorie targets with participant coefficients\n- Comprehensive test suite with 30+ test cases covering all scenarios\n\nThe implementation follows existing patterns from CoefficientCalculator and integrates smoothly with the existing scaling infrastructure. All tests pass and the module is ready for use.\n</info added on 2025-07-09T15:40:31.310Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -545,7 +545,7 @@
               3
             ],
             "details": "Develop context-aware rounding that considers ingredient type (liquid vs solid), unit of measurement, and practical cooking constraints. Maintain accuracy while ensuring usable quantities.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -556,8 +556,8 @@
               1,
               4
             ],
-            "details": "Define and enforce reasonable scaling limits to prevent impractical recipe sizes. Include warnings for extreme scaling factors and handle boundary conditions gracefully.",
-            "status": "pending",
+            "details": "Define and enforce reasonable scaling limits to prevent impractical recipe sizes. Include warnings for extreme scaling factors and handle boundary conditions gracefully.\n<info added on 2025-07-09T15:53:43.869Z>\nCompleted implementation of scaling constraints and limits:\n\n1. Created `/src/jidelnicek/recipe/utils/constraints.py` with:\n   - ScalingConstraints class with configurable limits\n   - Default constants: MIN=0.1 (10%), MAX=10.0 (1000%), WARNING_LOW=0.5 (50%), WARNING_HIGH=2.0 (200%)\n   - ScalingValidationResult dataclass\n   - Methods: validate_scaling_factor(), get_scaling_warnings(), clamp_scaling_factor()\n   - Support for custom constraint configurations\n\n2. Extended `/src/jidelnicek/recipe/utils/scaling.py`:\n   - Added use_constraints parameter to RecipeScaler.__init__()\n   - Integrated ScalingConstraints into the scaler\n   - Added scale_recipe_with_constraints() method\n   - Added calculate_base_scaling_factor_with_validation() method\n   - Added validate_and_apply_constraints() helper method\n\n3. Created comprehensive tests in `/tests/recipe/test_constraints.py`:\n   - Tests for all constraint boundaries and thresholds\n   - Tests for warning generation\n   - Tests for clamping behavior\n   - Integration tests with RecipeScaler\n   - Custom constraint configuration tests\n   - Edge case tests (zero participants, extreme scaling)\n\nThe implementation successfully:\n- Prevents scaling below 10% with appropriate clamping\n- Prevents scaling above 1000% with appropriate clamping\n- Generates warnings for scaling outside 50-200% range\n- Allows custom constraint configuration\n- Provides clear feedback about violations\n- Handles all boundary conditions gracefully\n</info added on 2025-07-09T15:53:43.869Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -571,7 +571,7 @@
               4
             ],
             "details": "Develop responsive UI components that display original and scaled quantities side-by-side. Include visual indicators for rounding adjustments and scaling warnings.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T15:07:03.622Z",
+      "updated": "2025-07-09T15:54:34.898Z",
       "description": "Tasks for master context"
     }
   }
