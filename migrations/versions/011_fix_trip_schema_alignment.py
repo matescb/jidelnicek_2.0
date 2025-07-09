@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '011_fix_trip_schema_alignment'
-down_revision = '005'
+down_revision = '0913b7f11427'
 branch_labels = None
 depends_on = None
 
@@ -23,14 +23,11 @@ def upgrade() -> None:
     # Fix trip_trips table - Add missing fields
     # =====================================================
     
-    # Add missing Trip fields
-    op.add_column('trip_trips', sa.Column('description', sa.Text(), nullable=True))
-    op.add_column('trip_trips', sa.Column('status', sa.String(length=20), server_default='planned', nullable=False))
+    # Add missing Trip fields (description and status already added in migration 010)
     op.add_column('trip_trips', sa.Column('share_token', sa.String(length=255), nullable=True))
     op.add_column('trip_trips', sa.Column('share_expires_at', sa.TIMESTAMP(), nullable=True))
     
-    # Add constraints for Trip
-    op.create_check_constraint('trip_status_check', 'trip_trips', "status IN ('planned', 'active', 'completed', 'cancelled')")
+    # Add constraints for Trip (status constraint already exists from migration 010)
     op.create_check_constraint('trip_name_not_empty_check', 'trip_trips', 'LENGTH(name) > 0')
     
     # Add indexes for Trip
@@ -318,8 +315,6 @@ def downgrade() -> None:
     op.drop_index('idx_trips_status', table_name='trip_trips')
     op.drop_index('idx_trips_share_token', table_name='trip_trips')
     op.drop_constraint('trip_name_not_empty_check', 'trip_trips', type_='check')
-    op.drop_constraint('trip_status_check', 'trip_trips', type_='check')
     op.drop_column('trip_trips', 'share_expires_at')
     op.drop_column('trip_trips', 'share_token')
-    op.drop_column('trip_trips', 'status')
-    op.drop_column('trip_trips', 'description')
+    # Note: description and status fields are managed by migration 010
