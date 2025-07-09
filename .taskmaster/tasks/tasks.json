@@ -602,7 +602,7 @@
               7
             ],
             "details": "Address edge cases like zero participants, fractional servings, missing data, invalid coefficients, and extreme scaling factors. Implement graceful degradation and informative error messages.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -620,7 +620,7 @@
               8
             ],
             "details": "Develop extensive unit and integration tests covering all scaling scenarios. Include precision tests, boundary tests, and real-world recipe examples. Verify mathematical accuracy meets the 99.9% threshold.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           }
         ]
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T17:07:33.755Z",
+      "updated": "2025-07-09T17:16:42.936Z",
       "description": "Tasks for master context"
     }
   }
