@@ -586,7 +586,7 @@
               5
             ],
             "details": "Build validation functions to verify scaling accuracy, check for mathematical errors, validate coefficient applications, and ensure all constraints are respected throughout the scaling process.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -602,7 +602,7 @@
               7
             ],
             "details": "Address edge cases like zero participants, fractional servings, missing data, invalid coefficients, and extreme scaling factors. Implement graceful degradation and informative error messages.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T15:54:34.898Z",
+      "updated": "2025-07-09T17:07:33.755Z",
       "description": "Tasks for master context"
     }
   }
