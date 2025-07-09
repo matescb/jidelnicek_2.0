@@ -84,13 +84,16 @@ unit-tests:
   script:
     # Wait for services to be ready
     - sleep 15
-    # Run unit tests with coverage
+    # Run unit tests with coverage and JUnit XML report
     - poetry run pytest tests/ 
         --cov=src/jidelnicek 
         --cov-report=xml 
         --cov-report=html 
         --cov-report=term-missing 
         --cov-fail-under=70 
+        --junitxml=junit-report.xml
+        --html=unit-test-report.html
+        --self-contained-html
         -v 
         --tb=short 
         --maxfail=10 || true
@@ -100,12 +103,15 @@ unit-tests:
     - poetry run python test_rounding_accuracy.py || echo "Rounding accuracy test not found"
   artifacts:
     reports:
+      junit: junit-report.xml
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
     paths:
       - htmlcov/
       - coverage.xml
+      - junit-report.xml
+      - unit-test-report.html
     expire_in: 1 week
     when: always
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
@@ -148,8 +154,11 @@ integration-tests:
     - poetry run alembic upgrade head
     # Seed test data
     - poetry run python src/jidelnicek/core/seed_data.py
-    # Run integration tests
+    # Run integration tests with JUnit XML report
     - poetry run pytest tests/auth/ tests/recipe/ tests/shopping/ tests/trip/ tests/core/
+        --junitxml=integration-test-results.xml
+        --html=integration-test-report.html
+        --self-contained-html
         -v 
         --tb=short 
         --maxfail=5
@@ -157,6 +166,9 @@ integration-tests:
   artifacts:
     reports:
       junit: integration-test-results.xml
+    paths:
+      - integration-test-results.xml
+      - integration-test-report.html
     expire_in: 1 week
     when: always
 
@@ -190,15 +202,19 @@ security-scan:
     - poetry install --with=dev
     - export PYTHONPATH="${PYTHONPATH}:${CI_PROJECT_DIR}/src"
   script:
-    # Bandit security linter
-    - bandit -r src/ -ll || echo "Bandit found security issues"
-    # Safety check for dependencies
-    - poetry run safety check || echo "Safety found vulnerable dependencies"
+    # Bandit security linter with JSON output
+    - bandit -r src/ -ll -f json -o bandit-report.json || echo "Bandit found security issues"
+    # Safety check for dependencies with JSON output
+    - poetry run safety check --json --output safety-report.json || echo "Safety found vulnerable dependencies"
   allow_failure: true
   artifacts:
     reports:
       sast: bandit-report.json
+    paths:
+      - bandit-report.json
+      - safety-report.json
     expire_in: 1 week
+    when: always
 
 # Docker build
 docker-build:
@@ -263,10 +279,22 @@ performance-tests:
     - sleep 15
     # Run database migrations
     - poetry run alembic upgrade head
-    # Performance tests - API response time <200ms
-    - poetry run pytest tests/core/test_database_performance.py -v
+    # Performance tests - API response time <200ms with JUnit XML report
+    - poetry run pytest tests/core/test_database_performance.py 
+        --junitxml=performance-test-results.xml
+        --html=performance-test-report.html
+        --self-contained-html
+        -v
     # Test scaling accuracy and performance
     - poetry run python test_scaling_accuracy_standalone_fixed.py
+  artifacts:
+    reports:
+      junit: performance-test-results.xml
+    paths:
+      - performance-test-results.xml
+      - performance-test-report.html
+    expire_in: 1 week
+    when: always
   allow_failure: false
   only:
     - main
