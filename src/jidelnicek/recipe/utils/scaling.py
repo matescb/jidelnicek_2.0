@@ -12,6 +12,7 @@ from datetime import date
 from jidelnicek.core.exceptions import ValidationError
 from jidelnicek.recipe.utils.rounding import SmartRounder
 from jidelnicek.recipe.utils.constraints import ScalingConstraints, ScalingValidationResult
+from jidelnicek.recipe.utils.scaling_validator import ScalingValidator
 
 
 class RecipeScaler:
@@ -36,7 +37,8 @@ class RecipeScaler:
         self, 
         use_rounding: bool = False,
         use_constraints: bool = True,
-        constraints: Optional[ScalingConstraints] = None
+        constraints: Optional[ScalingConstraints] = None,
+        use_validation: bool = True
     ):
         """Initialize the RecipeScaler.
         
@@ -44,11 +46,14 @@ class RecipeScaler:
             use_rounding: Whether to use smart rounding for ingredient quantities.
             use_constraints: Whether to enforce scaling constraints.
             constraints: Custom constraints instance (uses defaults if None).
+            use_validation: Whether to use comprehensive validation.
         """
         self.use_rounding = use_rounding
         self.rounder = SmartRounder() if use_rounding else None
         self.use_constraints = use_constraints
         self.constraints = constraints if constraints is not None else ScalingConstraints()
+        self.use_validation = use_validation
+        self.validator = ScalingValidator() if use_validation else None
     
     def calculate_base_scaling_factor(
         self, 
@@ -78,18 +83,30 @@ class RecipeScaler:
             >>> scaler.calculate_base_scaling_factor(8, 2)
             Decimal('0.2500')
         """
-        # Validate inputs
-        if original_servings <= 0:
-            raise ValidationError(
-                "Original servings must be a positive integer, "
-                f"got {original_servings}"
+        # Validate inputs using comprehensive validator if enabled
+        if self.use_validation and self.validator:
+            servings_result = self.validator.validate_servings(
+                original_servings, target_participants
             )
-        
-        if target_participants < 0:
-            raise ValidationError(
-                "Target participants must be non-negative, "
-                f"got {target_participants}"
-            )
+            if not servings_result.is_valid:
+                raise ValidationError("; ".join(servings_result.errors))
+            # Log warnings if any
+            for warning in servings_result.warnings:
+                # In production, these could be logged or returned
+                pass
+        else:
+            # Fallback to basic validation
+            if original_servings <= 0:
+                raise ValidationError(
+                    "Original servings must be a positive integer, "
+                    f"got {original_servings}"
+                )
+            
+            if target_participants < 0:
+                raise ValidationError(
+                    "Target participants must be non-negative, "
+                    f"got {target_participants}"
+                )
         
         # Handle special case where target is zero (no scaling needed)
         if target_participants == 0:
@@ -391,6 +408,43 @@ class RecipeScaler:
             )
         
         return factor, validation_result
+    
+    def validate_scaling_operation(
+        self,
+        original_data: Dict[str, Any],
+        scaled_data: Dict[str, Any],
+        scaling_factor: Decimal
+    ) -> Tuple[bool, List[str], List[str]]:
+        """Validate a complete scaling operation.
+        
+        Performs comprehensive validation on the results of a scaling operation,
+        checking for accuracy, constraint compliance, and potential issues.
+        
+        Args:
+            original_data: Original recipe data before scaling
+            scaled_data: Recipe data after scaling
+            scaling_factor: The scaling factor that was applied
+            
+        Returns:
+            Tuple of (is_valid, errors, warnings)
+        """
+        if not self.use_validation or not self.validator:
+            return True, [], []
+        
+        # Validate the scaling factor
+        factor_result = self.validator.validate_scaling_factor(scaling_factor)
+        
+        # Validate the scaling result
+        result_validation = self.validator.validate_scaling_result(
+            original_data, scaled_data, scaling_factor
+        )
+        
+        # Combine results
+        all_errors = factor_result.errors + result_validation.errors
+        all_warnings = factor_result.warnings + result_validation.warnings
+        is_valid = factor_result.is_valid and result_validation.is_valid
+        
+        return is_valid, all_errors, all_warnings
 
 
 class CalorieScaler(RecipeScaler):

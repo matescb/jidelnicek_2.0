@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy (
+from sqlalchemy import (
     Boolean, DateTime, String, ForeignKey,
     UniqueConstraint, text, Index
 )

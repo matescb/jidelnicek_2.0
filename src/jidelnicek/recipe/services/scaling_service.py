@@ -20,6 +20,7 @@ from jidelnicek.recipe.models.ingredient import RecipeIngredient
 from jidelnicek.recipe.utils.scaling import RecipeScaler, CalorieScaler, ParticipantScaler
 from jidelnicek.recipe.utils.rounding import SmartRounder
 from jidelnicek.recipe.utils.constraints import ScalingConstraints
+from jidelnicek.recipe.utils.scaling_validator import ScalingValidator, validate_scaling_operation
 
 
 class ScalingService:
@@ -28,11 +29,12 @@ class ScalingService:
     def __init__(self, db_session: AsyncSession):
         """Initialize the scaling service."""
         self.db = db_session
-        self.base_scaler = RecipeScaler(use_rounding=True, use_constraints=True)
-        self.calorie_scaler = CalorieScaler(use_rounding=True, use_constraints=True)
-        self.participant_scaler = ParticipantScaler(use_rounding=True, use_constraints=True)
+        self.base_scaler = RecipeScaler(use_rounding=True, use_constraints=True, use_validation=True)
+        self.calorie_scaler = CalorieScaler(use_rounding=True, use_constraints=True, use_validation=True)
+        self.participant_scaler = ParticipantScaler(use_rounding=True, use_constraints=True, use_validation=True)
         self.rounder = SmartRounder()
         self.constraints = ScalingConstraints()
+        self.validator = ScalingValidator()
     
     async def get_recipe_with_ingredients(self, recipe_id: UUID) -> Recipe:
         """Get recipe with all ingredients loaded."""
@@ -69,10 +71,19 @@ class ScalingService:
         Returns:
             Preview data with original and scaled quantities
         """
+        # Validate request first
+        request_data = {
+            'type': 'basic',
+            'target_servings': target_servings
+        }
+        is_valid, errors, request_warnings = validate_scaling_operation('request', request_data)
+        if not is_valid:
+            raise ValidationError("; ".join(errors))
+        
         recipe = await self.get_recipe_with_ingredients(recipe_id)
         
-        # Configure scaler
-        scaler = RecipeScaler(use_rounding=use_rounding, use_constraints=use_constraints)
+        # Configure scaler with validation
+        scaler = RecipeScaler(use_rounding=use_rounding, use_constraints=use_constraints, use_validation=True)
         
         # Prepare ingredients data
         ingredients = []
@@ -100,6 +111,9 @@ class ScalingService:
                 ingredient_quantities=[ing['quantity'] for ing in ingredients]
             )
             warnings = []
+        
+        # Add request validation warnings
+        warnings.extend(request_warnings)
         
         # Build preview response
         ingredient_previews = []
@@ -149,6 +163,16 @@ class ScalingService:
         Returns:
             Preview data with calorie calculations
         """
+        # Validate request
+        request_data = {
+            'type': 'calorie',
+            'target_calories': float(target_calories),
+            'target_servings': target_servings
+        }
+        is_valid, errors, request_warnings = validate_scaling_operation('request', request_data)
+        if not is_valid:
+            raise ValidationError("; ".join(errors))
+        
         recipe = await self.get_recipe_with_ingredients(recipe_id)
         
         # Prepare recipe data with nutritional info
@@ -207,7 +231,7 @@ class ScalingService:
             'scaled_calories_per_serving': float(scaled_calories_per_serving),
             'scaling_factor': float(result['scaling_factor']),
             'ingredients': result['ingredients'],
-            'warnings': result.get('warnings', [])
+            'warnings': result.get('warnings', []) + request_warnings
         }
     
     async def preview_participant_scaling(
@@ -229,6 +253,16 @@ class ScalingService:
         Returns:
             Preview data with participant calculations
         """
+        # Validate request
+        request_data = {
+            'type': 'participant',
+            'participants': participants,
+            'target_calories_per_person': float(target_calories_per_person) if target_calories_per_person else None
+        }
+        is_valid, errors, request_warnings = validate_scaling_operation('request', request_data)
+        if not is_valid:
+            raise ValidationError("; ".join(errors))
+        
         recipe = await self.get_recipe_with_ingredients(recipe_id)
         
         # Calculate effective participants
@@ -309,7 +343,7 @@ class ScalingService:
             'scaling_factor': float(result['scaling_factor']),
             'ingredients': result['ingredients'],
             'participant_details': participant_details,
-            'warnings': result.get('warnings', [])
+            'warnings': result.get('warnings', []) + request_warnings
         }
         
         if target_calories_per_person:
