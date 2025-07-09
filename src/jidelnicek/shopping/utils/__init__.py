@@ -6,6 +6,7 @@ from .aggregation import IngredientAggregator
 from .shopping_rounding import ShoppingRounder
 from .categorization import IngredientCategorizer, ShoppingCategory, StorageType
 from .weight_volume_calculator import WeightVolumeCalculator, WeightVolumeResult, IngredientType
+from .custom_items import CustomItemsManager, CustomItem, CustomItemCategory
 
 __all__ = [
     'IngredientAggregator',
@@ -15,5 +16,8 @@ __all__ = [
     'StorageType',
     'WeightVolumeCalculator',
     'WeightVolumeResult',
-    'IngredientType'
+    'IngredientType',
+    'CustomItemsManager',
+    'CustomItem',
+    'CustomItemCategory'
 ]
