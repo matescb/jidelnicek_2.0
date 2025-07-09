@@ -89,7 +89,7 @@ unit-tests:
         --cov-fail-under=70 
         -v 
         --tb=short 
-        --maxfail=10 || echo "Some tests failed but continuing"
+        --maxfail=10 || true
     # Nutritional accuracy tests (99.9% requirement)
     - poetry run python test_scaling_accuracy_standalone.py || echo "Scaling accuracy test not found"
     - poetry run python test_categorization_accuracy.py || echo "Categorization accuracy test not found"
@@ -145,7 +145,7 @@ integration-tests:
         -v 
         --tb=short 
         --maxfail=5
-        -m "not unit" || echo "Some integration tests failed but continuing"
+        -m "not unit" || true
   artifacts:
     reports:
       junit: integration-test-results.xml

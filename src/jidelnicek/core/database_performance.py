@@ -22,7 +22,14 @@ from sqlalchemy import event, create_engine, pool
 from sqlalchemy.engine import Engine, Connection
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import Pool
-import psutil
+
+# Optional psutil import for memory monitoring
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    psutil = None
+    HAS_PSUTIL = False
 
 logger = logging.getLogger(__name__)
 
@@ -198,14 +205,28 @@ class PerformanceBenchmark:
     def measure(self, operation: str, metadata: Optional[Dict[str, Any]] = None):
         """Measure the performance of an operation."""
         start_time = time.perf_counter()
-        start_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+        
+        # Optional memory monitoring if psutil is available
+        start_memory = 0
+        if HAS_PSUTIL:
+            try:
+                start_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+            except Exception:
+                start_memory = 0
         
         try:
             yield
         finally:
             duration = time.perf_counter() - start_time
-            end_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
-            memory_delta = end_memory - start_memory
+            
+            # Optional memory delta calculation
+            memory_delta = 0
+            if HAS_PSUTIL and start_memory > 0:
+                try:
+                    end_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+                    memory_delta = end_memory - start_memory
+                except Exception:
+                    memory_delta = 0
             
             result = {
                 'operation': operation,
