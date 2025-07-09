@@ -881,7 +881,7 @@
             "description": "Develop analytics dashboard showing system metrics, user activity, content statistics, and usage patterns with visual representations",
             "dependencies": [],
             "details": "Create dashboard widgets for active users, content creation rates, popular recipes/ingredients, system health metrics. Implement date range filtering and export capabilities. Use charts/graphs for data visualization. Include real-time updates where applicable and ensure efficient database queries.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -890,7 +890,7 @@
             "description": "Build administrative interface for managing ingredient master data including categories, nutritional information, and approval workflows",
             "dependencies": [],
             "details": "Implement ingredient CRUD operations with bulk import/export. Add category management and tagging system. Include nutritional data fields and validation. Create approval workflow for user-submitted ingredients. Add duplicate detection and merging capabilities.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T21:47:32.683Z",
+      "updated": "2025-07-09T21:56:53.266Z",
       "description": "Tasks for master context"
     }
   }
