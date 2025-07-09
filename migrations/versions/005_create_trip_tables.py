@@ -38,65 +38,38 @@ def upgrade() -> None:
     op.drop_constraint('trip_trips_check', 'trip_trips', type_='check')
     op.create_check_constraint('trip_trips_date_check', 'trip_trips', 'end_date >= start_date')
     
-    # Create trip_participants table
-    op.create_table('trip_participants',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('trip_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('name', sa.String(length=100), nullable=True),
-        sa.Column('number', sa.Integer(), nullable=True),
-        sa.Column('coefficient', sa.Numeric(precision=5, scale=2), server_default='100.00', nullable=True),
-        sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-        sa.CheckConstraint('(name IS NOT NULL) OR (number IS NOT NULL)', name='trip_participants_name_or_number_check'),
-        sa.CheckConstraint('coefficient > 0 AND coefficient <= 999.99', name='trip_participants_coefficient_check'),
-        sa.ForeignKeyConstraint(['trip_id'], ['trip_trips.id'], name='trip_participants_trip_id_fkey', ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id', name='trip_participants_pkey')
-    )
+    # Enhance existing trip_participants table (table already created in migration 001)
+    op.add_column('trip_participants', sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True))
+    op.add_column('trip_participants', sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True))
     
-    # Create trip_days table
-    op.create_table('trip_days',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('trip_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('day_number', sa.Integer(), nullable=False),
-        sa.Column('date', sa.Date(), nullable=False),
-        sa.Column('notes', sa.Text(), nullable=True),
-        sa.CheckConstraint('day_number > 0', name='trip_days_day_number_check'),
-        sa.CheckConstraint('LENGTH(notes) <= 2000', name='trip_days_notes_length_check'),
-        sa.ForeignKeyConstraint(['trip_id'], ['trip_trips.id'], name='trip_days_trip_id_fkey', ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id', name='trip_days_pkey'),
-        sa.UniqueConstraint('trip_id', 'day_number', name='trip_days_trip_id_day_number_key')
-    )
+    # Update constraints to match migration 005 requirements
+    op.drop_constraint('trip_participants_check', 'trip_participants', type_='check')
+    op.drop_constraint('trip_participants_coefficient_check', 'trip_participants', type_='check')
     
-    # Create trip_recipe_snapshots table
-    op.create_table('trip_recipe_snapshots',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('original_recipe_id', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('recipe_data', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('nutritional_data', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-        sa.ForeignKeyConstraint(['original_recipe_id'], ['recipe_recipes.id'], name='trip_recipe_snapshots_original_recipe_id_fkey'),
-        sa.PrimaryKeyConstraint('id', name='trip_recipe_snapshots_pkey')
-    )
+    op.create_check_constraint('trip_participants_name_or_number_check', 'trip_participants', '(name IS NOT NULL) OR (number IS NOT NULL)')
+    op.create_check_constraint('trip_participants_coefficient_check', 'trip_participants', 'coefficient > 0 AND coefficient <= 999.99')
     
-    # Create trip_meals table
-    op.create_table('trip_meals',
-        sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('trip_day_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('meal_slot', sa.String(length=50), nullable=False),
-        sa.Column('recipe_snapshot_id', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('target_calories_per_person', sa.Numeric(precision=10, scale=2), nullable=True),
-        sa.Column('scaling_factor', sa.Numeric(precision=10, scale=4), server_default='1.0000', nullable=True),
-        sa.Column('rating', sa.Integer(), nullable=True),
-        sa.Column('notes', sa.Text(), nullable=True),
-        sa.CheckConstraint('rating >= 1 AND rating <= 5', name='trip_meals_rating_check'),
-        sa.CheckConstraint('target_calories_per_person > 0', name='trip_meals_calories_check'),
-        sa.CheckConstraint('scaling_factor > 0', name='trip_meals_scaling_check'),
-        sa.CheckConstraint('LENGTH(notes) <= 2000', name='trip_meals_notes_length_check'),
-        sa.ForeignKeyConstraint(['recipe_snapshot_id'], ['trip_recipe_snapshots.id'], name='trip_meals_recipe_snapshot_id_fkey'),
-        sa.ForeignKeyConstraint(['trip_day_id'], ['trip_days.id'], name='trip_meals_trip_day_id_fkey', ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id', name='trip_meals_pkey'),
-        sa.UniqueConstraint('trip_day_id', 'meal_slot', name='trip_meals_trip_day_id_meal_slot_key')
-    )
+    # Enhance existing trip_days table (table already created in migration 001)
+    # Add missing check constraints not present in migration 001
+    op.create_check_constraint('trip_days_day_number_check', 'trip_days', 'day_number > 0')
+    op.create_check_constraint('trip_days_notes_length_check', 'trip_days', 'LENGTH(notes) <= 2000')
+    
+    # Update constraint name to match migration 005 style
+    op.drop_constraint('trip_days_trip_id_day_number_key', 'trip_days', type_='unique')
+    op.create_unique_constraint('trip_days_trip_id_day_number_key', 'trip_days', ['trip_id', 'day_number'])
+    
+    # Note: trip_recipe_snapshots table already exists from migration 001 with identical structure
+    # No modifications needed - table structure is the same
+    
+    # Enhance existing trip_meals table (table already created in migration 001)
+    # Add missing check constraints not present in migration 001
+    op.create_check_constraint('trip_meals_calories_check', 'trip_meals', 'target_calories_per_person > 0')
+    op.create_check_constraint('trip_meals_scaling_check', 'trip_meals', 'scaling_factor > 0')
+    op.create_check_constraint('trip_meals_notes_length_check', 'trip_meals', 'LENGTH(notes) <= 2000')
+    
+    # Update constraint name to match migration 005 style
+    op.drop_constraint('trip_meals_trip_day_id_meal_slot_key', 'trip_meals', type_='unique')
+    op.create_unique_constraint('trip_meals_trip_day_id_meal_slot_key', 'trip_meals', ['trip_day_id', 'meal_slot'])
     
     # Create trip_day_snacks table
     op.create_table('trip_day_snacks',
@@ -294,15 +267,35 @@ def downgrade() -> None:
     op.drop_index('idx_trips_dates', table_name='trip_trips')
     op.drop_index('idx_trips_user', table_name='trip_trips')
     
-    # Drop tables in reverse order of dependencies
+    # Drop new tables created in this migration (in reverse order of dependencies)
     op.drop_table('trip_templates')
     op.drop_table('trip_stoves')
     op.drop_table('trip_day_drinks')
     op.drop_table('trip_day_snacks')
-    op.drop_table('trip_meals')
-    op.drop_table('trip_recipe_snapshots')
-    op.drop_table('trip_days')
-    op.drop_table('trip_participants')
+    
+    # Revert constraint changes to existing tables
+    # Revert trip_meals constraints
+    op.drop_constraint('trip_meals_notes_length_check', 'trip_meals', type_='check')
+    op.drop_constraint('trip_meals_scaling_check', 'trip_meals', type_='check')
+    op.drop_constraint('trip_meals_calories_check', 'trip_meals', type_='check')
+    op.drop_constraint('trip_meals_trip_day_id_meal_slot_key', 'trip_meals', type_='unique')
+    op.create_unique_constraint('trip_meals_trip_day_id_meal_slot_key', 'trip_meals', ['trip_day_id', 'meal_slot'])
+    
+    # Revert trip_days constraints
+    op.drop_constraint('trip_days_notes_length_check', 'trip_days', type_='check')
+    op.drop_constraint('trip_days_day_number_check', 'trip_days', type_='check')
+    op.drop_constraint('trip_days_trip_id_day_number_key', 'trip_days', type_='unique')
+    op.create_unique_constraint('trip_days_trip_id_day_number_key', 'trip_days', ['trip_id', 'day_number'])
+    
+    # Revert trip_participants constraints
+    op.drop_constraint('trip_participants_coefficient_check', 'trip_participants', type_='check')
+    op.drop_constraint('trip_participants_name_or_number_check', 'trip_participants', type_='check')
+    op.create_check_constraint('trip_participants_check', 'trip_participants', '(name IS NOT NULL) OR (number IS NOT NULL)')
+    op.create_check_constraint('trip_participants_coefficient_check', 'trip_participants', 'coefficient > 0')
+    
+    # Remove added columns from trip_participants
+    op.drop_column('trip_participants', 'updated_at')
+    op.drop_column('trip_participants', 'created_at')
     
     # Remove columns and constraints added to existing trip_trips table (don't drop the table itself)
     op.drop_constraint('trip_trips_notes_length_check', 'trip_trips', type_='check')
