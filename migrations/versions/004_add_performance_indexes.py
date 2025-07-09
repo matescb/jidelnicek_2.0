@@ -36,6 +36,9 @@ def upgrade():
     These are installed in the database initialization script.
     """
     
+    # Install required PostgreSQL extensions if not already installed
+    op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
+    
     # =====================================================
     # Recipe Search and Filter Indexes
     # =====================================================
