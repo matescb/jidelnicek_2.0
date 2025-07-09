@@ -635,7 +635,7 @@
         "dependencies": [
           5
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -722,7 +722,7 @@
               5
             ],
             "details": "Create recommendation engine that suggests container sizes based on ingredient volumes, considers different container types (boxes, bags, coolers), and provides packing optimization suggestions.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -737,7 +737,7 @@
         "dependencies": [
           6
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -745,7 +745,7 @@
             "description": "Implement PDF export functionality using ReportLab library with support for tables, charts, and custom styling",
             "dependencies": [],
             "details": "Install and configure ReportLab, create PDF template system, implement table layouts for meal data, add chart generation for nutritional information, ensure proper Unicode support for Czech characters",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-09T18:09:44.470Z",
+      "updated": "2025-07-09T18:16:57.770Z",
       "description": "Tasks for master context"
     }
   }
