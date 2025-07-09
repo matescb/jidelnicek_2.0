@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
-    Boolean, String, Integer, ForeignKey, 
+    Boolean, DateTime, String, Integer, ForeignKey, 
     CheckConstraint, Index, Text, JSON, text
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
