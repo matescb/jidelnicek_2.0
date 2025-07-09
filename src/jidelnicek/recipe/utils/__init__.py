@@ -7,6 +7,7 @@ from .scaling import RecipeScaler, CalorieScaler, ParticipantScaler
 from .rounding import SmartRounder
 from .constraints import ScalingConstraints
 from .scaling_validator import ScalingValidator, validate_scaling_operation
+from .scaling_edge_cases import ScalingEdgeCaseHandler, handle_scaling_edge_cases
 
 __all__ = [
     'NutritionCalculator', 
@@ -16,5 +17,7 @@ __all__ = [
     'SmartRounder',
     'ScalingConstraints',
     'ScalingValidator',
-    'validate_scaling_operation'
+    'validate_scaling_operation',
+    'ScalingEdgeCaseHandler',
+    'handle_scaling_edge_cases'
 ]

@@ -21,6 +21,7 @@ from jidelnicek.recipe.utils.scaling import RecipeScaler, CalorieScaler, Partici
 from jidelnicek.recipe.utils.rounding import SmartRounder
 from jidelnicek.recipe.utils.constraints import ScalingConstraints
 from jidelnicek.recipe.utils.scaling_validator import ScalingValidator, validate_scaling_operation
+from jidelnicek.recipe.utils.scaling_edge_cases import ScalingEdgeCaseHandler, handle_scaling_edge_cases
 
 
 class ScalingService:
@@ -35,6 +36,7 @@ class ScalingService:
         self.rounder = SmartRounder()
         self.constraints = ScalingConstraints()
         self.validator = ScalingValidator()
+        self.edge_case_handler = ScalingEdgeCaseHandler()
     
     async def get_recipe_with_ingredients(self, recipe_id: UUID) -> Recipe:
         """Get recipe with all ingredients loaded."""
@@ -71,19 +73,37 @@ class ScalingService:
         Returns:
             Preview data with original and scaled quantities
         """
-        # Validate request first
-        request_data = {
-            'type': 'basic',
-            'target_servings': target_servings
-        }
-        is_valid, errors, request_warnings = validate_scaling_operation('request', request_data)
-        if not is_valid:
-            raise ValidationError("; ".join(errors))
-        
-        recipe = await self.get_recipe_with_ingredients(recipe_id)
-        
-        # Configure scaler with validation
-        scaler = RecipeScaler(use_rounding=use_rounding, use_constraints=use_constraints, use_validation=True)
+        try:
+            # Sanitize request first
+            request_data = {
+                'type': 'basic',
+                'target_servings': target_servings
+            }
+            sanitized_request, sanitize_warnings = self.edge_case_handler.sanitize_scaling_request(
+                request_data, 'basic'
+            )
+            target_servings = sanitized_request.get('target_servings', target_servings)
+            
+            # Validate sanitized request
+            is_valid, errors, request_warnings = validate_scaling_operation('request', sanitized_request)
+            if not is_valid:
+                raise ValidationError("; ".join(errors))
+            
+            # Combine warnings
+            all_warnings = sanitize_warnings + request_warnings
+            
+            recipe = await self.get_recipe_with_ingredients(recipe_id)
+            
+            # Handle zero participants edge case
+            if target_servings == 0:
+                zero_result = self.edge_case_handler.handle_zero_participants(
+                    target_servings, recipe.servings
+                )
+                if zero_result.handled:
+                    all_warnings.extend(zero_result.warnings)
+            
+            # Configure scaler with validation
+            scaler = RecipeScaler(use_rounding=use_rounding, use_constraints=use_constraints, use_validation=True)
         
         # Prepare ingredients data
         ingredients = []
@@ -111,9 +131,9 @@ class ScalingService:
                 ingredient_quantities=[ing['quantity'] for ing in ingredients]
             )
             warnings = []
-        
-        # Add request validation warnings
-        warnings.extend(request_warnings)
+            
+            # Add all accumulated warnings
+            warnings.extend(all_warnings)
         
         # Build preview response
         ingredient_previews = []
@@ -145,6 +165,25 @@ class ScalingService:
             'constraints_applied': use_constraints,
             'rounding_applied': use_rounding
         }
+        
+        except Exception as e:
+            # Provide graceful degradation
+            context = {
+                'recipe_id': recipe_id,
+                'recipe_name': 'Unknown Recipe',
+                'original_servings': 4,
+                'ingredients': []
+            }
+            
+            # Try to get recipe info if possible
+            try:
+                recipe = await self.get_recipe_with_ingredients(recipe_id)
+                context['recipe_name'] = recipe.title
+                context['original_servings'] = recipe.servings
+            except:
+                pass
+            
+            return self.edge_case_handler.provide_graceful_degradation(e, context)
     
     async def preview_calorie_scaling(
         self,
@@ -253,104 +292,134 @@ class ScalingService:
         Returns:
             Preview data with participant calculations
         """
-        # Validate request
-        request_data = {
-            'type': 'participant',
-            'participants': participants,
-            'target_calories_per_person': float(target_calories_per_person) if target_calories_per_person else None
-        }
-        is_valid, errors, request_warnings = validate_scaling_operation('request', request_data)
-        if not is_valid:
-            raise ValidationError("; ".join(errors))
-        
-        recipe = await self.get_recipe_with_ingredients(recipe_id)
-        
-        # Calculate effective participants
-        effective_participants = self.participant_scaler.calculate_effective_participants(
-            participants=participants,
-            meal_type=meal_type
-        )
-        
-        # Prepare recipe data
-        recipe_data = {
-            'servings': recipe.servings,
-            'ingredients': []
-        }
-        
-        for ri in recipe.recipe_ingredients:
-            ingredient_data = {
-                'name': ri.ingredient.name,
-                'quantity': ri.quantity,
-                'unit': ri.unit
+        try:
+            # Sanitize request first
+            request_data = {
+                'type': 'participant',
+                'participants': participants,
+                'target_calories_per_person': float(target_calories_per_person) if target_calories_per_person else None
+            }
+            sanitized_request, sanitize_warnings = self.edge_case_handler.sanitize_scaling_request(
+                request_data, 'participant'
+            )
+            participants = sanitized_request.get('participants', participants)
+            
+            # Validate sanitized request
+            is_valid, errors, request_warnings = validate_scaling_operation('request', sanitized_request)
+            if not is_valid:
+                raise ValidationError("; ".join(errors))
+            
+            # Combine warnings
+            all_warnings = sanitize_warnings + request_warnings
+            
+            recipe = await self.get_recipe_with_ingredients(recipe_id)
+            
+            # Calculate effective participants
+            effective_participants = self.participant_scaler.calculate_effective_participants(
+                participants=participants,
+                meal_type=meal_type
+            )
+            
+            # Prepare recipe data
+            recipe_data = {
+                'servings': recipe.servings,
+                'ingredients': []
             }
             
-            # Add nutritional data if doing calorie scaling
-            if target_calories_per_person and ri.ingredient.nutritional_value:
-                nv = ri.ingredient.nutritional_value
-                ingredient_data['nutritional_value'] = {
-                    'calories': nv.calories
+            for ri in recipe.recipe_ingredients:
+                ingredient_data = {
+                    'name': ri.ingredient.name,
+                    'quantity': ri.quantity,
+                    'unit': ri.unit
                 }
+                
+                # Add nutritional data if doing calorie scaling
+                if target_calories_per_person and ri.ingredient.nutritional_value:
+                    nv = ri.ingredient.nutritional_value
+                    ingredient_data['nutritional_value'] = {
+                        'calories': nv.calories
+                    }
+                
+                recipe_data['ingredients'].append(ingredient_data)
             
-            recipe_data['ingredients'].append(ingredient_data)
-        
-        # Scale based on method
-        if target_calories_per_person:
-            result = self.participant_scaler.scale_recipe_for_participant_calories(
-                recipe_data=recipe_data,
-                participants=participants,
-                target_calories_per_person=target_calories_per_person,
-                meal_type=meal_type
-            )
-        else:
-            result = self.participant_scaler.scale_recipe_for_participants(
-                recipe_data=recipe_data,
-                participants=participants,
-                meal_type=meal_type
-            )
-        
-        # Build participant breakdown
-        participant_details = []
-        for p in participants:
-            coefficient = p.get('coefficient', 100) / 100
+            # Scale based on method
+            if target_calories_per_person:
+                result = self.participant_scaler.scale_recipe_for_participant_calories(
+                    recipe_data=recipe_data,
+                    participants=participants,
+                    target_calories_per_person=target_calories_per_person,
+                    meal_type=meal_type
+                )
+            else:
+                result = self.participant_scaler.scale_recipe_for_participants(
+                    recipe_data=recipe_data,
+                    participants=participants,
+                    meal_type=meal_type
+                )
             
-            # Apply meal-specific coefficient if available
-            if meal_type and 'meal_coefficients' in p:
-                meal_coef = p['meal_coefficients'].get(meal_type, 100) / 100
-                coefficient *= meal_coef
+            # Build participant breakdown
+            participant_details = []
+            for p in participants:
+                coefficient = p.get('coefficient', 100) / 100
+                
+                # Apply meal-specific coefficient if available
+                if meal_type and 'meal_coefficients' in p:
+                    meal_coef = p['meal_coefficients'].get(meal_type, 100) / 100
+                    coefficient *= meal_coef
+                
+                # Apply attendance factor if present
+                if 'attendance_factor' in p:
+                    coefficient *= p['attendance_factor']
+                
+                participant_details.append({
+                    'name': p.get('name', 'Participant'),
+                    'base_coefficient': p.get('coefficient', 100),
+                    'meal_coefficient': p.get('meal_coefficients', {}).get(meal_type, 100) if meal_type else None,
+                    'attendance_factor': p.get('attendance_factor', 1.0),
+                    'effective_coefficient': coefficient * 100,
+                    'calories_allocated': result.get('calorie_distribution', {}).get(
+                        p.get('name', 'Participant'), 0
+                    ) if target_calories_per_person else None
+                })
             
-            # Apply attendance factor if present
-            if 'attendance_factor' in p:
-                coefficient *= p['attendance_factor']
+            response = {
+                'recipe_id': str(recipe_id),
+                'recipe_name': recipe.title,
+                'original_servings': recipe.servings,
+                'participant_count': len(participants),
+                'effective_participants': float(effective_participants),
+                'meal_type': meal_type,
+                'scaling_factor': float(result['scaling_factor']),
+                'ingredients': result['ingredients'],
+                'participant_details': participant_details,
+                'warnings': result.get('warnings', []) + all_warnings
+            }
             
-            participant_details.append({
-                'name': p.get('name', 'Participant'),
-                'base_coefficient': p.get('coefficient', 100),
-                'meal_coefficient': p.get('meal_coefficients', {}).get(meal_type, 100) if meal_type else None,
-                'attendance_factor': p.get('attendance_factor', 1.0),
-                'effective_coefficient': coefficient * 100,
-                'calories_allocated': result.get('calorie_distribution', {}).get(
-                    p.get('name', 'Participant'), 0
-                ) if target_calories_per_person else None
-            })
-        
-        response = {
-            'recipe_id': str(recipe_id),
-            'recipe_name': recipe.title,
-            'original_servings': recipe.servings,
-            'participant_count': len(participants),
-            'effective_participants': float(effective_participants),
-            'meal_type': meal_type,
-            'scaling_factor': float(result['scaling_factor']),
-            'ingredients': result['ingredients'],
-            'participant_details': participant_details,
-            'warnings': result.get('warnings', []) + request_warnings
-        }
-        
-        if target_calories_per_person:
-            response['target_calories_per_person'] = float(target_calories_per_person)
-            response['total_calories'] = float(result.get('total_calories', 0))
-            response['calories_per_effective_participant'] = float(
-                result.get('calories_per_effective_participant', 0)
-            )
-        
-        return response
+            if target_calories_per_person:
+                response['target_calories_per_person'] = float(target_calories_per_person)
+                response['total_calories'] = float(result.get('total_calories', 0))
+                response['calories_per_effective_participant'] = float(
+                    result.get('calories_per_effective_participant', 0)
+                )
+            
+            return response
+            
+        except Exception as e:
+            # Provide graceful degradation
+            context = {
+                'recipe_id': recipe_id,
+                'recipe_name': 'Unknown Recipe',
+                'original_servings': 4,
+                'ingredients': [],
+                'participants': participants
+            }
+            
+            # Try to get recipe info if possible
+            try:
+                recipe = await self.get_recipe_with_ingredients(recipe_id)
+                context['recipe_name'] = recipe.title
+                context['original_servings'] = recipe.servings
+            except:
+                pass
+            
+            return self.edge_case_handler.provide_graceful_degradation(e, context)
