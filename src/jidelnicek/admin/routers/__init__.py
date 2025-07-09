@@ -1,5 +1,6 @@
 """Admin routers package."""
 
 from jidelnicek.admin.routers.users import router as users_router
+from jidelnicek.admin.routers.dashboard import router as dashboard_router
 
-__all__ = ["users_router"]
+__all__ = ["users_router", "dashboard_router"]

@@ -37,6 +37,9 @@ def cache_key_wrapper(prefix: str, ttl: int = 300):
         return func
     return decorator
 
+# Alias for backward compatibility
+cache_result = cache_key_wrapper
+
 __all__ = [
     "get_redis_client",
     "cache_get",
@@ -45,4 +48,5 @@ __all__ = [
     "cache_exists",
     "cached",
     "cache_key_wrapper",
+    "cache_result",
 ]

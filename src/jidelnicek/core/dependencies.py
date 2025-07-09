@@ -248,3 +248,19 @@ async def check_redis_health() -> bool:
     except Exception as e:
         logger.error(f"Redis health check failed: {str(e)}")
         return False
+
+
+# Re-export commonly used auth dependencies for convenience
+from jidelnicek.auth.dependencies.auth import (
+    get_current_user,
+    get_current_user_optional,
+    get_current_verified_user,
+    get_current_admin_user,
+    CurrentUser,
+    CurrentUserOptional,
+    CurrentVerifiedUser,
+    CurrentAdminUser,
+)
+
+# Alias for backward compatibility
+require_admin = get_current_admin_user
