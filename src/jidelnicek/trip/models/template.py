@@ -11,9 +11,9 @@ from uuid import UUID
 
 from sqlalchemy import (
     Boolean, DateTime, String, Integer, ForeignKey, 
-    CheckConstraint, Index, Text, JSON, text
+    CheckConstraint, Index, Text, text
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
 
 from jidelnicek.core.database import Base
@@ -74,21 +74,21 @@ class TripTemplate(Base):
     )
     
     meal_slots: Mapped[List[str]] = mapped_column(
-        JSON,
+        JSONB,
         nullable=False,
         server_default=text('\'["Breakfast", "Lunch", "Dinner"]\'::jsonb'),
         comment="Array of meal slot names for the trip"
     )
     
     participants: Mapped[List[Dict[str, Any]]] = mapped_column(
-        JSON,
+        JSONB,
         nullable=False,
         server_default=text('\'[]\'::jsonb'),
         comment="Array of participant templates with name and coefficient"
     )
     
     meal_assignments: Mapped[Dict[str, Any]] = mapped_column(
-        JSON,
+        JSONB,
         nullable=False,
         server_default=text('\'{}\'::jsonb'),
         comment="Object mapping days and meal slots to recipe/meal configurations"
@@ -111,7 +111,7 @@ class TripTemplate(Base):
     )
     
     tags: Mapped[List[str]] = mapped_column(
-        JSON,
+        JSONB,
         nullable=False,
         server_default=text('\'[]\'::jsonb'),
         comment="Array of tags for template organization"

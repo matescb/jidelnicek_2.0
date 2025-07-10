@@ -15,7 +15,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 import enum
 
-from jidelnicek.common.models.base import Base
+from jidelnicek.core.database import Base
 
 
 class ReportStatus(str, enum.Enum):
