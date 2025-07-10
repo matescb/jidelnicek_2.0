@@ -193,7 +193,7 @@ export default {
     description: 'Description',
     startDate: 'Start Date',
     endDate: 'End Date',
-    participants: 'Participants',
+    participantCount: 'Participants',
     meals: 'Meals',
     
     // Participants
@@ -224,7 +224,7 @@ export default {
     totalMeals: 'Total Meals',
     uniqueRecipes: 'Unique Recipes',
     avgDailyCalories: 'Avg Daily Calories',
-    participants: 'Participants',
+    participantsSummary: 'Participants',
     
     // Meal types
     mealTypes: {

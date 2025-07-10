@@ -11,7 +11,7 @@ import {
   Tooltip,
   Menu,
   MenuItem,
-} from '@mui/material';
+} from 'react';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,

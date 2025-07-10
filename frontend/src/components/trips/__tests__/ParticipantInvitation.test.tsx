@@ -2,25 +2,25 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
 import { ParticipantInvitation } from '../ParticipantInvitation'
 import { useInvitations } from '@/hooks/useInvitations'
 import { useToast } from '@/hooks/useToast'
 import type { InvitationTemplate } from '@/types/invitation'
 
 // Mock dependencies
-vi.mock('@/hooks/useInvitations')
-vi.mock('@/hooks/useToast')
-vi.mock('qrcode', () => ({
+jest.mock('@/hooks/useInvitations')
+jest.mock('@/hooks/useToast')
+jest.mock('qrcode', () => ({
   default: {
-    toDataURL: vi.fn().mockResolvedValue('data:image/png;base64,mockqrcode')
+    toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,mockqrcode')
   }
 }))
 
 // Mock navigator.clipboard
 Object.assign(navigator, {
   clipboard: {
-    writeText: vi.fn().mockResolvedValue(undefined)
+    writeText: jest.fn().mockResolvedValue(undefined)
   }
 })
 
@@ -68,20 +68,20 @@ const mockUseInvitations = {
   invitations: mockInvitations,
   templates: mockTemplates,
   sendingStatus: new Map(),
-  sendInvitations: vi.fn(),
-  sendInvitationsAsync: vi.fn(),
-  generateLink: vi.fn(),
-  generateLinkAsync: vi.fn(),
+  sendInvitations: jest.fn(),
+  sendInvitationsAsync: jest.fn(),
+  generateLink: jest.fn(),
+  generateLinkAsync: jest.fn(),
   isGeneratingLink: false,
   isSendingInvitations: false,
-  clearSendingStatus: vi.fn(),
+  clearSendingStatus: jest.fn(),
   invitationsLoading: false,
   templatesLoading: false,
-  cancelInvitation: vi.fn(),
-  resendInvitation: vi.fn()
+  cancelInvitation: jest.fn(),
+  resendInvitation: jest.fn()
 }
 
-const mockShowToast = vi.fn()
+const mockShowToast = jest.fn()
 
 describe('ParticipantInvitation', () => {
   let queryClient: QueryClient
@@ -108,7 +108,7 @@ describe('ParticipantInvitation', () => {
     const defaultProps = {
       tripId: 'trip-123',
       tripName: 'Summer Vacation',
-      onInviteSent: vi.fn()
+      onInviteSent: jest.fn()
     }
 
     return render(
@@ -209,7 +209,7 @@ describe('ParticipantInvitation', () => {
     })
 
     it('sends email invitations successfully', async () => {
-      const onInviteSent = vi.fn()
+      const onInviteSent = jest.fn()
       renderComponent({ onInviteSent })
 
       // Add emails
@@ -588,7 +588,7 @@ describe('ParticipantInvitation', () => {
     it('uses generated link over provided shareLink', async () => {
       vi.mocked(useInvitations).mockReturnValue({
         ...mockUseInvitations,
-        generateLinkAsync: vi.fn().mockResolvedValue({ url: 'https://generated.link/xyz' })
+        generateLinkAsync: jest.fn().mockResolvedValue({ url: 'https://generated.link/xyz' })
       })
 
       renderComponent({ shareLink: 'https://original.link/abc' })

@@ -7,8 +7,8 @@ export { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 
 // Form field wrappers
 export { TextField, UncontrolledTextField } from './TextField';
-export { TextareaField, UncontrolledTextareaField } from './TextareaField';
-export { SelectField, UncontrolledSelectField, type SelectOption } from './SelectField';
+export { TextareaField, UncontrolledTextareaField } from './textareaField';
+export { SelectField, UncontrolledSelectField, type SelectOption } from './selectField';
 export { CheckboxField, CheckboxGroupField, UncontrolledCheckboxField, UncontrolledCheckboxGroupField, type CheckboxOption } from './CheckboxField';
 export { RadioField, UncontrolledRadioField, type RadioOption } from './RadioField';
 export { DateField, UncontrolledDateField } from './DateField';

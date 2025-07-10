@@ -27,8 +27,8 @@ import {
   validationAPI,
 } from '../../api/validation';
 import { emailSchema, recipeNameSchema, tripNameSchema } from '../../utils/validation';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { FormField, FormLabel, FormError, FormDescription } from '../ui/Form';
 

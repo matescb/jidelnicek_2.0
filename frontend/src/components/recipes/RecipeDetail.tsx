@@ -110,7 +110,7 @@ export function RecipeDetail({ recipe, onEdit, onDelete }: RecipeDetailProps) {
   
   const handleAddToTrip = () => {
     // TODO: Implement add to trip functionality
-    navigate('/trips/new', { state: { recipeId: recipe.id } })
+    navigate('/dashboard/trips/new', { state: { recipeId: recipe.id } })
   }
   
   const getDifficultyColor = (difficulty: string) => {

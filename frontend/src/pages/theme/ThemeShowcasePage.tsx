@@ -80,7 +80,7 @@ const SectionHeader: React.FC<{ title: string; icon?: React.ReactNode }> = ({ ti
 
 export const ThemeShowcasePage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-  const { showToast } = useToast();
+  const { toast } = useToast();
   const [inputValue, setInputValue] = useState('');
   const [checkboxChecked, setCheckboxChecked] = useState(false);
   const [radioValue, setRadioValue] = useState('option1');
@@ -94,7 +94,7 @@ export const ThemeShowcasePage: React.FC = () => {
       warning: 'This is a warning toast message!',
       info: 'This is an info toast message!'
     };
-    showToast(messages[type], type);
+    toast({ title: messages[type], variant: type === 'info' ? 'default' : type });
   };
 
   return (
@@ -313,7 +313,7 @@ export const ThemeShowcasePage: React.FC = () => {
               <div className="flex flex-wrap gap-4">
                 <FormButton>Normal</FormButton>
                 <FormButton disabled>Disabled</FormButton>
-                <FormButton loading>Loading</FormButton>
+                <FormButton isLoading>Loading</FormButton>
                 <FormButton fullWidth>Full Width Button</FormButton>
               </div>
             </div>
@@ -795,3 +795,5 @@ export const ThemeShowcasePage: React.FC = () => {
     </Container>
   );
 };
+
+export default ThemeShowcasePage;

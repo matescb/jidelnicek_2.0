@@ -106,7 +106,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   canEdit: propCanEdit
 }) => {
   const { user: currentUser } = useAuth()
-  const { addToast } = useToast()
+  const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [isEditing, setIsEditing] = useState(false)
@@ -229,16 +229,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         onSave(editedData)
       }
       
-      addToast({
+      toast({
         title: 'Profile Updated',
-        message: 'Your profile has been successfully updated.',
-        type: 'success'
+        description: 'Your profile has been successfully updated.',
+        variant: 'success'
       })
     } catch (error) {
-      addToast({
+      toast({
         title: 'Update Failed',
-        message: 'Failed to update profile. Please try again.',
-        type: 'error'
+        description: 'Failed to update profile. Please try again.',
+        variant: 'error'
       })
     } finally {
       setIsSaving(false)

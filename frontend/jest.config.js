@@ -13,9 +13,15 @@ module.exports = {
       },
     },
   },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     // Mock auth module to avoid import.meta issues
     '^@/api/auth$': '<rootDir>/src/api/__mocks__/auth.ts',
+    // Mock API client to avoid import.meta issues
+    '^@/api/client$': '<rootDir>/src/api/__mocks__/client.ts',
+    '^@/utils/apiClient$': '<rootDir>/src/api/__mocks__/client.ts',
+    // Mock @mui/lab components
+    '^@mui/lab$': '<rootDir>/src/__mocks__/@mui/lab.ts',
     // Handle CSS imports
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     // Handle image imports
@@ -42,6 +48,7 @@ module.exports = {
         tsconfig: {
           jsx: 'react',
         },
+        useESM: true,
       },
     ],
   },

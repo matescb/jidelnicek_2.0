@@ -12,7 +12,7 @@ jest.mock('@mui/material/styles', () => ({
   createTheme: () => ({}),
 }));
 
-jest.mock('@mui/material', () => {
+jest.mock('react', () => {
   const actual = jest.requireActual('react');
   return {
     Box: ({ children, ...props }: any) => <div {...props}>{children}</div>,

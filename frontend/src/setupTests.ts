@@ -11,6 +11,7 @@ Object.defineProperty(globalThis, 'import', {
       env: {
         DEV: false,
         VITE_API_URL: '/api/v1',
+        VITE_USE_MOCK_AUTH: 'true',
       },
     },
   },
@@ -63,24 +64,6 @@ Element.prototype.scrollIntoView = jest.fn()
 // Mock HTMLElement methods
 HTMLElement.prototype.focus = jest.fn()
 HTMLElement.prototype.blur = jest.fn()
-
-// Suppress console errors in tests
-const originalError = console.error
-beforeAll(() => {
-  console.error = (...args: any[]) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render is no longer supported')
-    ) {
-      return
-    }
-    originalError.call(console, ...args)
-  }
-})
-
-afterAll(() => {
-  console.error = originalError
-})
 
 // Clean up after each test
 afterEach(() => {

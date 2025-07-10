@@ -1,16 +1,8 @@
 import React, { ReactElement } from 'react'
 import { render as rtlRender, RenderOptions } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-import { I18nextProvider } from 'react-i18next'
-// Mock i18n for tests
-const mockI18n = {
-  t: (key: string) => key,
-  changeLanguage: () => Promise.resolve(),
-  language: 'en',
-}
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from '@/context/ThemeContext'
-// Toast provider not needed for tests
 
 // Create a custom render function that includes all providers
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
@@ -24,8 +16,7 @@ export function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        staleTime: 0,
-        cacheTime: 0,
+        gcTime: Infinity,
       },
       mutations: {
         retry: false,
@@ -67,28 +58,15 @@ export const mockRecipeStore = {
   forkRecipe: jest.fn(),
   setFilters: jest.fn(),
   clearFilters: jest.fn(),
-  setSorting: jest.fn(),
-  setPageSize: jest.fn(),
-  searchRecipes: jest.fn(),
-  loadMore: jest.fn(),
+  setSortBy: jest.fn(),
+  setSortOrder: jest.fn(),
+  setCurrentPage: jest.fn(),
   toggleFavorite: jest.fn(),
-  rateRecipe: jest.fn(),
-  clearError: jest.fn(),
-  pagination: {
-    currentPage: 1,
-    pageSize: 20,
-    totalPages: 1,
-    totalItems: 0,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  },
+  exportRecipe: jest.fn(),
+  importRecipe: jest.fn(),
 }
 
-// Mock toast
-export const mockToast = jest.fn()
-
-// Custom render function
-export function customRender(
+export function render(
   ui: ReactElement,
   {
     initialRoute = '/',
@@ -96,20 +74,15 @@ export function customRender(
     ...renderOptions
   }: CustomRenderOptions = {}
 ) {
-  // Update the browser history if needed
-  if (initialRoute !== '/') {
-    window.history.pushState({}, 'Test page', initialRoute)
-  }
+  window.history.pushState({}, 'Test page', initialRoute)
 
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <I18nextProvider i18n={mockI18n as any}>
-            <ThemeProvider>
-              {children}
-            </ThemeProvider>
-          </I18nextProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
         </BrowserRouter>
       </QueryClientProvider>
     )
@@ -118,109 +91,38 @@ export function customRender(
   return rtlRender(ui, { wrapper: Wrapper, ...renderOptions })
 }
 
-// Re-export everything from React Testing Library
-export * from '@testing-library/react'
-export { customRender as render }
-
-// Test data factories
-export const createMockRecipe = (overrides?: Partial<any>) => ({
-  id: '1',
-  name: 'Test Recipe',
-  description: 'A delicious test recipe',
-  instructions: [
-    { step: 1, text: 'First instruction' },
-    { step: 2, text: 'Second instruction' },
-  ],
-  ingredients: [
-    { name: 'Flour', quantity: 200, unit: 'g', notes: '' },
-    { name: 'Sugar', quantity: 100, unit: 'g', notes: '' },
-  ],
-  prepTime: 15,
-  cookTime: 30,
-  totalTime: 45,
-  servings: 4,
-  difficulty: 'medium',
-  categories: ['dessert'],
-  tags: ['easy', 'quick'],
-  isPublic: true,
-  images: [],
-  author: {
-    id: '1',
-    name: 'Test User',
-    avatar: '/avatar.jpg',
-  },
-  authorId: '1',
-  userId: '1',
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
-  ratingAverage: 4.5,
-  ratingCount: 10,
-  viewCount: 100,
-  nutrition: {
-    calories: 250,
-    protein: 5,
-    carbs: 45,
-    fat: 8,
-    fiber: 2,
-    sodium: 150,
-  },
-  ...overrides,
-})
-
-export const createMockUser = (overrides?: Partial<any>) => ({
-  id: '1',
-  name: 'Test User',
-  email: 'test@example.com',
-  avatar: '/avatar.jpg',
-  role: 'user',
-  ...overrides,
-})
-
-// Mock API responses
-export const mockApiResponse = (data: any, status = 200) => {
-  return Promise.resolve({
-    status,
-    data,
-    headers: {},
-    config: {},
-    statusText: 'OK',
-  })
-}
-
-export const mockApiError = (message: string, status = 400) => {
-  return Promise.reject({
-    response: {
-      status,
-      data: { message },
-    },
-  })
-}
-
-// Wait for async updates
-export const waitForLoadingToFinish = () => 
-  new Promise(resolve => setTimeout(resolve, 0))
-
-// File upload helpers
-export const createMockFile = (name: string, size: number, type: string): File => {
-  const file = new File(['test'], name, { type })
-  Object.defineProperty(file, 'size', { value: size })
-  return file
-}
-
-export const createMockFileList = (files: File[]): FileList => {
-  const fileList = {
-    length: files.length,
-    item: (index: number) => files[index] || null,
-    [Symbol.iterator]: function* () {
-      for (let i = 0; i < files.length; i++) {
-        yield files[i]
-      }
-    },
+// Mock data factories
+export function createMockRecipe(overrides = {}) {
+  return {
+    id: 'recipe-1',
+    title: 'Test Recipe',
+    description: 'A test recipe',
+    servings: 4,
+    prepTime: 30,
+    cookTime: 45,
+    difficulty: 'medium',
+    category: 'main-course',
+    tags: ['test'],
+    ingredients: [],
+    instructions: [],
+    nutrition: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
   }
-  
-  files.forEach((file, index) => {
-    fileList[index] = file
-  })
-  
-  return fileList as unknown as FileList
 }
+
+export function createMockUser(overrides = {}) {
+  return {
+    id: 'user-1',
+    name: 'Test User',
+    email: 'test@example.com',
+    isVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  }
+}
+
+// Re-export everything from testing library
+export * from '@testing-library/react'

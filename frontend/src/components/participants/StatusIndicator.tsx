@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import { formatDistanceToNow } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 export interface StatusIndicatorProps {
   isOnline: boolean;
@@ -19,23 +20,19 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   showLabel = false,
   showActivity = false,
 }) => {
-  const theme = useTheme();
-
-  const sizeMap = {
-    small: 8,
-    medium: 12,
-    large: 16,
+  const sizeClasses = {
+    small: 'w-2 h-2',
+    medium: 'w-3 h-3',
+    large: 'w-4 h-4',
   };
 
-  const dotSize = sizeMap[size];
-
   const getStatusColor = () => {
-    if (isOnline) return theme.palette.success.main;
+    if (isOnline) return 'bg-green-500';
     if (lastSeen) {
       const minutesAgo = (Date.now() - lastSeen.getTime()) / 1000 / 60;
-      if (minutesAgo < 5) return theme.palette.warning.main;
+      if (minutesAgo < 5) return 'bg-yellow-500';
     }
-    return theme.palette.text.disabled;
+    return 'bg-gray-400';
   };
 
   const getStatusText = () => {
@@ -55,62 +52,42 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   const statusText = getStatusText();
 
   return (
-    <Tooltip title={statusText} placement="top">
-      <Box
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 1,
-        }}
-        data-testid={isOnline ? 'status-indicator-online' : 'status-indicator-offline'}
-      >
-        <Box
-          sx={{
-            width: dotSize,
-            height: dotSize,
-            borderRadius: '50%',
-            backgroundColor: statusColor,
-            position: 'relative',
-            '&::after': isOnline
-              ? {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  borderRadius: '50%',
-                  border: `2px solid ${statusColor}`,
-                  animation: 'pulse 2s infinite',
-                }
-              : {},
-            '@keyframes pulse': {
-              '0%': {
-                transform: 'scale(1)',
-                opacity: 1,
-              },
-              '50%': {
-                transform: 'scale(1.5)',
-                opacity: 0.5,
-              },
-              '100%': {
-                transform: 'scale(1)',
-                opacity: 1,
-              },
-            },
-          }}
-        />
-        {showLabel && (
-          <Typography
-            variant={size === 'small' ? 'caption' : 'body2'}
-            color={isOnline ? 'text.primary' : 'text.secondary'}
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className="inline-flex items-center gap-2"
+            data-testid={isOnline ? 'status-indicator-online' : 'status-indicator-offline'}
           >
-            {statusText}
-          </Typography>
-        )}
-      </Box>
-    </Tooltip>
+            <div className="relative">
+              <div
+                className={cn(
+                  'rounded-full',
+                  sizeClasses[size],
+                  statusColor
+                )}
+              />
+              {isOnline && (
+                <div
+                  className={cn(
+                    'absolute top-0 left-0 rounded-full border-2 border-white animate-pulse',
+                    sizeClasses[size],
+                    statusColor
+                  )}
+                />
+              )}
+            </div>
+            {showLabel && (
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                {statusText}
+              </span>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{statusText}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
-
-export default StatusIndicator;

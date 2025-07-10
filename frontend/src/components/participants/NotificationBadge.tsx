@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Badge, IconButton, Popover, List, ListItem, ListItemText, Typography, Divider, Button, useTheme } from '@mui/material';
+import { Box, Badge, IconButton, Popover, List, ListItem, ListItemText, Typography, Divider, Button, useTheme } from 'react';
 import { Notifications, NotificationsActive, Check, Close } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import { Activity } from './ActivityTimeline';

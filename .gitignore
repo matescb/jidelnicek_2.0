@@ -208,3 +208,13 @@ settings.local.py
 # .taskmaster/tasks/
 # .taskmaster/reports/ 
 .venv/
+
+
+# Frontend specific
+frontend/dist/
+frontend/coverage/
+frontend/.vite/
+frontend/.eslintcache
+frontend/fix-*.js
+
+

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Box, Stack, Paper, Typography } from '@mui/material';
+import { Box, Stack, Paper, Typography } from 'react';
 import { StatusIndicator } from './StatusIndicator';
 import { ActivityTimeline } from './ActivityTimeline';
 import { NotificationBadge } from './NotificationBadge';

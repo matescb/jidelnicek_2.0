@@ -68,7 +68,7 @@ const TripPlannerPage: React.FC = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-        <Button onClick={() => navigate('/trips')} variant="outline">
+        <Button onClick={() => navigate('/dashboard/trips')} variant="outline">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Trips
         </Button>
@@ -117,7 +117,7 @@ const TripPlannerPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
-            onClick={() => navigate('/trips')}
+            onClick={() => navigate('/dashboard/trips')}
             variant="ghost"
             size="sm"
           >

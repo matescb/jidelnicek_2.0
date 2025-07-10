@@ -6,6 +6,17 @@ import { ActivityTimeline } from '../ActivityTimeline'
 import type { Activity } from '../ActivityTimeline'
 import { formatDistanceToNow, format } from 'date-fns'
 
+// Mock @mui/lab components
+jest.mock('@mui/lab', () => ({
+  Timeline: ({ children }: any) => <div data-testid="timeline">{children}</div>,
+  TimelineItem: ({ children }: any) => <div data-testid="timeline-item">{children}</div>,
+  TimelineSeparator: ({ children }: any) => <div data-testid="timeline-separator">{children}</div>,
+  TimelineConnector: () => <div data-testid="timeline-connector" />,
+  TimelineContent: ({ children }: any) => <div data-testid="timeline-content">{children}</div>,
+  TimelineDot: ({ children }: any) => <div data-testid="timeline-dot">{children}</div>,
+  TimelineOppositeContent: ({ children }: any) => <div data-testid="timeline-opposite-content">{children}</div>,
+}));
+
 // Mock date-fns
 jest.mock('date-fns', () => ({
   formatDistanceToNow: jest.fn(() => '5 minutes ago'),

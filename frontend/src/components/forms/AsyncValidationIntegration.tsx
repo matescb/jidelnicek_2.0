@@ -11,7 +11,7 @@ import { useAsyncFieldValidator } from '../../hooks/useAsyncFieldValidator';
 import { FormInput } from './FormInput';
 import { FormSelect } from './FormSelect';
 import { FormTextarea } from './FormTextarea';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 import {
   createEmailUniquenessValidator,
   createRecipeNameUniquenessValidator,

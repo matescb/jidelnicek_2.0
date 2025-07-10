@@ -138,7 +138,7 @@ const RecipeDetailPage: React.FC = () => {
     
     try {
       await deleteRecipe(currentRecipe.id)
-      navigate('/recipes')
+      navigate('/dashboard/recipes')
     } catch (error) {
       console.error('Failed to delete recipe:', error)
     }
@@ -247,7 +247,7 @@ const RecipeDetailPage: React.FC = () => {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
         <Button 
-          onClick={() => navigate('/recipes')} 
+          onClick={() => navigate('/dashboard/recipes')} 
           className="mt-4"
           variant="outline"
         >
@@ -266,7 +266,7 @@ const RecipeDetailPage: React.FC = () => {
           <AlertDescription>{t('recipes.notFoundDescription')}</AlertDescription>
         </Alert>
         <Button 
-          onClick={() => navigate('/recipes')} 
+          onClick={() => navigate('/dashboard/recipes')} 
           className="mt-4"
           variant="outline"
         >

@@ -13,13 +13,14 @@ export const authApi = {
         email: credentials.email,
         firstName: 'Test',
         lastName: 'User',
-        avatar: null,
+        emailVerified: true,
+        role: 'user',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
       tokens: {
-        access: 'mock-access-token',
-        refresh: 'mock-refresh-token',
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
       },
     }
   },
@@ -31,13 +32,14 @@ export const authApi = {
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
-        avatar: null,
+        emailVerified: false,
+        role: 'user',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
       tokens: {
-        access: 'mock-access-token',
-        refresh: 'mock-refresh-token',
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
       },
     }
   },
@@ -48,8 +50,8 @@ export const authApi = {
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
     return {
-      access: 'new-mock-access-token',
-      refresh: 'new-mock-refresh-token',
+      accessToken: 'new-mock-access-token',
+      refreshToken: 'new-mock-refresh-token',
     }
   },
 
@@ -59,7 +61,8 @@ export const authApi = {
       email: 'test@example.com',
       firstName: 'Test',
       lastName: 'User',
-      avatar: null,
+      emailVerified: true,
+      role: 'user',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }

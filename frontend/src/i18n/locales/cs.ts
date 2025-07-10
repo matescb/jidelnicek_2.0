@@ -171,7 +171,7 @@ export default {
     description: 'Popis',
     startDate: 'Datum začátku',
     endDate: 'Datum konce',
-    participants: 'Účastníci',
+    participantCount: 'Účastníci',
     meals: 'Jídla',
     
     // Participants
@@ -202,7 +202,7 @@ export default {
     totalMeals: 'Celkem jídel',
     uniqueRecipes: 'Unikátních receptů',
     avgDailyCalories: 'Průměr kalorií/den',
-    participants: 'Účastníci',
+    participantsSummary: 'Účastníci',
     
     // Meal types
     mealTypes: {

@@ -99,7 +99,7 @@ const TripCreatePage = () => {
             
             <Button
               variant="outline"
-              onClick={() => navigate('/trips')}
+              onClick={() => navigate('/dashboard/trips')}
               className="hidden md:flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />

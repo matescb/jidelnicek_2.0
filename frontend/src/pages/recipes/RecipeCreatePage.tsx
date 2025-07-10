@@ -60,7 +60,7 @@ const RecipeCreatePage: React.FC = () => {
       })
 
       // Navigate to the new recipe detail page
-      navigate(`/recipes/${newRecipe.id}`)
+      navigate(`/dashboard/recipes/${newRecipe.id}`)
     } catch (error) {
       // Error handling is done in the store and RecipeForm
       console.error('Failed to create recipe:', error)
@@ -78,7 +78,7 @@ const RecipeCreatePage: React.FC = () => {
   }
 
   const handleCancel = () => {
-    navigate('/recipes')
+    navigate('/dashboard/recipes')
   }
 
   return (
@@ -92,7 +92,7 @@ const RecipeCreatePage: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center gap-2 sm:gap-4 mb-4">
           <TouchableArea
-            onClick={() => navigate('/recipes')}
+            onClick={() => navigate('/dashboard/recipes')}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label={t('common.back', 'Go back')}
           >

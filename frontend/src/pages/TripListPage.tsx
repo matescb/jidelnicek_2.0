@@ -344,21 +344,21 @@ const TripListPage: React.FC = () => {
   
   // Handlers
   const handleCreateTrip = () => {
-    navigate('/trips/new')
+    navigate('/dashboard/trips/new')
   }
   
   const handleViewTrip = (tripId: string) => {
-    navigate(`/trips/${tripId}`)
+    navigate(`/dashboard/trips/${tripId}`)
   }
   
   const handleEditTrip = (tripId: string) => {
-    navigate(`/trips/${tripId}/edit`)
+    navigate(`/dashboard/trips/${tripId}/edit`)
   }
   
   const handleDuplicateTrip = async (tripId: string) => {
     try {
       const newTrip = await duplicateTrip(tripId)
-      navigate(`/trips/${newTrip.id}/edit`)
+      navigate(`/dashboard/trips/${newTrip.id}/edit`)
     } catch (error) {
       console.error('Failed to duplicate trip:', error)
     }

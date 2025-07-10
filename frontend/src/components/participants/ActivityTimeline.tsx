@@ -18,7 +18,7 @@ import {
   IconButton,
   Collapse,
   Button,
-} from '@mui/material';
+} from 'react';
 import {
   PersonAdd,
   PersonRemove,

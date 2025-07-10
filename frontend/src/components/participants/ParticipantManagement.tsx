@@ -5,7 +5,7 @@ import {
   Tab,
   Typography,
   Paper,
-} from '@mui/material';
+} from 'react';
 import {
   People as PeopleIcon,
   Security as SecurityIcon,

@@ -74,7 +74,7 @@ const RecipeListPage: React.FC = () => {
   }
   
   const handleCreateRecipe = () => {
-    navigate('/recipes/new')
+    navigate('/dashboard/recipes/new')
   }
   
   // Get unique categories and tags from loaded recipes with null safety
