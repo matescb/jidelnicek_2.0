@@ -1,108 +1,135 @@
 version: '3.9'
 
-# Development overrides for docker-compose.yml
+# Development-specific overrides for docker-compose.yml
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 services:
-  # PostgreSQL Database - Development
+  # PostgreSQL Database (Development)
   db:
-    ports:
-      - "5432:5432"  # Expose PostgreSQL for development tools
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-development}
+      POSTGRES_DB: ${DB_NAME:-jidelnicek}
+      POSTGRES_USER: ${DB_USER:-jidelnicek}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-jidelnicek_dev_2024}
     volumes:
-      - ./docker/postgres/init-dev.sql:/docker-entrypoint-initdb.d/init.sql:ro
-
-  # Redis Cache - Development
-  redis:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./docker/postgres/00_init.sql:/docker-entrypoint-initdb.d/00_init.sql:ro
+      - ./docker/postgres/01_dev_schema.sql:/docker-entrypoint-initdb.d/01_dev_schema.sql:ro
     ports:
-      - "6379:6379"  # Expose Redis for development tools
-    command: redis-server --appendonly yes
+      - "5432:5432"  # Expose PostgreSQL directly for development
+    command: >
+      postgres
+      -c log_statement=all
+      -c log_duration=on
+      -c shared_preload_libraries='pg_stat_statements'
 
-  # FastAPI Application - Development
+  # Redis Cache (Development)
+  redis:
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_dev_password_2024}
+    volumes:
+      - redis_data_dev:/data
+    ports:
+      - "6379:6379"  # Expose Redis directly for development
+
+  # FastAPI Application (Development)
   app:
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: builder  # Use builder stage with all dev dependencies
-    command: uvicorn jidelnicek.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+      target: development  # Use development stage if available
     environment:
+      # Override for development
       ENVIRONMENT: development
       DEBUG: "true"
-      PYTHONDONTWRITEBYTECODE: 1
       LOG_LEVEL: DEBUG
-      # Allow all CORS origins in development
-      CORS_ORIGINS: "*"
-      # Development database
-      DATABASE_URL: postgresql://jidelnicek:development@db:5432/jidelnicek
+      # Database - use container name for host
+      DATABASE_URL: postgresql://${DB_USER:-jidelnicek}:${DB_PASSWORD:-jidelnicek_dev_2024}@db:5432/${DB_NAME:-jidelnicek}
+      DB_HOST: db
+      DB_PORT: 5432
+      # Redis - use container name for host
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_dev_password_2024}@redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Reload on code changes
+      RELOAD: "true"
     volumes:
-      - ./src:/app/src:ro  # Mount source code for hot reload
-      - ./tests:/app/tests:ro  # Mount tests
-      - ./migrations:/app/migrations  # Mount migrations for development
+      # Mount source code for hot reloading
+      - ./src:/app/src:ro
+      - ./migrations:/app/migrations:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
       - ./logs:/app/logs
       - ./static:/app/static
       - ./media:/app/media
-      - ./.env:/app/.env:ro  # Mount .env file
     ports:
-      - "8000:8000"  # Expose FastAPI directly in development
-    deploy:
-      resources:
-        limits:
-          memory: 2048M  # More memory for development
+      - "8000:8000"  # Expose FastAPI directly for development
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Starting development server...' &&
+        uvicorn src.jidelnicek.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+      "
 
-  # Nginx - Development
+  # Nginx (Optional for development)
   nginx:
+    profiles:
+      - with-nginx  # Only start if explicitly requested
     volumes:
       - ./docker/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/conf.d/dev.conf:/etc/nginx/conf.d/default.conf:ro
-    environment:
-      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
-      NGINX_ENVSUBST_TEMPLATE_SUFFIX: .conf
-    ports:
-      - "8080:80"  # Use different port to avoid conflicts
 
-  # Additional development services
-  
-  # Adminer - Database management UI
-  adminer:
-    image: adminer:latest
-    container_name: jidelnicek_adminer
-    restart: unless-stopped
-    ports:
-      - "8081:8080"
-    networks:
-      - backend
-    depends_on:
-      - db
-    environment:
-      ADMINER_DEFAULT_SERVER: db
-      ADMINER_DESIGN: pepa-linha-dark
-
-  # RedisInsight - Redis management UI
-  redis-insight:
-    image: redislabs/redisinsight:latest
-    container_name: jidelnicek_redis_insight
-    restart: unless-stopped
-    ports:
-      - "8082:8001"
-    networks:
-      - backend
-    depends_on:
-      - redis
-    volumes:
-      - redis_insight_data:/db
-
-  # Mailhog - Email testing
+  # Mailhog for email testing (Development only)
   mailhog:
     image: mailhog/mailhog:latest
     container_name: jidelnicek_mailhog
-    restart: unless-stopped
     ports:
       - "1025:1025"  # SMTP server
       - "8025:8025"  # Web UI
     networks:
       - backend
+    logging:
+      driver: "none"  # Disable logging for mailhog
+
+  # pgAdmin for database management (Development only)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: jidelnicek_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@jidelnicek.local
+      PGADMIN_DEFAULT_PASSWORD: pgadmin_dev_2024
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    networks:
+      - backend
+    depends_on:
+      - db
+    profiles:
+      - tools  # Only start if explicitly requested
+    volumes:
+      - pgadmin_data_dev:/var/lib/pgadmin
+
+  # Redis Commander for Redis management (Development only)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: jidelnicek_redis_commander
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-redis_dev_password_2024}
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+    depends_on:
+      - redis
+    profiles:
+      - tools  # Only start if explicitly requested
 
 volumes:
-  redis_insight_data:
-    name: jidelnicek_redis_insight_data
+  postgres_data_dev:
+    name: jidelnicek_postgres_data_dev
+  redis_data_dev:
+    name: jidelnicek_redis_data_dev
+  pgadmin_data_dev:
+    name: jidelnicek_pgadmin_data_dev

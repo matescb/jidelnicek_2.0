@@ -1,0 +1,8 @@
+-- Development-specific database setup
+-- This file is intentionally empty as we use Alembic migrations for schema management
+-- 
+-- To create the database schema, run:
+-- alembic upgrade head
+--
+-- The actual schema is defined in:
+-- migrations/versions/001_initial_schema.py

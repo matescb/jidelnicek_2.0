@@ -16,6 +16,26 @@ export default {
     newPassword: 'Nové heslo',
     verifyEmail: 'Ověřit email',
     resendVerification: 'Znovu odeslat ověřovací email',
+    
+    // Messages
+    loginSuccess: 'Vítejte zpět!',
+    loginError: 'Neplatný email nebo heslo',
+    registerSuccess: 'Účet byl úspěšně vytvořen! Prosím ověřte svůj email.',
+    registerError: 'Nepodařilo se vytvořit účet',
+    logoutSuccess: 'Byli jste odhlášeni',
+    passwordResetSent: 'Odkaz pro obnovení hesla byl odeslán na váš email',
+    passwordResetSuccess: 'Heslo bylo úspěšně obnoveno',
+    emailVerified: 'Email byl úspěšně ověřen',
+    emailVerificationSent: 'Ověřovací email byl odeslán',
+    
+    // Validation
+    emailRequired: 'Email je povinný',
+    emailInvalid: 'Zadejte prosím platný email',
+    passwordRequired: 'Heslo je povinné',
+    passwordMin: 'Heslo musí mít alespoň {{min}} znaků',
+    passwordRequirements: 'Heslo musí obsahovat velké písmeno, malé písmeno, číslo a speciální znak',
+    passwordsMatch: 'Hesla se musí shodovat',
+    nameRequired: 'Jméno je povinné',
   },
   navigation: {
     dashboard: 'Přehled',
@@ -23,6 +43,16 @@ export default {
     trips: 'Výlety',
     profile: 'Profil',
     settings: 'Nastavení',
+    admin: 'Administrace',
+    
+    // Sub-navigation
+    myRecipes: 'Moje recepty',
+    publicRecipes: 'Veřejné recepty',
+    createRecipe: 'Vytvořit recept',
+    myTrips: 'Moje výlety',
+    createTrip: 'Vytvořit výlet',
+    shoppingList: 'Nákupní seznam',
+    packingList: 'Seznam na balení',
   },
   breadcrumbs: {
     home: 'Domů',
@@ -33,6 +63,7 @@ export default {
     settings: 'Nastavení',
     new: 'Nový',
     edit: 'Upravit',
+    details: 'Detail',
   },
   home: {
     title: 'Vítejte v Jídelníčku',
@@ -53,6 +84,10 @@ export default {
         title: 'Nákupní seznamy',
         description: 'Generujte inteligentní nákupní seznamy s automatickou agregací ingrediencí.',
       },
+      nutrition: {
+        title: 'Nutriční analýza',
+        description: 'Sledujte kalorie, makroživiny a nutriční informace pro všechna vaše jídla.',
+      },
     },
   },
   notFound: {
@@ -60,20 +95,281 @@ export default {
     message: 'Stránka, kterou hledáte, neexistuje nebo byla přesunuta.',
     backHome: 'Zpět domů',
   },
+  recipes: {
+    title: 'Recepty',
+    createNew: 'Vytvořit nový recept',
+    searchPlaceholder: 'Hledat recepty...',
+    filters: {
+      all: 'Všechny recepty',
+      mine: 'Moje recepty',
+      public: 'Veřejné',
+      private: 'Soukromé',
+      favorites: 'Oblíbené',
+    },
+    
+    // Recipe form
+    name: 'Název receptu',
+    description: 'Popis',
+    ingredients: 'Ingredience',
+    instructions: 'Postup',
+    prepTime: 'Čas přípravy',
+    cookTime: 'Čas vaření',
+    totalTime: 'Celkový čas',
+    servings: 'Porce',
+    difficulty: 'Obtížnost',
+    categories: 'Kategorie',
+    tags: 'Štítky',
+    isPublic: 'Zveřejnit recept',
+    
+    // Difficulty levels
+    difficultyLevels: {
+      easy: 'Snadný',
+      medium: 'Střední',
+      hard: 'Obtížný',
+    },
+    
+    // Units
+    units: {
+      g: 'gramů',
+      kg: 'kilogramů',
+      ml: 'mililitrů',
+      l: 'litrů',
+      cup: 'hrnek',
+      tbsp: 'lžíce',
+      tsp: 'lžička',
+      piece: 'kus',
+    },
+    
+    // Messages
+    created: 'Recept byl úspěšně vytvořen',
+    updated: 'Recept byl úspěšně aktualizován',
+    deleted: 'Recept byl smazán',
+    duplicated: 'Recept byl duplikován',
+    noRecipes: 'Nebyly nalezeny žádné recepty',
+    
+    // Actions
+    addIngredient: 'Přidat ingredienci',
+    addInstruction: 'Přidat krok',
+    duplicate: 'Duplikovat',
+    share: 'Sdílet',
+    print: 'Tisk',
+  },
+  
+  trips: {
+    title: 'Výlety',
+    createNew: 'Vytvořit nový výlet',
+    searchPlaceholder: 'Hledat výlety...',
+    
+    // Trip form
+    name: 'Název výletu',
+    description: 'Popis',
+    startDate: 'Datum začátku',
+    endDate: 'Datum konce',
+    participants: 'Účastníci',
+    meals: 'Jídla',
+    
+    // Participants
+    addParticipant: 'Přidat účastníka',
+    participantName: 'Jméno',
+    participantEmail: 'Email (nepovinný)',
+    arrivalDate: 'Datum příjezdu',
+    departureDate: 'Datum odjezdu',
+    mealCoefficients: 'Koeficienty jídel',
+    breakfast: 'Snídaně',
+    lunch: 'Oběd',
+    dinner: 'Večeře',
+    
+    // Meals
+    assignMeal: 'Přiřadit jídlo',
+    mealSlot: 'Čas jídla',
+    selectRecipe: 'Vybrat recept',
+    portions: 'Porce',
+    
+    // Messages
+    created: 'Výlet byl úspěšně vytvořen',
+    updated: 'Výlet byl úspěšně aktualizován',
+    deleted: 'Výlet byl smazán',
+    noTrips: 'Nebyly nalezeny žádné výlety',
+    participantLimit: 'Maximálně {{max}} účastníků povoleno',
+  },
+  
+  shoppingList: {
+    title: 'Nákupní seznam',
+    generate: 'Vygenerovat seznam',
+    regenerate: 'Znovu vygenerovat',
+    
+    // Categories
+    categories: {
+      produce: 'Ovoce a zelenina',
+      dairy: 'Mléčné výrobky',
+      meat: 'Maso',
+      bakery: 'Pekařství',
+      pantry: 'Spíž',
+      frozen: 'Mražené',
+      other: 'Ostatní',
+    },
+    
+    // Actions
+    addCustomItem: 'Přidat vlastní položku',
+    markPurchased: 'Označit jako nakoupeno',
+    clearPurchased: 'Vymazat nakoupené',
+    export: 'Exportovat',
+    print: 'Tisk',
+  },
+  
+  nutrition: {
+    title: 'Nutriční informace',
+    perServing: 'Na porci',
+    total: 'Celkem',
+    
+    // Nutrients
+    calories: 'Kalorie',
+    protein: 'Bílkoviny',
+    carbs: 'Sacharidy',
+    fat: 'Tuky',
+    fiber: 'Vláknina',
+    sodium: 'Sodík',
+    
+    // Units
+    kcal: 'kcal',
+    g: 'g',
+    mg: 'mg',
+  },
+  
+  settings: {
+    title: 'Nastavení',
+    
+    // Sections
+    account: 'Účet',
+    preferences: 'Předvolby',
+    notifications: 'Oznámení',
+    privacy: 'Soukromí',
+    
+    // Preferences
+    language: 'Jazyk',
+    theme: 'Téma',
+    defaultServings: 'Výchozí počet porcí',
+    units: 'Jednotky měření',
+    
+    // Themes
+    themes: {
+      light: 'Světlé',
+      dark: 'Tmavé',
+      system: 'Systém',
+    },
+    
+    // Units
+    unitSystems: {
+      metric: 'Metrické',
+      imperial: 'Imperiální',
+    },
+    
+    // Actions
+    changePassword: 'Změnit heslo',
+    deleteAccount: 'Smazat účet',
+    exportData: 'Exportovat moje data',
+  },
+  
+  errors: {
+    title: 'Něco se pokazilo',
+    generic: 'Nastala neočekávaná chyba',
+    network: 'Chyba sítě. Zkontrolujte prosím své připojení.',
+    unauthorized: 'Pro přístup k této stránce se musíte přihlásit',
+    forbidden: 'Nemáte oprávnění k přístupu k tomuto zdroji',
+    notFound: 'Zdroj nebyl nalezen',
+    validation: 'Zkontrolujte prosím zadané údaje',
+    server: 'Chyba serveru. Zkuste to prosím později.',
+  },
+  
   common: {
     save: 'Uložit',
     cancel: 'Zrušit',
     delete: 'Smazat',
     edit: 'Upravit',
     create: 'Vytvořit',
+    update: 'Aktualizovat',
     search: 'Hledat',
     filter: 'Filtrovat',
+    sort: 'Seřadit',
     loading: 'Načítání...',
     error: 'Chyba',
     success: 'Úspěch',
+    warning: 'Varování',
+    info: 'Info',
     confirm: 'Potvrdit',
     back: 'Zpět',
     next: 'Další',
     previous: 'Předchozí',
+    yes: 'Ano',
+    no: 'Ne',
+    ok: 'OK',
+    close: 'Zavřít',
+    view: 'Zobrazit',
+    download: 'Stáhnout',
+    upload: 'Nahrát',
+    refresh: 'Obnovit',
+    reset: 'Resetovat',
+    clear: 'Vymazat',
+    select: 'Vybrat',
+    selectAll: 'Vybrat vše',
+    none: 'Žádný',
+    all: 'Vše',
+    
+    // Time
+    today: 'Dnes',
+    yesterday: 'Včera',
+    tomorrow: 'Zítra',
+    week: 'Týden',
+    month: 'Měsíc',
+    year: 'Rok',
+    
+    // Status
+    active: 'Aktivní',
+    inactive: 'Neaktivní',
+    pending: 'Čekající',
+    completed: 'Dokončeno',
+    
+    // Pagination
+    page: 'Stránka',
+    of: 'z',
+    items: 'položek',
+    showing: 'Zobrazeno',
+    to: 'do',
+    
+    // Confirmation
+    deleteConfirm: 'Opravdu chcete smazat tuto {{item}}?',
+    unsavedChanges: 'Máte neuložené změny. Opravdu chcete odejít?',
+  },
+  
+  // Date and time
+  dateTime: {
+    formats: {
+      date: 'DD.MM.YYYY',
+      time: 'HH:mm',
+      dateTime: 'DD.MM.YYYY HH:mm',
+    },
+    days: {
+      monday: 'Pondělí',
+      tuesday: 'Úterý',
+      wednesday: 'Středa',
+      thursday: 'Čtvrtek',
+      friday: 'Pátek',
+      saturday: 'Sobota',
+      sunday: 'Neděle',
+    },
+    months: {
+      january: 'Leden',
+      february: 'Únor',
+      march: 'Březen',
+      april: 'Duben',
+      may: 'Květen',
+      june: 'Červen',
+      july: 'Červenec',
+      august: 'Srpen',
+      september: 'Září',
+      october: 'Říjen',
+      november: 'Listopad',
+      december: 'Prosinec',
+    },
   },
 }
