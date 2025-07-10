@@ -413,4 +413,29 @@ export default {
       december: 'Prosinec',
     },
   },
+  
+  // Dashboard
+  dashboard: {
+    calculationSummary: {
+      title: 'Přehled kalkulací',
+      selectTrip: 'Vyberte výlet pro zobrazení kalkulací',
+      participants: 'účastníků',
+      days: 'dní',
+      offline: 'Real-time aktualizace nejsou dostupné - zobrazena data z cache',
+      totalCost: 'Celkové náklady',
+      perPerson: 'na osobu',
+      dailyCalories: 'Denní kalorie',
+      perPersonPerDay: 'Průměr na osobu a den',
+      shoppingItems: 'Položky nákupu',
+      uniqueIngredients: 'Unikátních ingrediencí',
+      activeTrip: 'Aktivní výlet',
+      costTrend: 'Trend nákladů',
+      calorieTrend: 'Trend kalorií',
+      dataPoints: 'datových bodů',
+      nutritionWarnings: 'Výživová upozornění',
+      moreWarnings: 'a dalších {{count}} upozornění',
+      noTripSelected: 'Není vybrán žádný výlet',
+      selectTripPrompt: 'Vyberte nebo vytvořte výlet pro zobrazení real-time kalkulací',
+    },
+  },
 }

@@ -41,3 +41,7 @@ export {
   useAutoSave,
   usePriorityQueue
 } from '../utils/formSubmissionUtils'
+
+// WebSocket hooks
+export * from './useWebSocket'
+export * from './useRealtimeShoppingList'

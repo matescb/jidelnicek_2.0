@@ -15,7 +15,7 @@ from jidelnicek.core.websockets.connection_manager import ConnectionManager
 from jidelnicek.core.websockets.handlers import websocket_endpoint, _heartbeat_handler
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def connection_manager():
     """Create a connection manager instance."""
     return ConnectionManager()

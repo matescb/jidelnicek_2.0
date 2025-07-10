@@ -22,9 +22,9 @@ class TestSecurityMiddleware:
     """Test security headers middleware."""
     
     @pytest.mark.asyncio
-    async def test_security_headers_added(self, client: AsyncClient):
+    async def test_security_headers_added(self, authenticated_client: AsyncClient):
         """Test that security headers are added to responses."""
-        response = await client.get("/health")
+        response = await authenticated_client.get("/health")
         
         # Check security headers
         assert response.headers.get("X-Content-Type-Options") == "nosniff"
@@ -66,33 +66,33 @@ class TestSecurityMiddleware:
             assert "preload" in hsts_header
     
     @pytest.mark.asyncio
-    async def test_api_version_headers(self, client: AsyncClient):
+    async def test_api_version_headers(self, authenticated_client: AsyncClient):
         """Test API versioning headers."""
-        response = await client.get("/health")
+        response = await authenticated_client.get("/health")
         
         assert response.headers.get("API-Version") == "2.0.0"
         assert "1.0.0" in response.headers.get("API-Supported-Versions", "")
         assert "2.0.0" in response.headers.get("API-Supported-Versions", "")
     
     @pytest.mark.asyncio
-    async def test_api_version_negotiation(self, client: AsyncClient):
+    async def test_api_version_negotiation(self, authenticated_client: AsyncClient):
         """Test API version negotiation."""
         # Request with supported version
-        response = await client.get("/health", headers={"API-Version": "1.0.0"})
+        response = await authenticated_client.get("/health", headers={"API-Version": "1.0.0"})
         assert response.status_code == 200
         assert response.headers.get("API-Deprecation") == "true"
         assert "API-Deprecation-Date" in response.headers
         assert "API-Deprecation-Info" in response.headers
         
         # Request with unsupported version
-        response = await client.get("/health", headers={"API-Version": "0.9.0"})
+        response = await authenticated_client.get("/health", headers={"API-Version": "0.9.0"})
         assert response.status_code == 406
         assert "Unsupported API version" in response.json()["detail"]
     
     @pytest.mark.asyncio
-    async def test_request_id_header(self, client: AsyncClient):
+    async def test_request_id_header(self, authenticated_client: AsyncClient):
         """Test that request ID is added to responses."""
-        response = await client.get("/health")
+        response = await authenticated_client.get("/health")
         
         assert "X-Request-ID" in response.headers
         request_id = response.headers["X-Request-ID"]
@@ -102,17 +102,17 @@ class TestSecurityMiddleware:
         uuid.UUID(request_id)  # Should not raise
     
     @pytest.mark.asyncio
-    async def test_server_header_removed(self, client: AsyncClient):
+    async def test_server_header_removed(self, authenticated_client: AsyncClient):
         """Test that server header is removed for security."""
-        response = await client.get("/health")
+        response = await authenticated_client.get("/health")
         assert "server" not in response.headers
         assert "Server" not in response.headers
     
     @pytest.mark.asyncio
-    async def test_cache_control_for_auth_endpoints(self, client: AsyncClient):
+    async def test_cache_control_for_auth_endpoints(self, authenticated_client: AsyncClient):
         """Test cache control headers for security-sensitive endpoints."""
         # Login endpoint should have no-cache headers
-        response = await client.post(
+        response = await authenticated_client.post(
             "/auth/login",
             json={"username": "test", "password": "test"}
         )
@@ -126,9 +126,9 @@ class TestCSRFProtection:
     """Test CSRF protection middleware."""
     
     @pytest.mark.asyncio
-    async def test_csrf_token_generated_on_safe_methods(self, client: AsyncClient):
+    async def test_csrf_token_generated_on_safe_methods(self, authenticated_client: AsyncClient):
         """Test CSRF token is generated on GET requests."""
-        response = await client.get("/health")
+        response = await authenticated_client.get("/health")
         
         # Check CSRF token in headers
         assert "X-CSRF-Token" in response.headers
@@ -209,12 +209,12 @@ class TestRateLimiting:
     """Test rate limiting middleware."""
     
     @pytest.mark.asyncio
-    async def test_rate_limit_headers(self, client: AsyncClient):
+    async def test_rate_limit_headers(self, authenticated_client: AsyncClient):
         """Test rate limit headers are added to responses."""
         if not settings.rate_limit_enabled:
             pytest.skip("Rate limiting is disabled")
         
-        response = await client.get("/health")
+        response = await authenticated_client.get("/health")
         
         assert "X-RateLimit-Limit" in response.headers
         assert "X-RateLimit-Remaining" in response.headers
@@ -394,10 +394,10 @@ class TestCORSConfiguration:
     """Test CORS configuration."""
     
     @pytest.mark.asyncio
-    async def test_cors_headers(self, client: AsyncClient):
+    async def test_cors_headers(self, authenticated_client: AsyncClient):
         """Test CORS headers are properly configured."""
         # Preflight request
-        response = await client.options(
+        response = await authenticated_client.options(
             "/api/test",
             headers={
                 "Origin": settings.cors_origins[0] if settings.cors_origins else "http://localhost:3000",
@@ -416,11 +416,11 @@ class TestCORSConfiguration:
             assert response.headers.get("Access-Control-Allow-Credentials") == "true"
     
     @pytest.mark.asyncio
-    async def test_cors_exposed_headers(self, client: AsyncClient):
+    async def test_cors_exposed_headers(self, authenticated_client: AsyncClient):
         """Test CORS exposed headers configuration."""
         origin = settings.cors_origins[0] if settings.cors_origins else "http://localhost:3000"
         
-        response = await client.get(
+        response = await authenticated_client.get(
             "/health",
             headers={"Origin": origin}
         )

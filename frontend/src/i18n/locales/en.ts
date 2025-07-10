@@ -284,19 +284,78 @@ export default {
     title: 'Nutritional Information',
     perServing: 'Per Serving',
     total: 'Total',
+    calculator: 'Nutrition Calculator',
     
     // Nutrients
     calories: 'Calories',
     protein: 'Protein',
+    proteins_g: 'Protein',
     carbs: 'Carbohydrates',
+    carbohydrates_g: 'Carbohydrates',
     fat: 'Fat',
+    fats_g: 'Fat',
     fiber: 'Fiber',
+    fiber_g: 'Fiber',
     sodium: 'Sodium',
+    sodium_mg: 'Sodium',
+    sugars_g: 'Sugars',
+    saturated_fats_g: 'Saturated Fat',
+    cholesterol_mg: 'Cholesterol',
+    
+    // Vitamins
+    vitamins: 'Vitamins',
+    vitamin_a_ug: 'Vitamin A',
+    vitamin_b1_mg: 'Vitamin B1 (Thiamine)',
+    vitamin_b2_mg: 'Vitamin B2 (Riboflavin)',
+    vitamin_b3_mg: 'Vitamin B3 (Niacin)',
+    vitamin_b5_mg: 'Vitamin B5 (Pantothenic Acid)',
+    vitamin_b6_mg: 'Vitamin B6',
+    vitamin_b7_ug: 'Vitamin B7 (Biotin)',
+    vitamin_b9_ug: 'Vitamin B9 (Folate)',
+    vitamin_b12_ug: 'Vitamin B12',
+    vitamin_c_mg: 'Vitamin C',
+    vitamin_d_ug: 'Vitamin D',
+    vitamin_e_mg: 'Vitamin E',
+    vitamin_k_ug: 'Vitamin K',
     
     // Units
     kcal: 'kcal',
     g: 'g',
     mg: 'mg',
+    ug: 'μg',
+    
+    // Views
+    summary: 'Summary',
+    daily: 'Daily',
+    participants: 'Participants',
+    goals: 'Goals',
+    
+    // Labels
+    exportReport: 'Export Report',
+    tripTotals: 'Trip Totals',
+    dailyAverage: 'Daily Average',
+    nutritionBalance: 'Nutrition Balance',
+    balanceTooltip: 'Shows how well balanced the macronutrients are based on dietary guidelines',
+    showMicronutrients: 'Show Micronutrients',
+    hideMicronutrients: 'Hide Micronutrients',
+    perPerson: 'Per Person',
+    averageDailyIntake: 'Average Daily Intake',
+    dailyGoals: 'Daily Goals',
+    dailyBreakdown: 'Daily Breakdown',
+    aboutGoals: 'About Nutrition Goals',
+    goalsDescription: 'These are recommended daily values based on general dietary guidelines. Individual needs may vary.',
+    macronutrientGoals: 'Macronutrient Goals',
+    micronutrientGoals: 'Micronutrient Goals',
+    range: 'Range',
+    minimum: 'Minimum',
+    maximum: 'Maximum',
+    
+    // Status
+    status: {
+      within: 'Within Range',
+      below: 'Below Target',
+      above: 'Above Target',
+    },
   },
   
   settings: {
@@ -418,6 +477,13 @@ export default {
     week: 'Week',
     month: 'Month',
     year: 'Year',
+    day: 'Day',
+    participants: 'Participants',
+    serving: 'serving',
+    servings: 'servings',
+    meals: 'Meals',
+    allParticipants: 'All Participants',
+    selectParticipant: 'Select Participant',
     
     // Status
     active: 'Active',
@@ -497,5 +563,38 @@ export default {
     progressTracking: 'Progress Tracking Example',
     optimisticUpdate: 'Optimistic Update Pattern',
     formSkeleton: 'Form Loading Skeleton',
+  },
+  
+  // Meal slots
+  mealSlot: {
+    breakfast: 'Breakfast',
+    lunch: 'Lunch',
+    dinner: 'Dinner',
+    snack: 'Snack',
+  },
+  
+  // Dashboard
+  dashboard: {
+    calculationSummary: {
+      title: 'Calculation Summary',
+      selectTrip: 'Select a trip to view calculations',
+      participants: 'participants',
+      days: 'days',
+      offline: 'Real-time updates unavailable - showing cached data',
+      totalCost: 'Total Cost',
+      perPerson: 'per person',
+      dailyCalories: 'Daily Calories',
+      perPersonPerDay: 'Average per person per day',
+      shoppingItems: 'Shopping Items',
+      uniqueIngredients: 'Unique ingredients',
+      activeTrip: 'Active trip',
+      costTrend: 'Cost Trend',
+      calorieTrend: 'Calorie Trend',
+      dataPoints: 'data points',
+      nutritionWarnings: 'Nutrition Warnings',
+      moreWarnings: 'and {{count}} more warnings',
+      noTripSelected: 'No Trip Selected',
+      selectTripPrompt: 'Select or create a trip to view real-time calculations',
+    },
   },
 }
