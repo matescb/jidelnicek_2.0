@@ -30,9 +30,9 @@ def mock_task():
 
 
 @pytest.fixture
-async def cleanup_policy(db_session):
+def cleanup_policy():
     """Create test cleanup policy."""
-    policy = CleanupPolicy(
+    return CleanupPolicy(
         name="Test Policy",
         file_type="shopping_list",
         retention_days=7,
@@ -40,9 +40,6 @@ async def cleanup_policy(db_session):
         notify_before_deletion=True,
         is_active=True,
     )
-    db_session.add(policy)
-    await db_session.commit()
-    return policy
 
 
 class TestCleanupTasks:
@@ -55,7 +52,7 @@ class TestCleanupTasks:
     @patch("pathlib.Path.rglob")
     @patch("pathlib.Path.stat")
     @patch("pathlib.Path.unlink")
-    async def test_cleanup_export_files(
+    def test_cleanup_export_files(
         self,
         mock_unlink,
         mock_stat,
@@ -118,7 +115,7 @@ class TestCleanupTasks:
     @patch("jidelnicek.tasks.cleanup_tasks.DatabaseSession")
     @patch("jidelnicek.tasks.cleanup_tasks.CleanupService")
     @patch("jidelnicek.core.storage.service.StorageService")
-    async def test_cleanup_cloud_storage(
+    def test_cleanup_cloud_storage(
         self,
         mock_storage_service,
         mock_cleanup_service,
@@ -157,7 +154,7 @@ class TestCleanupTasks:
     @patch("pathlib.Path.unlink")
     @patch("pathlib.Path.rmdir")
     @patch("pathlib.Path.iterdir")
-    async def test_cleanup_temp_files(
+    def test_cleanup_temp_files(
         self,
         mock_iterdir,
         mock_rmdir,
@@ -215,7 +212,7 @@ class TestCleanupTasks:
     @patch("jidelnicek.tasks.cleanup_tasks.CleanupService")
     @patch("pathlib.Path.exists")
     @patch("pathlib.Path.unlink")
-    async def test_process_deletion_queue(
+    def test_process_deletion_queue(
         self,
         mock_unlink,
         mock_exists,
@@ -279,7 +276,7 @@ class TestCleanupTasks:
     @patch("jidelnicek.tasks.cleanup_tasks.DatabaseSession")
     @patch("sqlalchemy.ext.asyncio.AsyncSession.execute")
     @patch("sqlalchemy.ext.asyncio.AsyncSession.commit")
-    async def test_cleanup_old_jobs(
+    def test_cleanup_old_jobs(
         self,
         mock_commit,
         mock_execute,
@@ -311,7 +308,7 @@ class TestCleanupTasks:
     
     @patch("jidelnicek.tasks.cleanup_tasks.DatabaseSession")
     @patch("jidelnicek.tasks.cleanup_tasks.CleanupService")
-    async def test_generate_cleanup_report(
+    def test_generate_cleanup_report(
         self,
         mock_cleanup_service,
         mock_db_session,

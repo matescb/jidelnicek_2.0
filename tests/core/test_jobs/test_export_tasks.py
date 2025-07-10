@@ -53,7 +53,7 @@ def mock_redis_client():
 class TestExportTasks:
     """Test export task functionality."""
     
-    @patch('jidelnicek.tasks.export_tasks.asyncio.run')
+    @patch('asyncio.run')
     @patch.object(export_shopping_list, 'update_state')
     def test_export_shopping_list_success(self, mock_update_state, mock_asyncio_run):
         """Test successful shopping list export."""
@@ -81,7 +81,7 @@ class TestExportTasks:
         mock_update_state.assert_called()
         mock_asyncio_run.assert_called_once()
     
-    @patch('jidelnicek.tasks.export_tasks.asyncio.run')
+    @patch('asyncio.run')
     @patch.object(export_shopping_list, 'update_state')
     def test_export_shopping_list_timeout(self, mock_update_state, mock_asyncio_run):
         """Test shopping list export timeout."""
@@ -96,7 +96,7 @@ class TestExportTasks:
                 user_id=1,
             )
     
-    @patch('jidelnicek.tasks.export_tasks.asyncio.run')
+    @patch('asyncio.run')
     @patch.object(export_shopping_list, 'update_state')
     @patch.object(export_shopping_list, 'retry')
     def test_export_shopping_list_retry_on_error(self, mock_retry, mock_update_state, mock_asyncio_run):
@@ -156,7 +156,7 @@ class TestExportTasks:
                         mock_export_manager.export.assert_called_once()
                         mock_redis_client.set.assert_called_once()
     
-    @patch('jidelnicek.tasks.export_tasks.asyncio.run')
+    @patch('asyncio.run')
     def test_cleanup_expired_jobs(self, mock_asyncio_run):
         """Test cleanup of expired jobs."""
         # Arrange
@@ -199,7 +199,7 @@ class TestExportTasks:
             assert result["cleaned"] == 2
             assert mock_redis_client.delete.call_count == 2
     
-    @patch('jidelnicek.tasks.export_tasks.asyncio.run')
+    @patch('asyncio.run')
     def test_cleanup_old_exports(self, mock_asyncio_run):
         """Test cleanup of old export files."""
         # Arrange

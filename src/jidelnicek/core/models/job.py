@@ -9,7 +9,7 @@ from sqlalchemy import (
     Column, Integer, String, DateTime, Text, JSON,
     ForeignKey, Enum as SQLEnum, Index, Boolean, Float
 )
-from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID, ENUM
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -65,13 +65,27 @@ class Job(Base):
     
     # Job identification
     task_id = Column(String(255), unique=True, nullable=False, index=True)
-    job_type = Column(SQLEnum(JobType), nullable=False, index=True)
+    job_type = Column(
+        SQLEnum(JobType), 
+        nullable=False, 
+        index=True
+    )
     name = Column(String(255), nullable=False)
     description = Column(Text)
     
     # Status tracking
-    status = Column(SQLEnum(JobStatus), nullable=False, default=JobStatus.PENDING, index=True)
-    priority = Column(SQLEnum(JobPriority), nullable=False, default=JobPriority.NORMAL, index=True)
+    status = Column(
+        SQLEnum(JobStatus), 
+        nullable=False, 
+        default=JobStatus.PENDING, 
+        index=True
+    )
+    priority = Column(
+        SQLEnum(JobPriority), 
+        nullable=False, 
+        default=JobPriority.NORMAL, 
+        index=True
+    )
     progress = Column(Float, default=0.0)  # 0.0 to 100.0
     progress_message = Column(String(500))
     

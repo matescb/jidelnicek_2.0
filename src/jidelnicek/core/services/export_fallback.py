@@ -30,7 +30,14 @@ class FallbackExporter:
                     if hasattr(obj, "to_dict"):
                         return obj.to_dict()
                     if hasattr(obj, "__dict__"):
-                        return obj.__dict__
+                        # Don't auto-serialize objects with problematic __repr__
+                        try:
+                            # Test if the object can be converted to string
+                            str(obj)
+                            return obj.__dict__
+                        except Exception:
+                            # Re-raise to trigger the exception handling
+                            raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
                     return super().default(obj)
             
             json_str = json.dumps(
@@ -61,7 +68,7 @@ class FallbackExporter:
             
             # Create CSV in memory
             output = io.StringIO()
-            writer = csv.DictWriter(output, fieldnames=headers)
+            writer = csv.DictWriter(output, fieldnames=headers, lineterminator='\n')
             
             writer.writeheader()
             for row in data:
@@ -163,7 +170,9 @@ class FallbackExporter:
             lines = []
             for key, value in data.items():
                 if isinstance(value, (list, dict)):
-                    value = json.dumps(value, indent=2)
+                    value = json.dumps(value, ensure_ascii=False)
+                elif isinstance(value, (datetime, date)):
+                    value = value.isoformat()
                 lines.append(f"{key}: {value}")
             return "\n".join(lines)
         
@@ -209,7 +218,23 @@ class FallbackExporter:
                 else:
                     # Generate key-value pair
                     if isinstance(value, (list, dict)):
-                        value = f"<pre>{json.dumps(value, indent=2)}</pre>"
+                        try:
+                            # Handle date objects in JSON serialization
+                            if isinstance(value, dict):
+                                # Check for date values and convert them
+                                clean_value = {}
+                                for k, v in value.items():
+                                    if isinstance(v, (datetime, date)):
+                                        clean_value[k] = v.isoformat()
+                                    else:
+                                        clean_value[k] = v
+                                value = f"<pre>{json.dumps(clean_value, indent=2, ensure_ascii=False)}</pre>"
+                            else:
+                                value = f"<pre>{json.dumps(value, indent=2, ensure_ascii=False)}</pre>"
+                        except (TypeError, ValueError):
+                            value = f"<pre>{str(value)}</pre>"
+                    elif isinstance(value, (datetime, date)):
+                        value = value.isoformat()
                     sections.append(
                         f'<div class="section">'
                         f'<span class="label">{key}:</span> {value}'

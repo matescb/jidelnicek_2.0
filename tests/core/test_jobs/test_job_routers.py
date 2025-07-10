@@ -79,11 +79,12 @@ class TestJobEndpoints:
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
             with patch('jidelnicek.core.routers.jobs.get_current_user', return_value=mock_current_user):
-                mock_job_service.create_job.return_value = sample_job
-                mock_job_service.submit_job.return_value = sample_job
-                
-                # Act
-                response = await client.post("/api/v1/jobs/", json=job_data)
+                with patch('jidelnicek.core.routers.jobs.get_db', return_value=AsyncMock()):
+                    mock_job_service.create_job.return_value = sample_job
+                    mock_job_service.submit_job.return_value = sample_job
+                    
+                    # Act
+                    response = await client.post("/api/v1/jobs/", json=job_data)
                 
                 # Assert
                 assert response.status_code == status.HTTP_201_CREATED
@@ -100,10 +101,11 @@ class TestJobEndpoints:
         # Arrange
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
             with patch('jidelnicek.core.routers.jobs.get_current_user', return_value=mock_current_user):
-                mock_job_service.get_job.return_value = sample_job
-                
-                # Act
-                response = await client.get("/api/v1/jobs/1")
+                with patch('jidelnicek.core.routers.jobs.get_db', return_value=AsyncMock()):
+                    mock_job_service.get_job.return_value = sample_job
+                    
+                    # Act
+                    response = await client.get("/api/v1/jobs/1")
                 
                 # Assert
                 assert response.status_code == status.HTTP_200_OK
