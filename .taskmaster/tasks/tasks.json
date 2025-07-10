@@ -1001,7 +1001,7 @@
               4
             ],
             "details": "Create multi-step trip form, interactive calendar for meal scheduling, drag-and-drop meal assignment, and trip overview dashboard with participant management.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1067,7 +1067,7 @@
               2
             ],
             "details": "Setup validation schemas using Yup or Zod, create reusable validation hooks, implement inline error messages, and add form submission feedback patterns.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1275,7 +1275,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-10T02:48:31.666Z",
+      "updated": "2025-07-10T03:48:23.485Z",
       "description": "Tasks for master context"
     }
   }
