@@ -32,6 +32,11 @@ const SettingsPage = lazy(() => import('@pages/profile/SettingsPage'))
 
 const NotFoundPage = lazy(() => import('@pages/NotFoundPage'))
 
+// Development-only pages
+const ThemeShowcasePage = import.meta.env.DEV 
+  ? lazy(() => import('@pages/theme/ThemeShowcasePage'))
+  : null
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -140,13 +145,24 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Development-only routes
+      ...(import.meta.env.DEV && ThemeShowcasePage ? [
+        {
+          path: 'theme-showcase',
+          element: <ThemeShowcasePage />,
+        },
+      ] : []),
       {
         path: '*',
         element: <NotFoundPage />,
       },
     ],
   },
-])
+], {
+  future: {
+    v7_startTransition: true,
+  },
+})
 
 // Route configuration for breadcrumbs
 export const routeConfig = {
@@ -168,4 +184,7 @@ export const routeConfig = {
   '/dashboard/trips/:id/planner': { label: 'Trip Planner' },
   '/dashboard/profile': { label: 'Profile', icon: 'user' },
   '/dashboard/settings': { label: 'Settings', icon: 'settings' },
+  ...(import.meta.env.DEV ? {
+    '/theme-showcase': { label: 'Theme Showcase', icon: 'palette' },
+  } : {}),
 }

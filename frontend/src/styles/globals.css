@@ -8,17 +8,243 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #171717;
-    --toast-bg: #ffffff;
-    --toast-color: #171717;
+    /* Primary Colors */
+    --color-primary-50: #eef2ff;
+    --color-primary-100: #e0e7ff;
+    --color-primary-200: #c7d2fe;
+    --color-primary-300: #a5b4fc;
+    --color-primary-400: #818cf8;
+    --color-primary-500: #6366f1;
+    --color-primary-600: #4f46e5;
+    --color-primary-700: #4338ca;
+    --color-primary-800: #3730a3;
+    --color-primary-900: #312e81;
+    --color-primary-950: #1e1b4b;
+
+    /* Secondary Colors */
+    --color-secondary-50: #f8fafc;
+    --color-secondary-100: #f1f5f9;
+    --color-secondary-200: #e2e8f0;
+    --color-secondary-300: #cbd5e1;
+    --color-secondary-400: #94a3b8;
+    --color-secondary-500: #64748b;
+    --color-secondary-600: #475569;
+    --color-secondary-700: #334155;
+    --color-secondary-800: #1e293b;
+    --color-secondary-900: #0f172a;
+    --color-secondary-950: #020617;
+
+    /* Semantic Colors */
+    --color-success-50: #f0fdf4;
+    --color-success-100: #dcfce7;
+    --color-success-200: #bbf7d0;
+    --color-success-300: #86efac;
+    --color-success-400: #4ade80;
+    --color-success-500: #22c55e;
+    --color-success-600: #16a34a;
+    --color-success-700: #15803d;
+    --color-success-800: #166534;
+    --color-success-900: #14532d;
+
+    --color-warning-50: #fffbeb;
+    --color-warning-100: #fef3c7;
+    --color-warning-200: #fde68a;
+    --color-warning-300: #fcd34d;
+    --color-warning-400: #fbbf24;
+    --color-warning-500: #f59e0b;
+    --color-warning-600: #d97706;
+    --color-warning-700: #b45309;
+    --color-warning-800: #92400e;
+    --color-warning-900: #78350f;
+
+    --color-error-50: #fef2f2;
+    --color-error-100: #fee2e2;
+    --color-error-200: #fecaca;
+    --color-error-300: #fca5a5;
+    --color-error-400: #f87171;
+    --color-error-500: #ef4444;
+    --color-error-600: #dc2626;
+    --color-error-700: #b91c1c;
+    --color-error-800: #991b1b;
+    --color-error-900: #7f1d1d;
+
+    --color-info-50: #eff6ff;
+    --color-info-100: #dbeafe;
+    --color-info-200: #bfdbfe;
+    --color-info-300: #93c5fd;
+    --color-info-400: #60a5fa;
+    --color-info-500: #3b82f6;
+    --color-info-600: #2563eb;
+    --color-info-700: #1d4ed8;
+    --color-info-800: #1e40af;
+    --color-info-900: #1e3a8a;
+
+    /* Background Colors */
+    --color-background: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-elevated: #ffffff;
+    --color-card: #ffffff;
+    --color-popover: #ffffff;
+    --color-modal: #ffffff;
+
+    /* Text Colors */
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748b;
+    --color-text-disabled: #94a3b8;
+    --color-text-inverse: #ffffff;
+
+    /* Border Colors */
+    --color-border: #e2e8f0;
+    --color-border-subtle: #f1f5f9;
+    --color-border-strong: #cbd5e1;
+    --color-border-focus: var(--color-primary-500);
+
+    /* Input Colors */
+    --color-input-background: #ffffff;
+    --color-input-border: #e2e8f0;
+    --color-input-border-hover: #cbd5e1;
+    --color-input-border-focus: var(--color-primary-500);
+    --color-input-placeholder: #94a3b8;
+
+    /* Focus Ring */
+    --color-focus-ring: var(--color-primary-500);
+    --focus-ring-offset: 2px;
+    --focus-ring-width: 2px;
+
+    /* Shadows */
+    --shadow-color: 220 3% 15%;
+    --shadow-sm: 0 1px 2px 0 hsl(var(--shadow-color) / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(var(--shadow-color) / 0.1), 0 2px 4px -2px hsl(var(--shadow-color) / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--shadow-color) / 0.1), 0 4px 6px -4px hsl(var(--shadow-color) / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(var(--shadow-color) / 0.1), 0 8px 10px -6px hsl(var(--shadow-color) / 0.1);
+    --shadow-2xl: 0 25px 50px -12px hsl(var(--shadow-color) / 0.25);
+    --shadow-inner: inset 0 2px 4px 0 hsl(var(--shadow-color) / 0.05);
+
+    /* Legacy variables for backward compatibility */
+    --background: var(--color-background);
+    --foreground: var(--color-text-primary);
+    --toast-bg: var(--color-surface);
+    --toast-color: var(--color-text-primary);
   }
 
   .dark {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --toast-bg: #1f2937;
-    --toast-color: #f3f4f6;
+    /* Primary Colors - Adjusted for dark mode */
+    --color-primary-50: #1e1b4b;
+    --color-primary-100: #312e81;
+    --color-primary-200: #3730a3;
+    --color-primary-300: #4338ca;
+    --color-primary-400: #4f46e5;
+    --color-primary-500: #6366f1;
+    --color-primary-600: #818cf8;
+    --color-primary-700: #a5b4fc;
+    --color-primary-800: #c7d2fe;
+    --color-primary-900: #e0e7ff;
+    --color-primary-950: #eef2ff;
+
+    /* Secondary Colors - Adjusted for dark mode */
+    --color-secondary-50: #020617;
+    --color-secondary-100: #0f172a;
+    --color-secondary-200: #1e293b;
+    --color-secondary-300: #334155;
+    --color-secondary-400: #475569;
+    --color-secondary-500: #64748b;
+    --color-secondary-600: #94a3b8;
+    --color-secondary-700: #cbd5e1;
+    --color-secondary-800: #e2e8f0;
+    --color-secondary-900: #f1f5f9;
+    --color-secondary-950: #f8fafc;
+
+    /* Semantic Colors - Adjusted for dark mode */
+    --color-success-50: #14532d;
+    --color-success-100: #166534;
+    --color-success-200: #15803d;
+    --color-success-300: #16a34a;
+    --color-success-400: #22c55e;
+    --color-success-500: #4ade80;
+    --color-success-600: #86efac;
+    --color-success-700: #bbf7d0;
+    --color-success-800: #dcfce7;
+    --color-success-900: #f0fdf4;
+
+    --color-warning-50: #78350f;
+    --color-warning-100: #92400e;
+    --color-warning-200: #b45309;
+    --color-warning-300: #d97706;
+    --color-warning-400: #f59e0b;
+    --color-warning-500: #fbbf24;
+    --color-warning-600: #fcd34d;
+    --color-warning-700: #fde68a;
+    --color-warning-800: #fef3c7;
+    --color-warning-900: #fffbeb;
+
+    --color-error-50: #7f1d1d;
+    --color-error-100: #991b1b;
+    --color-error-200: #b91c1c;
+    --color-error-300: #dc2626;
+    --color-error-400: #ef4444;
+    --color-error-500: #f87171;
+    --color-error-600: #fca5a5;
+    --color-error-700: #fecaca;
+    --color-error-800: #fee2e2;
+    --color-error-900: #fef2f2;
+
+    --color-info-50: #1e3a8a;
+    --color-info-100: #1e40af;
+    --color-info-200: #1d4ed8;
+    --color-info-300: #2563eb;
+    --color-info-400: #3b82f6;
+    --color-info-500: #60a5fa;
+    --color-info-600: #93c5fd;
+    --color-info-700: #bfdbfe;
+    --color-info-800: #dbeafe;
+    --color-info-900: #eff6ff;
+
+    /* Background Colors - Dark mode */
+    --color-background: #0a0a0a;
+    --color-surface: #0f172a;
+    --color-surface-elevated: #1e293b;
+    --color-card: #1e293b;
+    --color-popover: #1e293b;
+    --color-modal: #0f172a;
+
+    /* Text Colors - Dark mode */
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-text-disabled: #64748b;
+    --color-text-inverse: #0f172a;
+
+    /* Border Colors - Dark mode */
+    --color-border: #334155;
+    --color-border-subtle: #1e293b;
+    --color-border-strong: #475569;
+    --color-border-focus: var(--color-primary-500);
+
+    /* Input Colors - Dark mode */
+    --color-input-background: #1e293b;
+    --color-input-border: #334155;
+    --color-input-border-hover: #475569;
+    --color-input-border-focus: var(--color-primary-500);
+    --color-input-placeholder: #64748b;
+
+    /* Focus Ring - Dark mode */
+    --color-focus-ring: var(--color-primary-500);
+
+    /* Shadows - Dark mode */
+    --shadow-color: 220 40% 2%;
+    --shadow-sm: 0 1px 2px 0 hsl(var(--shadow-color) / 0.5);
+    --shadow-md: 0 4px 6px -1px hsl(var(--shadow-color) / 0.6), 0 2px 4px -2px hsl(var(--shadow-color) / 0.6);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--shadow-color) / 0.6), 0 4px 6px -4px hsl(var(--shadow-color) / 0.6);
+    --shadow-xl: 0 20px 25px -5px hsl(var(--shadow-color) / 0.6), 0 8px 10px -6px hsl(var(--shadow-color) / 0.6);
+    --shadow-2xl: 0 25px 50px -12px hsl(var(--shadow-color) / 0.8);
+    --shadow-inner: inset 0 2px 4px 0 hsl(var(--shadow-color) / 0.5);
+
+    /* Legacy variables for backward compatibility */
+    --background: var(--color-background);
+    --foreground: var(--color-text-primary);
+    --toast-bg: var(--color-surface-elevated);
+    --toast-color: var(--color-text-primary);
   }
 
   html {
@@ -33,27 +259,114 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors;
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring focus:ring-focus-ring focus:ring-offset transition-colors;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors;
+    @apply inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-text-primary bg-surface hover:bg-surface-elevated focus:outline-none focus:ring focus:ring-focus-ring focus:ring-offset transition-colors;
+  }
+
+  .btn-success {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-success-600 hover:bg-success-700 focus:outline-none focus:ring focus:ring-success-500 focus:ring-offset transition-colors;
+  }
+
+  .btn-warning {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-warning-600 hover:bg-warning-700 focus:outline-none focus:ring focus:ring-warning-500 focus:ring-offset transition-colors;
+  }
+
+  .btn-error {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-error-600 hover:bg-error-700 focus:outline-none focus:ring focus:ring-error-500 focus:ring-offset transition-colors;
   }
 
   .input-field {
-    @apply mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+    @apply mt-1 block w-full rounded-md border-input-border bg-input-background text-text-primary placeholder-input-placeholder shadow-sm hover:border-input-border-hover focus:border-input-border-focus focus:ring-focus-ring sm:text-sm transition-colors;
   }
 
   .card {
-    @apply bg-white dark:bg-gray-800 shadow rounded-lg;
+    @apply bg-card shadow-md rounded-lg;
   }
 
   .card-header {
-    @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+    @apply px-6 py-4 border-b border-border;
   }
 
   .card-body {
     @apply px-6 py-4;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-border bg-surface;
+  }
+
+  /* Alert variations */
+  .alert {
+    @apply p-4 rounded-md border;
+  }
+
+  .alert-info {
+    @apply bg-info-50 border-info-200 text-info-900;
+  }
+
+  .alert-success {
+    @apply bg-success-50 border-success-200 text-success-900;
+  }
+
+  .alert-warning {
+    @apply bg-warning-50 border-warning-200 text-warning-900;
+  }
+
+  .alert-error {
+    @apply bg-error-50 border-error-200 text-error-900;
+  }
+
+  /* Badge variations */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary-100 text-primary-800;
+  }
+
+  .badge-secondary {
+    @apply bg-secondary-100 text-secondary-800;
+  }
+
+  .badge-success {
+    @apply bg-success-100 text-success-800;
+  }
+
+  .badge-warning {
+    @apply bg-warning-100 text-warning-800;
+  }
+
+  .badge-error {
+    @apply bg-error-100 text-error-800;
+  }
+
+  /* Table styles */
+  .table {
+    @apply min-w-full divide-y divide-border;
+  }
+
+  .table-header {
+    @apply bg-surface;
+  }
+
+  .table-header-cell {
+    @apply px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider;
+  }
+
+  .table-body {
+    @apply bg-background divide-y divide-border;
+  }
+
+  .table-cell {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-text-primary;
+  }
+
+  .table-row-hover {
+    @apply hover:bg-surface transition-colors;
   }
 }
 

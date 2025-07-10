@@ -276,6 +276,18 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v: Any) -> List[str]:
         """Parse CORS origins from comma-separated string."""
         if isinstance(v, str):
+            # Handle empty string case
+            if not v.strip():
+                return []
+            # Try to parse as JSON first (for backward compatibility)
+            try:
+                import json
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+            except json.JSONDecodeError:
+                pass
+            # Otherwise parse as comma-separated string
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
     

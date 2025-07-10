@@ -1,0 +1,1 @@
+export { ThemeShowcasePage as default } from './ThemeShowcasePage';

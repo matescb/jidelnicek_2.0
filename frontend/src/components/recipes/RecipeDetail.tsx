@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { 
   Clock, Users, Flame, Star, Heart, Edit, Trash2, Copy, 
-  Share2, Print, ChefHat, Calendar, ShoppingCart 
+  Share2, Printer, ChefHat, Calendar, ShoppingCart 
 } from 'lucide-react'
 import { Recipe } from '@/types/recipe'
 import { useAuthStore } from '@/store/slices/authStore'
@@ -202,7 +202,7 @@ export function RecipeDetail({ recipe, onEdit, onDelete }: RecipeDetailProps) {
                   className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 print:hidden"
                   aria-label={t('recipes.print')}
                 >
-                  <Print className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <Printer className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </TouchableArea>
                 
                 {user && (

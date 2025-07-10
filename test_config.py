@@ -4,19 +4,31 @@ import os
 import sys
 sys.path.insert(0, 'src')
 
-# Set environment variables
-os.environ['ENVIRONMENT'] = 'test'
+# Clear all env vars first
+for key in list(os.environ.keys()):
+    if key.startswith(('DB_', 'REDIS_', 'CORS_', 'SECRET_')):
+        del os.environ[key]
+
+# Set minimal environment variables
+os.environ['ENVIRONMENT'] = 'development'
+os.environ['SECRET_KEY'] = 'test-secret-key-12345678901234567890'
+os.environ['DB_HOST'] = 'localhost'
+os.environ['DB_PORT'] = '5432'
+os.environ['DB_NAME'] = 'test'
+os.environ['DB_USER'] = 'test'
 os.environ['DB_PASSWORD'] = 'test-password'
-os.environ['CORS_ORIGINS'] = 'http://testserver'
-os.environ['ALLOWED_UPLOAD_EXTENSIONS'] = '.jpg,.jpeg,.png,.gif,.pdf,.txt,.md'
+
+# Set CORS_ORIGINS to empty string to reproduce the error
+os.environ['CORS_ORIGINS'] = ''
+
+print("Testing with CORS_ORIGINS set to empty string...")
+print(f"CORS_ORIGINS env var = '{os.environ.get('CORS_ORIGINS')}'")
 
 try:
     from jidelnicek.core.config import Settings
     settings = Settings()
-    print("✓ Configuration loaded successfully")
-    print(f"CORS Origins: {settings.cors_origins}")
-    print(f"Upload Extensions: {settings.allowed_upload_extensions}")
+    print(f"✓ Success: cors_origins = {settings.cors_origins}")
 except Exception as e:
-    print(f"✗ Configuration failed: {e}")
+    print(f"✗ Failed: {type(e).__name__}: {e}")
     import traceback
     traceback.print_exc()

@@ -33,6 +33,11 @@ const LoginPage: React.FC = () => {
     }
   }
 
+  const handleDevLogin = () => {
+    setValue('email', 'test@example.com')
+    setValue('password', 'password123')
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
       <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
