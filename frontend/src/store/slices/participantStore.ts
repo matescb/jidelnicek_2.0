@@ -110,7 +110,7 @@ export const useParticipantStore = create<ParticipantStore>()(
 
       saveTemplate: (template) => {
         set((state) => {
-          const existingIndex = state.templates.findIndex(t => t.id === template.id)
+          const existingIndex = state.templates.findIndex((t: ParticipantTemplate) => t.id === template.id)
           
           if (existingIndex !== -1) {
             state.templates[existingIndex] = template
@@ -125,7 +125,7 @@ export const useParticipantStore = create<ParticipantStore>()(
 
       deleteTemplate: (templateId) => {
         set((state) => {
-          state.templates = state.templates.filter(t => t.id !== templateId)
+          state.templates = state.templates.filter((t: ParticipantTemplate) => t.id !== templateId)
         })
         
         // Save to localStorage
@@ -134,7 +134,7 @@ export const useParticipantStore = create<ParticipantStore>()(
 
       setDefaultTemplate: (templateId) => {
         set((state) => {
-          state.templates.forEach(t => {
+          state.templates.forEach((t: ParticipantTemplate) => {
             t.isDefault = t.id === templateId
           })
         })
@@ -165,7 +165,7 @@ export const useParticipantStore = create<ParticipantStore>()(
 
       updateTempParticipant: (id, updates) => {
         set((state) => {
-          const index = state.tempParticipants.findIndex(p => p.id === id)
+          const index = state.tempParticipants.findIndex((p: Participant) => p.id === id)
           if (index !== -1) {
             state.tempParticipants[index] = { ...state.tempParticipants[index], ...updates }
           }
@@ -174,7 +174,7 @@ export const useParticipantStore = create<ParticipantStore>()(
 
       removeTempParticipant: (id) => {
         set((state) => {
-          state.tempParticipants = state.tempParticipants.filter(p => p.id !== id)
+          state.tempParticipants = state.tempParticipants.filter((p: Participant) => p.id !== id)
         })
       },
 

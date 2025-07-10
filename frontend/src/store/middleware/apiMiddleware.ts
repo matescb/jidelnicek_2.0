@@ -2,6 +2,12 @@ import axios, { AxiosError } from 'axios'
 import { useAuthStore } from '../slices/authStore'
 import { useUIStore } from '../slices/uiStore'
 
+// API Error Response types
+interface ApiErrorResponse {
+  message?: string
+  errors?: Record<string, string | string[]>
+}
+
 // Configure axios defaults
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 axios.defaults.headers.common['Content-Type'] = 'application/json'
@@ -64,13 +70,14 @@ axios.interceptors.response.use(
     // Handle other errors
     if (error.response) {
       const { status, data } = error.response
+      const apiError = data as ApiErrorResponse
       
       // Show error toast for server errors
       if (status >= 500) {
         useUIStore.getState().showToast({
           type: 'error',
           title: 'Server Error',
-          message: data.message || 'Something went wrong. Please try again later.'
+          message: apiError.message || 'Something went wrong. Please try again later.'
         })
       }
       
@@ -84,8 +91,8 @@ axios.interceptors.response.use(
       }
       
       // Handle validation errors
-      if (status === 422 && data.errors) {
-        const firstError = Object.values(data.errors)[0]
+      if (status === 422 && apiError.errors) {
+        const firstError = Object.values(apiError.errors)[0]
         useUIStore.getState().showToast({
           type: 'error',
           title: 'Validation Error',

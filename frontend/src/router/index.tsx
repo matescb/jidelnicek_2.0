@@ -1,5 +1,5 @@
-import React, { lazy } from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { lazy } from 'react'
+import { createBrowserRouter } from 'react-router-dom'
 import { ProtectedRoute } from '@components/auth/ProtectedRoute'
 import { PublicRoute } from '@components/auth/PublicRoute'
 import { RootLayout } from '@components/layouts/RootLayout'

@@ -1,8 +1,4 @@
-import React from 'react'
-import { useTranslation } from 'react-i18next'
-
-const RecipeCreatePage: React.FC = () => {
-  const { t } = useTranslation()
+const RecipeCreatePage = () => {
 
   return (
     <div>

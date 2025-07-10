@@ -1,5 +1,3 @@
-import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { useAuth } from '@hooks/useAuth'
 import { UserMenu } from './UserMenu'
 import { ThemeToggle } from './ThemeToggle'
@@ -12,8 +10,7 @@ interface HeaderProps {
   onSidebarToggle: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSidebarToggle }) => {
-  const { t } = useTranslation()
+export const Header = ({ onMenuClick, onSidebarToggle }: HeaderProps) => {
   const { user } = useAuth()
 
   return (

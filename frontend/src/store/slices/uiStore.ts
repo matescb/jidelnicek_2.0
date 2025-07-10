@@ -174,7 +174,7 @@ export const useUIStore = create<UIStore>()(
 
       removeToast: (id) => {
         set((state) => {
-          state.toasts = state.toasts.filter(t => t.id !== id)
+          state.toasts = state.toasts.filter((t: Toast) => t.id !== id)
         })
       },
 
@@ -203,7 +203,7 @@ export const useUIStore = create<UIStore>()(
 
       closeModal: (id) => {
         set((state) => {
-          state.modals = state.modals.filter(m => m.id !== id)
+          state.modals = state.modals.filter((m: Modal) => m.id !== id)
         })
       },
 

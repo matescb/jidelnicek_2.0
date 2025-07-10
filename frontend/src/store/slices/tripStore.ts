@@ -241,7 +241,7 @@ export const useTripStore = create<TripStore>()(
           const updatedTrip = response.data
           
           set((state) => {
-            const index = state.trips.findIndex(t => t.id === id)
+            const index = state.trips.findIndex((t: Trip) => t.id === id)
             if (index !== -1) {
               state.trips[index] = updatedTrip
             }
@@ -271,7 +271,7 @@ export const useTripStore = create<TripStore>()(
           await axios.delete(`/api/v1/trips/${id}`)
           
           set((state) => {
-            state.trips = state.trips.filter(t => t.id !== id)
+            state.trips = state.trips.filter((t: Trip) => t.id !== id)
             
             if (state.currentTrip?.id === id) {
               state.currentTrip = null
@@ -438,7 +438,7 @@ export const useTripStore = create<TripStore>()(
 
       updateShoppingItem: (itemId, updates) => {
         set((state) => {
-          const index = state.shoppingList.findIndex(item => item.ingredientId === itemId)
+          const index = state.shoppingList.findIndex((item: ShoppingListItem) => item.ingredientId === itemId)
           if (index !== -1) {
             state.shoppingList[index] = { ...state.shoppingList[index], ...updates }
           }
@@ -461,7 +461,7 @@ export const useTripStore = create<TripStore>()(
 
       removeShoppingItem: (itemId) => {
         set((state) => {
-          state.shoppingList = state.shoppingList.filter(item => item.ingredientId !== itemId)
+          state.shoppingList = state.shoppingList.filter((item: ShoppingListItem) => item.ingredientId !== itemId)
         })
       },
 
@@ -511,7 +511,7 @@ export const useTripStore = create<TripStore>()(
           
           // Update trip with share link
           set((state) => {
-            const index = state.trips.findIndex(t => t.id === id)
+            const index = state.trips.findIndex((t: Trip) => t.id === id)
             if (index !== -1) {
               state.trips[index].shareLink = shareLink
             }

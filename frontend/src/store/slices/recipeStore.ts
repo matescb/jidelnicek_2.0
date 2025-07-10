@@ -228,13 +228,13 @@ export const useRecipeStore = create<RecipeStore>()(
           
           set((state) => {
             // Update in recipes list
-            const index = state.recipes.findIndex(r => r.id === id)
+            const index = state.recipes.findIndex((r: Recipe) => r.id === id)
             if (index !== -1) {
               state.recipes[index] = updatedRecipe
             }
             
             // Update in user recipes
-            const userIndex = state.userRecipes.findIndex(r => r.id === id)
+            const userIndex = state.userRecipes.findIndex((r: Recipe) => r.id === id)
             if (userIndex !== -1) {
               state.userRecipes[userIndex] = updatedRecipe
             }
@@ -266,10 +266,10 @@ export const useRecipeStore = create<RecipeStore>()(
           
           set((state) => {
             // Remove from recipes list
-            state.recipes = state.recipes.filter(r => r.id !== id)
+            state.recipes = state.recipes.filter((r: Recipe) => r.id !== id)
             
             // Remove from user recipes
-            state.userRecipes = state.userRecipes.filter(r => r.id !== id)
+            state.userRecipes = state.userRecipes.filter((r: Recipe) => r.id !== id)
             
             // Clear current recipe if it's the one being deleted
             if (state.currentRecipe?.id === id) {

@@ -30,7 +30,9 @@
       "@utils/*": ["src/utils/*"],
       "@context/*": ["src/context/*"],
       "@styles/*": ["src/styles/*"],
-      "@types/*": ["src/types/*"]
+      "@types/*": ["src/types/*"],
+      "@store": ["src/store/index.ts"],
+      "@store/*": ["src/store/*"]
     }
   },
   "include": ["src"],

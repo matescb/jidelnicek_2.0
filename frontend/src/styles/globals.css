@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import responsive utilities */
+@import './responsive.css';
+
 @layer base {
   :root {
     --background: #ffffff;
