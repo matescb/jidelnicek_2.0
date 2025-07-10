@@ -454,7 +454,7 @@ class TestRequestValidator:
     
     class TestSchema(BaseModel):
         name: str = Field(..., min_length=1, max_length=100)
-        email: str = Field(..., regex=r'^[^@]+@[^@]+\.[^@]+$')
+        email: str = Field(..., pattern=r'^[^@]+@[^@]+\.[^@]+$')
         age: int = Field(..., ge=0, le=150)
     
     @pytest.fixture

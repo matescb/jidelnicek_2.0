@@ -751,3 +751,48 @@ class EmailService:
         )
         await asyncio.sleep(0.1)
         return True
+    
+    async def send_email(
+        self,
+        to_email: str,
+        subject: str,
+        body: str,
+        is_html: bool = False
+    ) -> bool:
+        """
+        Send a generic email.
+        
+        Args:
+            to_email: Recipient email address
+            subject: Email subject
+            body: Email body content
+            is_html: Whether body contains HTML
+            
+        Returns:
+            True if email was sent successfully
+        """
+        # Generate HTML wrapper if body is HTML
+        if is_html:
+            html_content = self._generate_email_html(
+                title=subject,
+                content=body
+            )
+        else:
+            html_content = self._generate_email_html(
+                title=subject,
+                content=f"<p>{body}</p>"
+            )
+        
+        # Mock email sending - log to console
+        logger.info(
+            f"📧 MOCK EMAIL SENT\n"
+            f"To: {to_email}\n"
+            f"Subject: {subject}\n"
+            f"HTML: {'Yes' if is_html else 'No'}\n"
+            f"Body Preview: {body[:100]}..."
+        )
+        
+        # Simulate async operation
+        await asyncio.sleep(0.1)
+        
+        return True

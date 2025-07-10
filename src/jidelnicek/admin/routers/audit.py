@@ -16,7 +16,7 @@ import csv
 import io
 import json
 
-from jidelnicek.core.database import get_db
+from jidelnicek.core.dependencies import get_db
 from jidelnicek.auth.dependencies import get_current_admin_user
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.admin.services.audit_service import AdminAuditService

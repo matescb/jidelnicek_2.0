@@ -11,6 +11,7 @@ from .meal import TripMeal
 from .stove import TripStove
 from .meal_slot import TripMealSlot
 from .template import TripTemplate
+from .invitation import TripInvitation, TripInvitationLink
 
 __all__ = [
     "Trip",
@@ -20,6 +21,8 @@ __all__ = [
     "TripStove",
     "TripMealSlot",
     "TripTemplate",
+    "TripInvitation",
+    "TripInvitationLink",
     # Additional models will be added here as they are created:
     # "TripRecipeSnapshot",
     # "TripDaySnack",

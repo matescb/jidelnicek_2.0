@@ -13,6 +13,24 @@ from .cache_utils.cache import (
     cached,
 )
 
+# Create a cache manager instance for backward compatibility
+class CacheManager:
+    """Simple cache manager for error recovery service."""
+    
+    async def get(self, key: str):
+        """Get value from cache."""
+        return await cache_get(key)
+    
+    async def set(self, key: str, value, ttl: int = 300):
+        """Set value in cache."""
+        return await cache_set(key, value, ttl)
+    
+    async def delete(self, key: str):
+        """Delete value from cache."""
+        return await cache_delete(key)
+
+cache_manager = CacheManager()
+
 # Additional cache wrapper for route handlers
 def cache_key_wrapper(prefix: str, ttl: int = 300):
     """

@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from .stove import TripStove
     from .template import TripTemplate
     from .meal_slot import TripMealSlot
+    from .invitation import TripInvitation
 
 
 class Trip(Base):
@@ -170,6 +171,13 @@ class Trip(Base):
     
     # Forward declaration for relationships defined in other modules
     # share_links: Mapped[List["ShareLink"]] = relationship() - defined in sharing module
+    invitations: Mapped[List["TripInvitation"]] = relationship(
+        "TripInvitation",
+        back_populates="trip",
+        cascade="all, delete-orphan",
+        lazy="select",
+        passive_deletes=True
+    )
     
     # Table constraints
     __table_args__ = (
@@ -234,6 +242,11 @@ class Trip(Base):
                 unique_slots.append(slot_cleaned)
         
         return unique_slots
+    
+    @property
+    def owner_id(self) -> UUID:
+        """Get the owner ID (alias for user_id for compatibility)."""
+        return self.user_id
     
     @hybrid_property
     def duration_days(self) -> int:

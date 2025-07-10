@@ -14,7 +14,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 import io
 
-from jidelnicek.core.database import get_db
+from jidelnicek.core.dependencies import get_db
 from jidelnicek.auth.dependencies import get_current_user, require_admin
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.admin.services.ingredient_management import IngredientManagementService

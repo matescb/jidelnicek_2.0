@@ -11,7 +11,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jidelnicek.core.database import get_db
+from jidelnicek.core.dependencies import get_db
 from jidelnicek.core.models.cleanup_policy import CleanupPolicy
 from jidelnicek.core.cleanup_config import DEFAULT_POLICIES, CLOUD_POLICIES
 

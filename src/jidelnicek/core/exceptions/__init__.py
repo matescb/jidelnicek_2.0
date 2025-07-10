@@ -27,6 +27,11 @@ class PermissionError(JidelnicekError):
         super().__init__(message)
 
 
+class PermissionDeniedError(PermissionError):
+    """Alias for PermissionError for backward compatibility."""
+    pass
+
+
 class ValidationError(JidelnicekError):
     """Raised when data validation fails."""
     

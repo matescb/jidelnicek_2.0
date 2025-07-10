@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from ..database import get_db
+from ..dependencies import get_db
 from ..models.monitoring import ErrorLog, ErrorPattern
 from ..monitoring.metrics import MetricsCollector
 
