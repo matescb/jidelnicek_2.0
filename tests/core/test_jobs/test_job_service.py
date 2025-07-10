@@ -218,7 +218,7 @@ class TestJobService:
         sample_job.status = JobStatus.RUNNING
         
         with patch.object(job_service, 'get_job', return_value=sample_job):
-            with patch('jidelnicek.core.celery_app.revoke_task') as mock_revoke:
+            with patch('jidelnicek.core.services.job_service.revoke_task') as mock_revoke:
                 mock_revoke.return_value = True
                 
                 # Act
@@ -240,7 +240,7 @@ class TestJobService:
             with pytest.raises(ValidationError) as exc_info:
                 await job_service.cancel_job(1)
             
-            assert "Cannot cancel job in completed state" in str(exc_info.value)
+            assert "Cannot cancel job in JobStatus.COMPLETED state" in str(exc_info.value)
     
     @pytest.mark.asyncio
     async def test_retry_job_success(self, job_service, sample_job):

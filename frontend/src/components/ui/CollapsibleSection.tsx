@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { TouchableArea } from './TouchableArea'
+import { collapse, getAnimation } from '@/utils/animations'
 
 interface CollapsibleSectionProps {
   title: React.ReactNode
@@ -26,67 +28,11 @@ export function CollapsibleSection({
   badge
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
-  const [height, setHeight] = useState<number | undefined>(defaultOpen ? undefined : 0)
-  const contentRef = useRef<HTMLDivElement>(null)
-  const isAnimating = useRef(false)
-  
-  useEffect(() => {
-    if (!contentRef.current) return
-    
-    const content = contentRef.current
-    const updateHeight = () => {
-      if (isOpen) {
-        setHeight(content.scrollHeight)
-      } else {
-        setHeight(0)
-      }
-    }
-    
-    // Initial height
-    updateHeight()
-    
-    // Update height on content changes
-    const observer = new ResizeObserver(updateHeight)
-    observer.observe(content)
-    
-    return () => observer.disconnect()
-  }, [isOpen, children])
   
   const toggle = () => {
-    if (isAnimating.current) return
-    
     const newState = !isOpen
     setIsOpen(newState)
     onToggle?.(newState)
-    
-    if (contentRef.current) {
-      isAnimating.current = true
-      const content = contentRef.current
-      
-      if (newState) {
-        // Opening
-        setHeight(content.scrollHeight)
-        
-        // After animation, set to auto for dynamic content
-        setTimeout(() => {
-          setHeight(undefined)
-          isAnimating.current = false
-        }, 300)
-      } else {
-        // Closing
-        setHeight(content.scrollHeight)
-        
-        // Force reflow
-        content.offsetHeight
-        
-        requestAnimationFrame(() => {
-          setHeight(0)
-          setTimeout(() => {
-            isAnimating.current = false
-          }, 300)
-        })
-      }
-    }
   }
   
   return (
@@ -100,11 +46,12 @@ export function CollapsibleSection({
         `}
       >
         <div className="flex items-center gap-3 flex-1">
-          {isOpen ? (
-            <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-          ) : (
+          <motion.div
+            animate={{ rotate: isOpen ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
             <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-          )}
+          </motion.div>
           
           {icon && (
             <div className="text-gray-600 dark:text-gray-400 flex-shrink-0">
@@ -124,15 +71,22 @@ export function CollapsibleSection({
         </div>
       </TouchableArea>
       
-      <div
-        ref={contentRef}
-        className="overflow-hidden transition-[height] duration-300 ease-in-out"
-        style={{ height }}
-      >
-        <div className={`p-4 pt-0 ${contentClassName}`}>
-          {children}
-        </div>
-      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="content"
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={getAnimation(collapse)}
+            className="overflow-hidden"
+          >
+            <div className={`p-4 pt-0 ${contentClassName}`}>
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

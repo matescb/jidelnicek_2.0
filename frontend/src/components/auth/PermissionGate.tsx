@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Alert, Typography } from 'react';
+import { Box, Alert, Typography } from '@mui/material';
 import { usePermissions } from '../../hooks/usePermissions';
 import { Participant } from '../../types/participants';
 

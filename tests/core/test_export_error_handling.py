@@ -91,7 +91,7 @@ class TestExportExceptions:
         # Test to_dict
         error_dict = error.to_dict()
         assert error_dict["error"] == "ExportException"
-        assert error_dict["message"] == "Test error"
+        assert error_dict["export_message"] == "Test error"  # Updated field name
         assert error_dict["error_code"] == "TEST_ERROR"
     
     def test_dependency_missing_error(self):

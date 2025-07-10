@@ -218,3 +218,6 @@ frontend/.eslintcache
 frontend/fix-*.js
 
 
+
+*storybook.log
+storybook-static

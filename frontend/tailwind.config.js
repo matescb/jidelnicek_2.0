@@ -169,6 +169,10 @@ export default {
           '0%': { transform: 'scale(0.9)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.3s ease-in-out',
@@ -176,6 +180,7 @@ export default {
         slideUp: 'slideUp 0.3s ease-out',
         slideDown: 'slideDown 0.3s ease-out',
         scaleIn: 'scaleIn 0.2s ease-out',
+        shimmer: 'shimmer 1.5s infinite',
       },
       transitionDuration: {
         '400': '400ms',

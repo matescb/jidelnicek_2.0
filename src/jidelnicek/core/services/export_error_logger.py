@@ -72,7 +72,7 @@ class ExportErrorLogger:
         verbose_handler.setFormatter(
             logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s\n'
-                'Context: %(context)s\n'
+                'Context: %(export_context)s\n'
                 'Traceback: %(exc_info)s\n'
                 '---'
             )
@@ -115,7 +115,7 @@ class ExportErrorLogger:
         # Log to file
         logger.error(
             f"Export error {error_id}: {error}",
-            extra={"context": json.dumps(context)},
+            extra={"export_context": json.dumps(context)},
             exc_info=True  # Use exc_info as keyword argument, not in extra dict
         )
         

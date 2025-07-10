@@ -6,16 +6,14 @@
  */
 
 import React, { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { useZodForm } from '../../hooks/useZodForm';
 import { useAsyncFieldValidator } from '../../hooks/useAsyncFieldValidator';
-import { useFieldValidation } from '../../hooks/useFieldValidation';
 import {
   createEmailUniquenessValidator,
   createUsernameAvailabilityValidator,
   createRecipeNameUniquenessValidator,
-  createTripNameValidator,
   createDynamicValidator,
   usernameSchema,
 } from '../../schemas/async';
@@ -23,14 +21,12 @@ import {
   checkEmailAvailability,
   checkUsernameAvailability,
   checkRecipeNameUniqueness,
-  checkTripNameUniqueness,
-  validationAPI,
 } from '../../api/validation';
-import { emailSchema, recipeNameSchema, tripNameSchema } from '../../utils/validation';
+import { emailSchema, recipeNameSchema } from '../../utils/validation';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { FormField, FormLabel, FormError, FormDescription } from '../ui/Form';
+// import { FormField, FormLabel, FormError, FormDescription } from '../ui/Form';
 
 /**
  * Basic async validation example
@@ -49,8 +45,8 @@ export function BasicAsyncValidationExample() {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Basic Async Validation</h3>
       
-      <FormField>
-        <FormLabel>Email Address</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Email Address</label>
         <div className="relative">
           <Input
             type="email"
@@ -66,7 +62,7 @@ export function BasicAsyncValidationExample() {
           )}
         </div>
         {emailValidator.error && (
-          <FormError>{emailValidator.error}</FormError>
+          <p className="text-sm text-red-600">{emailValidator.error}</p>
         )}
         {emailValidator.isValid && emailValidator.isValidated && (
           <p className="text-sm text-green-600">Email is available!</p>
@@ -74,7 +70,7 @@ export function BasicAsyncValidationExample() {
         {emailValidator.wasCached && (
           <p className="text-xs text-gray-500">Result from cache</p>
         )}
-      </FormField>
+      </div>
     </div>
   );
 }
@@ -123,8 +119,8 @@ export function MultipleAsyncFieldsExample() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-lg font-semibold">Multiple Async Fields</h3>
       
-      <FormField>
-        <FormLabel>Email</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Email</label>
         <div className="relative">
           <Input
             type="email"
@@ -135,11 +131,11 @@ export function MultipleAsyncFieldsExample() {
             <LoadingSpinner size="sm" className="absolute right-2 top-1/2 -translate-y-1/2" />
           )}
         </div>
-        {emailValidator.error && <FormError>{emailValidator.error}</FormError>}
-      </FormField>
+        {emailValidator.error && <p className="text-sm text-red-600">{emailValidator.error}</p>}
+      </div>
 
-      <FormField>
-        <FormLabel>Username</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Username</label>
         <div className="relative">
           <Input
             type="text"
@@ -150,12 +146,12 @@ export function MultipleAsyncFieldsExample() {
             <LoadingSpinner size="sm" className="absolute right-2 top-1/2 -translate-y-1/2" />
           )}
         </div>
-        {usernameValidator.error && <FormError>{usernameValidator.error}</FormError>}
-        <FormDescription>Letters, numbers, underscores, and hyphens only</FormDescription>
-      </FormField>
+        {usernameValidator.error && <p className="text-sm text-red-600">{usernameValidator.error}</p>}
+        <p className="text-xs text-gray-500">Letters, numbers, underscores, and hyphens only</p>
+      </div>
 
-      <FormField>
-        <FormLabel>Recipe Name</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Recipe Name</label>
         <div className="relative">
           <Input
             type="text"
@@ -166,8 +162,8 @@ export function MultipleAsyncFieldsExample() {
             <LoadingSpinner size="sm" className="absolute right-2 top-1/2 -translate-y-1/2" />
           )}
         </div>
-        {recipeValidator.error && <FormError>{recipeValidator.error}</FormError>}
-      </FormField>
+        {recipeValidator.error && <p className="text-sm text-red-600">{recipeValidator.error}</p>}
+      </div>
 
       <Button 
         type="submit" 
@@ -229,8 +225,8 @@ export function IntegratedAsyncFormExample() {
     <form onSubmit={form.handleSubmitWithLoading(onSubmit)} className="space-y-4">
       <h3 className="text-lg font-semibold">Integrated Async Validation</h3>
       
-      <FormField>
-        <FormLabel>Email</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Email</label>
         <Controller
           name="email"
           control={form.control}
@@ -252,12 +248,12 @@ export function IntegratedAsyncFormExample() {
           )}
         />
         {form.formState.errors.email && (
-          <FormError>{form.formState.errors.email.message}</FormError>
+          <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
         )}
-      </FormField>
+      </div>
 
-      <FormField>
-        <FormLabel>Username</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Username</label>
         <Controller
           name="username"
           control={form.control}
@@ -275,33 +271,33 @@ export function IntegratedAsyncFormExample() {
           )}
         />
         {form.formState.errors.username && (
-          <FormError>{form.formState.errors.username.message}</FormError>
+          <p className="text-sm text-red-600">{form.formState.errors.username.message}</p>
         )}
-      </FormField>
+      </div>
 
-      <FormField>
-        <FormLabel>Password</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Password</label>
         <Input
           {...form.register('password')}
           type="password"
           className={form.formState.errors.password ? 'border-red-500' : ''}
         />
         {form.formState.errors.password && (
-          <FormError>{form.formState.errors.password.message}</FormError>
+          <p className="text-sm text-red-600">{form.formState.errors.password.message}</p>
         )}
-      </FormField>
+      </div>
 
-      <FormField>
-        <FormLabel>Confirm Password</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
         <Input
           {...form.register('confirmPassword')}
           type="password"
           className={form.formState.errors.confirmPassword ? 'border-red-500' : ''}
         />
         {form.formState.errors.confirmPassword && (
-          <FormError>{form.formState.errors.confirmPassword.message}</FormError>
+          <p className="text-sm text-red-600">{form.formState.errors.confirmPassword.message}</p>
         )}
-      </FormField>
+      </div>
 
       <Button
         type="submit"
@@ -352,8 +348,8 @@ export function AdvancedAsyncValidationExample() {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Advanced Error Handling</h3>
       
-      <FormField>
-        <FormLabel>Username (Unreliable Network)</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Username (Unreliable Network)</label>
         <div className="relative">
           <Input
             type="text"
@@ -368,7 +364,7 @@ export function AdvancedAsyncValidationExample() {
         
         {unreliableValidator.error && (
           <div className="space-y-2">
-            <FormError>{unreliableValidator.error}</FormError>
+            <p className="text-sm text-red-600">{unreliableValidator.error}</p>
             {unreliableValidator.error.includes('Network') && (
               <Button 
                 size="sm" 
@@ -392,7 +388,7 @@ export function AdvancedAsyncValidationExample() {
             <p>Last validated: {new Date(unreliableValidator.validatedAt).toLocaleTimeString()}</p>
           )}
         </div>
-      </FormField>
+      </div>
 
       <Button
         size="sm"
@@ -469,8 +465,8 @@ export function DynamicValidationExample() {
         </div>
       )}
 
-      <FormField>
-        <FormLabel>Dynamic Field</FormLabel>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Dynamic Field</label>
         <div className="relative">
           <Input
             type="text"
@@ -483,12 +479,12 @@ export function DynamicValidationExample() {
           )}
         </div>
         {dynamicValidator.error && (
-          <FormError>{dynamicValidator.error}</FormError>
+          <p className="text-sm text-red-600">{dynamicValidator.error}</p>
         )}
         {dynamicValidator.isValid && dynamicValidator.isValidated && (
           <p className="text-sm text-green-600">Valid!</p>
         )}
-      </FormField>
+      </div>
     </div>
   );
 }

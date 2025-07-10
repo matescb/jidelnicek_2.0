@@ -91,12 +91,51 @@ export const participantUpdateSchema = z
   );
 
 // Participant response schema
-export const participantResponseSchema = participantBaseSchema.extend({
-  id: uuidSchema,
-  trip_id: uuidSchema,
-  created_at: dateSchema,
-  updated_at: dateSchema,
-});
+export const participantResponseSchema = z
+  .object({
+    id: uuidSchema,
+    trip_id: uuidSchema,
+    name: z.string().max(100, 'Name too long').optional(),
+    number: z.number().int().min(1, 'Number must be at least 1').optional(),
+    email: emailSchema.optional(),
+    coefficient: coefficientSchema.default('100.00'),
+    meal_coefficients: mealCoefficientsSchema.optional(),
+    arrival_date: dateStringSchema.optional(),
+    departure_date: dateStringSchema.optional(),
+    created_at: dateSchema,
+    updated_at: dateSchema,
+  })
+  .refine(
+    (data) => {
+      // Either name or number must be provided, but not both
+      if (data.name && data.number !== undefined) {
+        return false;
+      }
+      if (!data.name && data.number === undefined) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Provide either name or number, not both',
+      path: [],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate arrival and departure dates
+      if (data.arrival_date && data.departure_date) {
+        const arrival = new Date(data.arrival_date);
+        const departure = new Date(data.departure_date);
+        return arrival <= departure;
+      }
+      return true;
+    },
+    {
+      message: 'Arrival date must be before departure date',
+      path: ['arrival_date'],
+    }
+  );
 
 // Participant summary schema
 export const participantSummarySchema = z.object({

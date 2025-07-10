@@ -1,5 +1,5 @@
 import apiClient from '../utils/apiClient';
-import type { ApiResponse } from '../types/api';
+// import type { ApiResponse } from '../types/api';
 
 // Frontend types (camelCase)
 export interface Participant {

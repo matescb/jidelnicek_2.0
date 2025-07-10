@@ -25,11 +25,11 @@ class ExportException(Exception):
         """Convert exception to dictionary for logging/API responses."""
         return {
             "error": self.__class__.__name__,
-            "message": self.message,
+            "export_message": self.message,  # Renamed from 'message' to avoid LogRecord conflicts
             "error_code": self.error_code,
             "details": self.details,
             "recoverable": self.recoverable,
-            "timestamp": self.timestamp.isoformat()
+            "error_timestamp": self.timestamp.isoformat()  # Renamed from 'timestamp' to avoid conflicts
         }
 
 

@@ -36,6 +36,7 @@ const NotFoundPage = lazy(() => import('@pages/NotFoundPage'))
 // Development-only pages
 const ThemeShowcasePage = lazy(() => import('@pages/theme/ThemeShowcasePage'))
 const UserProfileDemo = lazy(() => import('@pages/participants/UserProfileDemo'))
+const AnimationShowcase = lazy(() => import('@components/examples/AnimationShowcase'))
 
 export const router = createBrowserRouter([
   {
@@ -159,6 +160,10 @@ export const router = createBrowserRouter([
           path: 'user-profile-demo',
           element: <UserProfileDemo />,
         },
+        {
+          path: 'animation-showcase',
+          element: <AnimationShowcase />,
+        },
       ] : []),
       {
         path: '*',
@@ -167,9 +172,9 @@ export const router = createBrowserRouter([
     ],
   },
 ], {
-  future: {
-    v7_startTransition: true,
-  },
+  // future: {
+  //   v7_startTransition: true,
+  // },
 })
 
 // Route configuration for breadcrumbs
@@ -196,5 +201,6 @@ export const routeConfig = {
   ...(import.meta.env.DEV ? {
     '/theme-showcase': { label: 'Theme Showcase', icon: 'palette' },
     '/user-profile-demo': { label: 'User Profile Demo', icon: 'user' },
+    '/animation-showcase': { label: 'Animation Showcase', icon: 'play' },
   } : {}),
 }

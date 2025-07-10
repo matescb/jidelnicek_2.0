@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { useTripStore } from '../tripStore'
 import { participantsApi } from '@/services/participants'
 import axios from 'axios'

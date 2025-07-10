@@ -9,8 +9,8 @@ import { z } from 'zod';
 import { useZodForm } from '../../hooks/useZodForm';
 import { useAsyncFieldValidator } from '../../hooks/useAsyncFieldValidator';
 import { FormInput } from './FormInput';
-import { FormSelect } from './FormSelect';
-import { FormTextarea } from './FormTextarea';
+import { SelectField } from './SelectField';
+import { TextareaField } from './TextareaField';
 import { Button } from '../ui/button';
 import {
   createEmailUniquenessValidator,
@@ -325,7 +325,7 @@ export function AsyncValidationIntegration() {
       <div className="bg-blue-50 p-4 rounded-lg">
         <h3 className="font-semibold text-blue-900 mb-2">Integration Features:</h3>
         <ul className="space-y-1 text-sm text-blue-800">
-          <li>✓ Seamless integration with FormInput, FormSelect, and FormTextarea</li>
+          <li>✓ Seamless integration with FormInput, SelectField, and TextareaField</li>
           <li>✓ Loading states shown in input fields</li>
           <li>✓ Debounced validation on change, immediate on blur</li>
           <li>✓ Cache indicators and success messages</li>

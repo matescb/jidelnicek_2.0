@@ -8,9 +8,8 @@ import {
   dateStringSchema,
   decimalSchema,
   positiveDecimalSchema,
-  paginationSchema,
 } from './common';
-import { participantCreateSchema, participantUpdateSchema, participantResponseSchema } from './participant';
+import { participantCreateSchema, participantUpdateSchema } from './participant';
 import { recipeUnitSchema } from './recipe';
 
 // Trip status validation
@@ -81,30 +80,74 @@ export const tripBaseSchema = z
   );
 
 // Trip creation schema
-export const tripCreateSchema = tripBaseSchema.extend({
-  participants: z
-    .array(participantCreateSchema)
-    .max(20, 'Maximum 20 participants allowed per trip')
-    .default([])
-    .refine(
-      (participants) => {
-        // Check for duplicate names
-        const names = participants.filter((p) => p.name).map((p) => p.name);
-        if (names.length !== new Set(names).size) {
-          return false;
-        }
-
-        // Check for duplicate numbers
-        const numbers = participants.filter((p) => p.number !== undefined).map((p) => p.number);
-        if (numbers.length !== new Set(numbers).size) {
-          return false;
-        }
-
-        return true;
-      },
-      'Participant names and numbers must be unique'
-    ),
-});
+export const tripCreateSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Trip name is required')
+      .max(100, 'Trip name too long')
+      .transform((val) => val.trim())
+      .refine((val) => val.length > 0, 'Trip name cannot be empty'),
+    description: z
+      .string()
+      .max(2000, 'Description too long')
+      .transform((val) => val?.trim() || null)
+      .optional(),
+    status: tripStatusSchema.default('planned'),
+    start_date: dateStringSchema,
+    end_date: dateStringSchema,
+    meal_slots: z
+      .array(z.string().min(1).max(50))
+      .min(1, 'At least one meal slot is required')
+      .max(10, 'Maximum 10 meal slots allowed')
+      .default(['Breakfast', 'Lunch', 'Dinner'])
+      .refine(
+        (slots) => {
+          // Check for duplicates
+          return new Set(slots).size === slots.length;
+        },
+        'Meal slot names must be unique'
+      )
+      .transform((slots) => slots.map((s) => s.trim())),
+    recipe_storage_mode: recipeStorageModeSchema.default('snapshot'),
+    notes: z.string().max(2000, 'Notes too long').optional(),
+    participants: z
+      .array(participantCreateSchema)
+      .max(20, 'Maximum 20 participants allowed per trip')
+      .default([])
+      .refine(
+        (participants) => {
+          // Check that numbered participants have unique numbers
+          const numberedParticipants = participants.filter((p) => p.number !== undefined);
+          const numbers = numberedParticipants.map((p) => p.number);
+          return new Set(numbers).size === numbers.length;
+        },
+        'Participant numbers must be unique'
+      ),
+  })
+  .refine(
+    (data) => {
+      const start = new Date(data.start_date);
+      const end = new Date(data.end_date);
+      return end >= start;
+    },
+    {
+      message: 'End date cannot be before start date',
+      path: ['end_date'],
+    }
+  )
+  .refine(
+    (data) => {
+      const start = new Date(data.start_date);
+      const end = new Date(data.end_date);
+      const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      return duration <= 365;
+    },
+    {
+      message: 'Trip duration cannot exceed 365 days',
+      path: ['end_date'],
+    }
+  );
 
 // Trip update schema
 export const tripUpdateSchema = z
@@ -325,23 +368,45 @@ export const tripListItemSchema = z.object({
   completion_percentage: z.number().min(0).max(100).default(0),
 });
 
-export const tripResponseSchema = tripBaseSchema.extend({
+export const tripResponseSchema = z.object({
   id: uuidSchema,
   user_id: uuidSchema,
+  name: z
+    .string()
+    .min(1, 'Trip name is required')
+    .max(100, 'Trip name too long')
+    .transform((val) => val.trim())
+    .refine((val) => val.length > 0, 'Trip name cannot be empty'),
+  description: z
+    .string()
+    .max(2000, 'Description too long')
+    .transform((val) => val?.trim() || null)
+    .optional(),
+  status: tripStatusSchema.default('planned'),
+  start_date: dateStringSchema,
+  end_date: dateStringSchema,
+  meal_slots: z
+    .array(z.string().min(1).max(50))
+    .min(1, 'At least one meal slot is required')
+    .max(10, 'Maximum 10 meal slots allowed')
+    .default(['Breakfast', 'Lunch', 'Dinner'])
+    .refine(
+      (slots) => {
+        // Check for duplicates
+        return new Set(slots).size === slots.length;
+      },
+      'Meal slot names must be unique'
+    )
+    .transform((slots) => slots.map((s) => s.trim())),
+  recipe_storage_mode: recipeStorageModeSchema.default('snapshot'),
+  notes: z.string().max(2000, 'Notes too long').optional(),
   is_archived: z.boolean(),
   created_at: dateSchema,
   updated_at: dateSchema,
   duration_days: z.number().int().positive(),
-  participants: z.array(participantResponseSchema).default([]),
-  days: z.array(tripDaySummarySchema).default([]),
   has_stove: z.boolean().default(false),
-  stove_efficiency: decimalSchema.optional(),
   total_meals_planned: z.number().int().nonnegative().default(0),
   completion_percentage: z.number().min(0).max(100).default(0),
-  total_calories: decimalSchema.optional(),
-  total_weight_g: decimalSchema.optional(),
-  total_water_ml: z.number().int().nonnegative().optional(),
-  total_fuel_g: decimalSchema.optional(),
 });
 
 export const tripListResponseSchema = z.object({

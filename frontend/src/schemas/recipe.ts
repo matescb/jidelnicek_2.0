@@ -7,7 +7,6 @@ import {
   dateSchema,
   decimalSchema,
   positiveDecimalSchema,
-  paginationSchema,
 } from './common';
 
 // Recipe unit validation

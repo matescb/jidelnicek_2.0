@@ -194,7 +194,7 @@ class ValidationConstants:
         'main_course', 'side_dish', 'soup', 'salad', 'beverage', 'sauce',
         'bread', 'pasta', 'rice', 'vegetarian', 'vegan', 'gluten_free',
         'low_carb', 'high_protein', 'quick', 'slow_cook', 'one_pot',
-        'grilled', 'baked', 'fried', 'steamed', 'raw', 'fermented'
+        'grilled', 'baked', 'fried', 'steamed', 'raw', 'fermented', 'easy'
     }
     
     # Allergen types
@@ -410,7 +410,7 @@ class RecipeValidator:
         if not name or not isinstance(name, str):
             raise RecipeValidationError("Recipe name is required", "name", "required")
         
-        name = ValidationHelpers.sanitize_string(name, ValidationConstants.RECIPE_NAME_MAX_LENGTH)
+        name = ValidationHelpers.sanitize_string(name)
         
         if len(name) < ValidationConstants.RECIPE_NAME_MIN_LENGTH:
             raise RecipeValidationError(
@@ -441,7 +441,7 @@ class RecipeValidator:
         if not isinstance(description, str):
             raise RecipeValidationError("Description must be a string", "description", "type")
         
-        description = ValidationHelpers.sanitize_string(description, ValidationConstants.RECIPE_DESCRIPTION_MAX_LENGTH)
+        description = ValidationHelpers.sanitize_string(description)
         
         if len(description) > ValidationConstants.RECIPE_DESCRIPTION_MAX_LENGTH:
             raise RecipeValidationError(
@@ -460,7 +460,7 @@ class RecipeValidator:
         if not isinstance(instructions, str):
             raise RecipeValidationError("Instructions must be a string", "instructions", "type")
         
-        instructions = ValidationHelpers.sanitize_string(instructions, ValidationConstants.RECIPE_INSTRUCTIONS_MAX_LENGTH)
+        instructions = ValidationHelpers.sanitize_string(instructions)
         
         if len(instructions) > ValidationConstants.RECIPE_INSTRUCTIONS_MAX_LENGTH:
             raise RecipeValidationError(
@@ -648,7 +648,7 @@ class IngredientValidator:
         if not name or not isinstance(name, str):
             raise IngredientValidationError("Ingredient name is required", "name", "required")
         
-        name = ValidationHelpers.sanitize_string(name, ValidationConstants.INGREDIENT_NAME_MAX_LENGTH)
+        name = ValidationHelpers.sanitize_string(name)
         
         if len(name) < ValidationConstants.INGREDIENT_NAME_MIN_LENGTH:
             raise IngredientValidationError(
@@ -673,7 +673,7 @@ class IngredientValidator:
         if not isinstance(brand, str):
             raise IngredientValidationError("Brand must be a string", "brand", "type")
         
-        brand = ValidationHelpers.sanitize_string(brand, ValidationConstants.INGREDIENT_BRAND_MAX_LENGTH)
+        brand = ValidationHelpers.sanitize_string(brand)
         
         if len(brand) > ValidationConstants.INGREDIENT_BRAND_MAX_LENGTH:
             raise IngredientValidationError(
@@ -692,7 +692,7 @@ class IngredientValidator:
         if not isinstance(category, str):
             raise IngredientValidationError("Category must be a string", "category", "type")
         
-        category = ValidationHelpers.sanitize_string(category, ValidationConstants.INGREDIENT_CATEGORY_MAX_LENGTH)
+        category = ValidationHelpers.sanitize_string(category)
         
         if len(category) > ValidationConstants.INGREDIENT_CATEGORY_MAX_LENGTH:
             raise IngredientValidationError(
@@ -1109,7 +1109,7 @@ class QuantityValidator:
         if not isinstance(notes, str):
             raise QuantityValidationError("Preparation notes must be a string", "preparation_notes", "type")
         
-        notes = ValidationHelpers.sanitize_string(notes, ValidationConstants.INGREDIENT_PREPARATION_NOTES_MAX_LENGTH)
+        notes = ValidationHelpers.sanitize_string(notes)
         
         if len(notes) > ValidationConstants.INGREDIENT_PREPARATION_NOTES_MAX_LENGTH:
             raise QuantityValidationError(

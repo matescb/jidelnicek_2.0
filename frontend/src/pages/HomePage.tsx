@@ -93,6 +93,35 @@ const HomePage: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {/* Development Links */}
+        {import.meta.env.DEV && (
+          <div className="mt-16 text-center">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Development Tools
+            </h3>
+            <div className="flex justify-center gap-4 flex-wrap">
+              <Link
+                to="/theme-showcase"
+                className="text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                Theme Showcase
+              </Link>
+              <Link
+                to="/animation-showcase"
+                className="text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                Animation Showcase
+              </Link>
+              <Link
+                to="/user-profile-demo"
+                className="text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                User Profile Demo
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

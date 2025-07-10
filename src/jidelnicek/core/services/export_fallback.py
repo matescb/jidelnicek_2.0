@@ -169,10 +169,21 @@ class FallbackExporter:
         if isinstance(data, dict):
             lines = []
             for key, value in data.items():
-                if isinstance(value, (list, dict)):
-                    value = json.dumps(value, ensure_ascii=False)
-                elif isinstance(value, (datetime, date)):
+                if isinstance(value, (datetime, date)):
                     value = value.isoformat()
+                elif isinstance(value, (list, dict)):
+                    # Handle complex objects with date-aware JSON encoder
+                    class DateTimeEncoder(json.JSONEncoder):
+                        def default(self, obj):
+                            if isinstance(obj, (datetime, date)):
+                                return obj.isoformat()
+                            if hasattr(obj, "to_dict"):
+                                return obj.to_dict()
+                            if hasattr(obj, "__dict__"):
+                                return obj.__dict__
+                            return super().default(obj)
+                    
+                    value = json.dumps(value, cls=DateTimeEncoder, indent=2, ensure_ascii=False)
                 lines.append(f"{key}: {value}")
             return "\n".join(lines)
         
