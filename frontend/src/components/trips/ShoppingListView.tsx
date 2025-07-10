@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { toast } from '@/components/ui/Toast'
+import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 import { 
   calculateTotalWeight, 
@@ -72,6 +72,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({ trip, classN
     generateShoppingList 
   } = useTripStore()
   
+  const { toast } = useToast()
   const { onTripEvent } = useTripWebSocket(trip.id)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
 

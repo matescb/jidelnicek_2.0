@@ -381,7 +381,7 @@ class TestJobEndpoints:
             "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat(),
         }
         
-        with patch('jidelnicek.core.routers.jobs.cache_get', return_value=export_data):
+        with patch('jidelnicek.core.cache.cache_get', return_value=export_data):
             # Act
             response = await authenticated_client.get(f"/api/v1/exports/{export_id}/download")
                 
@@ -396,7 +396,7 @@ class TestJobEndpoints:
         # Arrange
         export_id = str(uuid.uuid4())
         
-        with patch('jidelnicek.core.routers.jobs.cache_get', return_value=None):
+        with patch('jidelnicek.core.cache.cache_get', return_value=None):
             # Act
             response = await authenticated_client.get(f"/api/v1/exports/{export_id}/download")
                 
@@ -415,7 +415,7 @@ class TestJobEndpoints:
             "created_by": 999,  # Different user
         }
         
-        with patch('jidelnicek.core.routers.jobs.cache_get', return_value=export_data):
+        with patch('jidelnicek.core.cache.cache_get', return_value=export_data):
             # Act
             response = await authenticated_client.get(f"/api/v1/exports/{export_id}/download")
                 

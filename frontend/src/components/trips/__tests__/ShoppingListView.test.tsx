@@ -12,8 +12,10 @@ jest.mock('@/hooks/useWebSocket', () => ({
 }))
 
 // Mock toast
-jest.mock('@/components/ui/Toast', () => ({
-  toast: jest.fn()
+jest.mock('@/hooks/useToast', () => ({
+  useToast: () => ({
+    toast: jest.fn()
+  })
 }))
 
 const mockTrip: Trip = {

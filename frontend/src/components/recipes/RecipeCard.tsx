@@ -1,19 +1,33 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Clock, Users, Flame, Star, Heart } from 'lucide-react'
+import { Clock, Users, Flame, Star, Heart, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Recipe } from '@/types/recipe'
 import { useRecipeStore } from '@/store/slices/recipeStore'
 import { useAuthStore } from '@/store/slices/authStore'
 import { useI18nFormats } from '@/hooks/useI18nFormats'
 import { TouchableArea } from '@/components/ui/TouchableArea'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface RecipeCardProps {
   recipe: Recipe
   onToggleFavorite?: (recipeId: string) => void
+  onClick?: () => void
+  selected?: boolean
+  onSelect?: () => void
+  showCheckbox?: boolean
+  actions?: React.ReactNode
 }
 
-export function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
+export function RecipeCard({ 
+  recipe, 
+  onToggleFavorite,
+  onClick,
+  selected = false,
+  onSelect,
+  showCheckbox = false,
+  actions
+}: RecipeCardProps) {
   const { t } = useTranslation()
   const { formatNumber } = useI18nFormats()
   const user = useAuthStore((state) => state.user)
@@ -47,12 +61,26 @@ export function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
     }
   }
   
+  const CardWrapper = onClick ? 'div' : Link;
+  const cardProps = onClick 
+    ? { onClick, className: "block group cursor-pointer" }
+    : { to: `/recipes/${recipe.id}`, className: "block group" };
+    
   return (
-    <Link
-      to={`/recipes/${recipe.id}`}
-      className="block group"
-    >
-      <TouchableArea className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+    <CardWrapper {...cardProps as any}>
+      <TouchableArea className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden relative ${selected ? 'ring-2 ring-blue-500' : ''}`}>
+        {/* Selection Checkbox */}
+        {showCheckbox && (
+          <div className="absolute top-2 left-2 z-10">
+            <Checkbox
+              checked={selected}
+              onCheckedChange={onSelect}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 shadow-md"
+            />
+          </div>
+        )}
+        
         {/* Image Section */}
         <div className="aspect-w-16 aspect-h-9 relative">
           {recipe.imageUrl ? (
@@ -87,8 +115,15 @@ export function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
           
           {/* Owner Badge */}
           {isOwner && (
-            <div className="absolute top-2 left-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-md">
+            <div className={`absolute top-2 ${showCheckbox ? 'left-12' : 'left-2'} px-2 py-1 bg-blue-600 text-white text-xs rounded-md`}>
               {t('recipes.myRecipe')}
+            </div>
+          )}
+          
+          {/* Actions Menu */}
+          {actions && (
+            <div className="absolute bottom-2 right-2">
+              {actions}
             </div>
           )}
         </div>
@@ -174,6 +209,6 @@ export function RecipeCard({ recipe, onToggleFavorite }: RecipeCardProps) {
           )}
         </div>
       </TouchableArea>
-    </Link>
+    </CardWrapper>
   )
 }

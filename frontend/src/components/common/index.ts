@@ -1,3 +1,6 @@
 export * from './ErrorBoundary'
 export * from './LoadingScreen'
 export * from './LanguageSelector'
+export * from './BaseDataTable'
+export * from './VirtualizedDataTable'
+export * from './dataTableUtils'

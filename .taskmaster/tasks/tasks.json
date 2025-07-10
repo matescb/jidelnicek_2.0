@@ -1157,7 +1157,7 @@
               18
             ],
             "details": "Create dynamic calculation displays, shopping list generators, cost breakdowns, and real-time updates using WebSocket connections.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1169,7 +1169,7 @@
               18
             ],
             "details": "Build sortable tables, pagination, filtering, and search functionality. Include bulk actions and export capabilities.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1440,7 +1440,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-10T22:17:36.304Z",
+      "updated": "2025-07-10T23:11:53.061Z",
       "description": "Tasks for master context"
     }
   }

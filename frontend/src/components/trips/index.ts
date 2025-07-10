@@ -18,6 +18,8 @@ export { ParticipantRoleManager } from './ParticipantRoleManager'
 export { CostCalculator } from './CostCalculator'
 export { NutritionCalculator } from './NutritionCalculator'
 export { NutritionCalculatorDemo } from './NutritionCalculatorDemo'
+export { TripListView } from './TripListView'
+export { TripFilters } from './TripFilters'
 export type {
   TripWizardData,
   TripBasicInfo,

@@ -9,6 +9,7 @@ import os
 from typing import AsyncGenerator, Generator
 from datetime import datetime, timezone
 import secrets
+import uuid
 
 import pytest
 import pytest_asyncio
@@ -83,7 +84,7 @@ async def test_engine():
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create a test database session."""
+    """Create a test database session with proper test isolation."""
     async_session_maker = async_sessionmaker(
         test_engine,
         class_=AsyncSession,
@@ -92,6 +93,7 @@ async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     
     async with async_session_maker() as session:
         yield session
+        # Rollback any uncommitted changes for test isolation
         await session.rollback()
 
 
@@ -139,8 +141,9 @@ async def client(async_client: AsyncClient) -> AsyncClient:
 @pytest_asyncio.fixture(scope="function")
 async def existing_user(db_session: AsyncSession) -> AuthUser:
     """Create an existing user for tests."""
+    unique_id = str(uuid.uuid4())[:8]
     user = AuthUser(
-        email="existing@example.com",
+        email=f"existing-{unique_id}@example.com",
         password_hash=PasswordHasher.hash_password("ExistingPass123!@#"),
         email_verified=True,
         email_verified_at=datetime.now(timezone.utc),
@@ -164,8 +167,9 @@ async def existing_user(db_session: AsyncSession) -> AuthUser:
 @pytest_asyncio.fixture(scope="function")
 async def admin_user(db_session: AsyncSession) -> AuthUser:
     """Create an admin user for tests."""
+    unique_id = str(uuid.uuid4())[:8]
     user = AuthUser(
-        email="admin@example.com",
+        email=f"admin-{unique_id}@example.com",
         password_hash=PasswordHasher.hash_password("AdminPass123!@#"),
         email_verified=True,
         email_verified_at=datetime.now(timezone.utc),
@@ -189,8 +193,9 @@ async def admin_user(db_session: AsyncSession) -> AuthUser:
 @pytest_asyncio.fixture(scope="function")
 async def unverified_user(db_session: AsyncSession) -> AuthUser:
     """Create an unverified user for tests."""
+    unique_id = str(uuid.uuid4())[:8]
     user = AuthUser(
-        email="unverified@example.com",
+        email=f"unverified-{unique_id}@example.com",
         password_hash=PasswordHasher.hash_password("UnverifiedPass123!@#"),
         email_verified=False,
         language="cs",
@@ -213,8 +218,9 @@ async def unverified_user(db_session: AsyncSession) -> AuthUser:
 @pytest_asyncio.fixture(scope="function")
 async def inactive_user(db_session: AsyncSession) -> AuthUser:
     """Create an inactive user for tests."""
+    unique_id = str(uuid.uuid4())[:8]
     user = AuthUser(
-        email="inactive@example.com",
+        email=f"inactive-{unique_id}@example.com",
         password_hash=PasswordHasher.hash_password("InactivePass123!@#"),
         email_verified=True,
         email_verified_at=datetime.now(timezone.utc),
@@ -310,8 +316,9 @@ async def other_user_token(request, db_session: AsyncSession, mock_redis: AsyncM
             other = request.getfixturevalue("other_user")
         except:
             # Create a new user if other_user fixture not available
+            unique_id = str(uuid.uuid4())[:8]
             other = AuthUser(
-                email="another@example.com",
+                email=f"another-{unique_id}@example.com",
                 password_hash=PasswordHasher.hash_password("AnotherPass123!"),
                 email_verified=True,
                 language="en",

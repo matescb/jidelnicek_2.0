@@ -3,10 +3,11 @@ Tests for WebSocket functionality.
 """
 
 import pytest
+import pytest_asyncio
 import json
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketState
@@ -227,11 +228,8 @@ async def test_connection_health_check(connection_manager):
     active_ws = Mock(spec=WebSocket)
     active_ws.application_state = WebSocketState.CONNECTED
     
-    # Set up heartbeat times
-    stale_time = datetime.utcnow()
-    stale_time = stale_time.replace(
-        second=stale_time.second - 120  # 2 minutes ago
-    )
+    # Set up heartbeat times - 2 minutes ago
+    stale_time = datetime.utcnow() - timedelta(minutes=2)
     
     connection_manager.last_heartbeat[stale_ws] = stale_time
     connection_manager.last_heartbeat[active_ws] = datetime.utcnow()
@@ -251,6 +249,7 @@ async def test_websocket_endpoint_authentication():
     """Test WebSocket endpoint authentication."""
     mock_ws = Mock(spec=WebSocket)
     mock_ws.close = AsyncMock()
+    mock_ws.application_state = WebSocketState.CONNECTED
     
     # Test without token
     with patch('jidelnicek.core.websockets.handlers.get_current_user_ws', return_value=None):

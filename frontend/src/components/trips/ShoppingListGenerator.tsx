@@ -26,7 +26,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
-import { toast } from '@/components/ui/Toast'
+import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 import { 
   calculateTotalWeight, 
@@ -143,6 +143,7 @@ export const ShoppingListGenerator: React.FC<ShoppingListGeneratorProps> = ({ tr
     removeShoppingItem
   } = useTripStore()
   
+  const { toast } = useToast()
   const { onTripEvent } = useTripWebSocket(trip.id)
   
   const [viewMode, setViewMode] = useState<ViewMode>('category')
