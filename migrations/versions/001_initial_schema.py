@@ -479,12 +479,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['role_id'], ['admin_roles.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['assigned_by'], ['auth_users.id'], ondelete='SET NULL'),
         sa.ForeignKeyConstraint(['revoked_by'], ['auth_users.id'], ondelete='SET NULL'),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint(
-            'user_id', 'role_id',
-            name='uq_user_role_assignment',
-            postgresql_where=sa.text('is_active = true AND revoked_at IS NULL')
-        )
+        sa.PrimaryKeyConstraint('id')
     )
     
     # Create admin_permission_delegations table
@@ -519,7 +514,7 @@ def upgrade() -> None:
     op.create_index('idx_user_role_assignments_role_id', 'admin_user_role_assignments', ['role_id'])
     op.create_index('idx_user_role_assignments_is_active', 'admin_user_role_assignments', ['is_active'])
     op.create_index('idx_user_role_assignments_valid', 'admin_user_role_assignments', ['user_id', 'role_id'], 
-                    postgresql_where=sa.text('is_active = true AND revoked_at IS NULL'))
+                    unique=True, postgresql_where=sa.text('is_active = true AND revoked_at IS NULL'))
     op.create_index('idx_permission_delegations_delegator_id', 'admin_permission_delegations', ['delegator_id'])
     op.create_index('idx_permission_delegations_delegate_id', 'admin_permission_delegations', ['delegate_id'])
     op.create_index('idx_permission_delegations_expires_at', 'admin_permission_delegations', ['expires_at'])

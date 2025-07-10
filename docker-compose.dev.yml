@@ -42,7 +42,7 @@ services:
       DEBUG: "true"
       LOG_LEVEL: DEBUG
       # Database - use container name for host
-      DATABASE_URL: postgresql://${DB_USER:-jidelnicek}:${DB_PASSWORD:-jidelnicek_dev_2024}@db:5432/${DB_NAME:-jidelnicek}
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-jidelnicek}:${DB_PASSWORD:-jidelnicek_dev_2024}@db:5432/${DB_NAME:-jidelnicek}
       DB_HOST: db
       DB_PORT: 5432
       # Redis - use container name for host
