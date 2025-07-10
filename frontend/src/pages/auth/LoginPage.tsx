@@ -19,6 +19,7 @@ const LoginPage: React.FC = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginCredentials>({
     resolver: zodResolver(loginSchema),

@@ -1,12 +1,16 @@
 import { apiClient } from './client'
 import { User, LoginCredentials, RegisterData, AuthTokens } from '@/types'
+import { mockAuthApi } from './mockAuth'
 
 interface AuthResponse {
   user: User
   tokens: AuthTokens
 }
 
-export const authApi = {
+// Use mock auth if enabled in environment
+const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === 'true'
+
+export const authApi = useMockAuth ? mockAuthApi : {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/login', credentials)
     return response.data

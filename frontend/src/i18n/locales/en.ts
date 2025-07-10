@@ -350,6 +350,10 @@ export default {
     clearFilters: 'Clear Filters',
     anonymous: 'Anonymous',
     step: 'Step',
+    actions: 'Actions',
+    noData: 'No data available',
+    ascending: 'Ascending',
+    descending: 'Descending',
     
     // Time
     today: 'Today',
