@@ -18,6 +18,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
 
 from jidelnicek.core.database import Base
 from jidelnicek.core.utils import get_utc_now
+from jidelnicek.core.database_types import get_json_column_type
 
 if TYPE_CHECKING:
     from .day import TripDay
@@ -70,7 +71,7 @@ class TripMeal(Base):
     
     # Recipe snapshot (for track_changes mode)
     recipe_snapshot: Mapped[Optional[dict]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         comment="Snapshot of recipe data at time of assignment"
     )
     

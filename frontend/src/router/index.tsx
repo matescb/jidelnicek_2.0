@@ -21,7 +21,7 @@ const RecipeDetailPage = lazy(() => import('@pages/recipes/RecipeDetailPage'))
 const RecipeCreatePage = lazy(() => import('@pages/recipes/RecipeCreatePage'))
 const RecipeEditPage = lazy(() => import('@pages/recipes/RecipeEditPage'))
 
-const TripListPage = lazy(() => import('@pages/trips/TripListPage'))
+const TripListPage = lazy(() => import('@pages/TripListPage'))
 const TripDetailPage = lazy(() => import('@pages/trips/TripDetailPage'))
 const TripCreatePage = lazy(() => import('@pages/trips/TripCreatePage'))
 const TripEditPage = lazy(() => import('@pages/trips/TripEditPage'))

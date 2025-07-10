@@ -193,7 +193,30 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          const response = await apiClient.post<Recipe>('/recipes', recipeData)
+          // Check if we have images to upload
+          const hasImages = 'images' in recipeData && (recipeData as any).images?.length > 0
+          let response
+
+          if (hasImages) {
+            // Create FormData for multipart upload
+            const formData = new FormData()
+            
+            // Add recipe data as JSON (excluding images)
+            const { images, ...recipeDataWithoutImages } = recipeData as any
+            formData.append('recipe', JSON.stringify(recipeDataWithoutImages))
+            
+            // Add each image file
+            images.forEach((file: File, index: number) => {
+              formData.append(`images`, file)
+            })
+
+            // Send with multipart/form-data (Content-Type will be set automatically)
+            response = await apiClient.post<Recipe>('/recipes', formData)
+          } else {
+            // Send as regular JSON
+            response = await apiClient.post<Recipe>('/recipes', recipeData)
+          }
+
           const newRecipe = response.data
           
           set((state) => {
@@ -218,7 +241,38 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          const response = await apiClient.put<Recipe>(`/recipes/${id}`, updates)
+          // Check if we have images to upload
+          const hasImages = 'images' in updates && (updates as any).images?.length > 0
+          const hasRemovedImages = 'removedImageIds' in updates && (updates as any).removedImageIds?.length > 0
+          let response
+
+          if (hasImages || hasRemovedImages) {
+            // Create FormData for multipart upload
+            const formData = new FormData()
+            
+            // Add recipe data as JSON (excluding images)
+            const { images, removedImageIds, ...recipeDataWithoutImages } = updates as any
+            formData.append('recipe', JSON.stringify(recipeDataWithoutImages))
+            
+            // Add removed image IDs if any
+            if (removedImageIds && removedImageIds.length > 0) {
+              formData.append('removedImageIds', JSON.stringify(removedImageIds))
+            }
+            
+            // Add each new image file
+            if (images && images.length > 0) {
+              images.forEach((file: File) => {
+                formData.append(`images`, file)
+              })
+            }
+
+            // Send with multipart/form-data (Content-Type will be set automatically)
+            response = await apiClient.put<Recipe>(`/recipes/${id}`, formData)
+          } else {
+            // Send as regular JSON
+            response = await apiClient.put<Recipe>(`/recipes/${id}`, updates)
+          }
+
           const updatedRecipe = response.data
           
           set((state) => {

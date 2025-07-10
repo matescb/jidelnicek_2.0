@@ -16,6 +16,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
 
 from jidelnicek.core.database import Base
 from jidelnicek.core.utils import get_utc_now
+from jidelnicek.core.database_types import get_json_column_type, get_string_array_column_type
 
 # TYPE_CHECKING imports removed as we no longer need NutritionalValue
 
@@ -62,25 +63,25 @@ class Snack(Base):
     
     # Nutritional data stored as JSON
     nutritional_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         comment="Nutritional values per 100g (e.g., calories, proteins)"
     )
     
     # Unit conversions stored as JSON
     unit_conversions: Mapped[Optional[Dict[str, float]]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         comment="Conversion factors to grams (e.g., {\"cup\": 120, \"tbsp\": 15})"
     )
     
     # Allergens stored as an array of strings
     allergens: Mapped[Optional[List[str]]] = mapped_column(
-        ARRAY(String),
+        get_string_array_column_type(),
         comment="List of allergens present in the snack"
     )
     
     # Dietary flags stored as JSON
     dietary_flags: Mapped[Optional[Dict[str, bool]]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         comment="Dietary flags (e.g., {\"vegan\": true, \"gluten_free\": false})"
     )
     

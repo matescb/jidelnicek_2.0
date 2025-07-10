@@ -1,14 +1,15 @@
 import React, { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useForm, useFieldArray, Controller } from 'react-hook-form'
+import { useForm, useFieldArray, Controller, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, GripVertical, Upload, X } from 'lucide-react'
+import { Plus, Trash2, GripVertical, X } from 'lucide-react'
 import { Recipe, RecipeIngredient } from '@/types/recipe'
 import { TouchableArea } from '@/components/ui/TouchableArea'
 import { useRecipeStore } from '@/store/slices/recipeStore'
 import { useToast } from '@/hooks/useToast'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { FileField } from '@/components/forms/FileField'
 
 // Form validation schema
 const recipeSchema = z.object({
@@ -30,7 +31,8 @@ const recipeSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
   categories: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
-  isPublic: z.boolean()
+  isPublic: z.boolean(),
+  images: z.array(z.instanceof(File)).optional()
 })
 
 type RecipeFormData = z.infer<typeof recipeSchema>
@@ -44,19 +46,11 @@ interface RecipeFormProps {
 export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const [images, setImages] = useState<File[]>([])
-  const [imagePreview, setImagePreview] = useState<string[]>(
-    recipe?.images?.map(img => img.url) || []
-  )
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [existingImages, setExistingImages] = useState(recipe?.images || [])
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
   
-  const {
-    control,
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch
-  } = useForm<RecipeFormData>({
+  const methods = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
     defaultValues: {
       name: recipe?.name || '',
@@ -69,9 +63,18 @@ export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
       difficulty: recipe?.difficulty || 'medium',
       categories: recipe?.categories || [],
       tags: recipe?.tags || [],
-      isPublic: recipe?.isPublic || false
+      isPublic: recipe?.isPublic || false,
+      images: []
     }
   })
+  
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch
+  } = methods
   
   const { fields: instructionFields, append: appendInstruction, remove: removeInstruction, move: moveInstruction } = useFieldArray({
     control,
@@ -83,50 +86,9 @@ export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
     name: 'ingredients'
   })
   
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    const validFiles = files.filter(file => {
-      const isValid = file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024
-      if (!isValid) {
-        toast({
-          title: t('errors.validation'),
-          description: t('recipes.imageRequirements'),
-          variant: 'error'
-        })
-      }
-      return isValid
-    })
-    
-    if (images.length + validFiles.length > 10) {
-      toast({
-        title: t('errors.validation'),
-        description: t('recipes.maxImages'),
-        variant: 'error'
-      })
-      return
-    }
-    
-    setImages([...images, ...validFiles])
-    
-    // Create preview URLs
-    const newPreviews = validFiles.map(file => URL.createObjectURL(file))
-    setImagePreview([...imagePreview, ...newPreviews])
-  }
-  
-  const removeImage = (index: number) => {
-    const newImages = [...images]
-    const newPreviews = [...imagePreview]
-    
-    // Revoke the object URL to free memory
-    if (newPreviews[index].startsWith('blob:')) {
-      URL.revokeObjectURL(newPreviews[index])
-    }
-    
-    newImages.splice(index, 1)
-    newPreviews.splice(index, 1)
-    
-    setImages(newImages)
-    setImagePreview(newPreviews)
+  const removeExistingImage = (imageId: string) => {
+    setExistingImages(existingImages.filter(img => img.id !== imageId))
+    setRemovedImageIds([...removedImageIds, imageId])
   }
   
   const handleDragEnd = (result: any) => {
@@ -138,8 +100,12 @@ export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
   const onFormSubmit = async (data: RecipeFormData) => {
     setIsSubmitting(true)
     try {
-      await onSubmit(data)
-      // TODO: Handle image upload
+      // Include removed image IDs if we're editing and have removed images
+      const submitData = {
+        ...data,
+        ...(recipe && removedImageIds.length > 0 ? { removedImageIds } : {})
+      }
+      await onSubmit(submitData as RecipeFormData)
     } catch (error) {
       toast({
         title: t('errors.generic'),
@@ -400,60 +366,80 @@ export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
       </div>
       
       {/* Images */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          {t('recipes.images')}
-        </h3>
-        
-        <div className="space-y-4">
-          {/* Image Upload */}
-          <div>
-            <label
-              htmlFor="image-upload"
-              className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <Upload className="w-8 h-8 mb-2 text-gray-400" />
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {t('recipes.uploadImages')}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {t('recipes.imageRequirements')}
-                </p>
-              </div>
-              <input
-                id="image-upload"
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </label>
-          </div>
+      <FormProvider {...methods}>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            {t('recipes.images')}
+          </h3>
           
-          {/* Image Previews */}
-          {imagePreview.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {imagePreview.map((url, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={url}
-                    alt={`Recipe image ${index + 1}`}
-                    className="w-full h-24 object-cover rounded-lg"
-                  />
-                  <TouchableArea
-                    onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4" />
-                  </TouchableArea>
+          <div className="space-y-4">
+            {/* Show existing images if in edit mode */}
+            {existingImages.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('recipes.existingImages')}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {existingImages.map((image) => (
+                    <div key={image.id} className="relative group">
+                      <img
+                        src={image.url}
+                        alt={image.alt || 'Recipe image'}
+                        className="w-full h-24 object-cover rounded-lg"
+                      />
+                      <TouchableArea
+                        onClick={() => removeExistingImage(image.id)}
+                        className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </TouchableArea>
+                      {image.isPrimary && (
+                        <span className="absolute bottom-1 left-1 px-2 py-1 text-xs bg-blue-600 text-white rounded">
+                          {t('recipes.primaryImage')}
+                        </span>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
+            
+            {/* New image upload */}
+            <FileField
+              name="images"
+              label={existingImages.length > 0 ? t('recipes.addMoreImages') : t('recipes.uploadImages')}
+              helperText={t('recipes.imageRequirements')}
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              multiple={true}
+              maxSize={5 * 1024 * 1024} // 5MB
+              maxFiles={10 - existingImages.length}
+              showPreview={true}
+              dragAndDrop={true}
+              rules={{
+                validate: {
+                  maxFiles: (files: File[]) => {
+                    if (!files) return true;
+                    const totalImages = existingImages.length + files.length;
+                    return totalImages <= 10 || t('recipes.maxImagesError');
+                  },
+                  fileType: (files: File[]) => {
+                    if (!files) return true;
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                    const invalidFiles = files.filter(file => !allowedTypes.includes(file.type));
+                    return invalidFiles.length === 0 || t('recipes.invalidImageType', 'Please upload only JPEG, PNG, or WebP images');
+                  },
+                  fileSize: (files: File[]) => {
+                    if (!files) return true;
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    const oversizedFiles = files.filter(file => file.size > maxSize);
+                    return oversizedFiles.length === 0 || t('recipes.imageTooLarge', 'Images must be less than 5MB');
+                  }
+                }
+              }}
+            />
+          </div>
         </div>
-      </div>
+      </FormProvider>
       
       {/* Form Actions */}
       <div className="flex justify-end gap-4">

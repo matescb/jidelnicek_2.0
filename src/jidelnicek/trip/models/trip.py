@@ -90,7 +90,7 @@ class Trip(Base):
     # Configuration
     meal_slots: Mapped[Optional[List[str]]] = mapped_column(
         JSON,
-        server_default=text('\'["Breakfast", "Lunch", "Dinner"]\'::jsonb'),
+        server_default=text('\'["Breakfast", "Lunch", "Dinner"]\''),
         comment="Customizable meal slot names for the trip"
     )
     

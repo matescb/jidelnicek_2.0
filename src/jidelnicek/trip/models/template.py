@@ -11,13 +11,15 @@ from uuid import UUID
 
 from sqlalchemy import (
     Boolean, DateTime, String, Integer, ForeignKey, 
-    CheckConstraint, Index, Text, text
+    CheckConstraint, Index, Text, text, JSON
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
+from sqlalchemy.sql.type_api import TypeEngine
 
 from jidelnicek.core.database import Base
 from jidelnicek.core.utils import get_utc_now
+from jidelnicek.core.database_types import get_json_column_type
 
 # Import for forward reference
 if TYPE_CHECKING:
@@ -74,23 +76,23 @@ class TripTemplate(Base):
     )
     
     meal_slots: Mapped[List[str]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         nullable=False,
-        server_default=text('\'["Breakfast", "Lunch", "Dinner"]\'::jsonb'),
+        server_default=text('\'["Breakfast", "Lunch", "Dinner"]\''),
         comment="Array of meal slot names for the trip"
     )
     
     participants: Mapped[List[Dict[str, Any]]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         nullable=False,
-        server_default=text('\'[]\'::jsonb'),
+        server_default=text('\'[]\''),
         comment="Array of participant templates with name and coefficient"
     )
     
     meal_assignments: Mapped[Dict[str, Any]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         nullable=False,
-        server_default=text('\'{}\'::jsonb'),
+        server_default=text('\'{}\''),
         comment="Object mapping days and meal slots to recipe/meal configurations"
     )
     
@@ -111,9 +113,9 @@ class TripTemplate(Base):
     )
     
     tags: Mapped[List[str]] = mapped_column(
-        JSONB,
+        get_json_column_type(),
         nullable=False,
-        server_default=text('\'[]\'::jsonb'),
+        server_default=text('\'[]\''),
         comment="Array of tags for template organization"
     )
     
@@ -141,10 +143,6 @@ class TripTemplate(Base):
     __table_args__ = (
         CheckConstraint('duration_days > 0', name='template_duration_check'),
         CheckConstraint('LENGTH(name) > 0', name='template_name_not_empty'),
-        CheckConstraint(
-            'jsonb_array_length(meal_slots) > 0', 
-            name='template_meal_slots_not_empty'
-        ),
         Index('idx_templates_user', 'user_id'),
         Index('idx_templates_public', 'is_public', 'category', postgresql_where=text('is_public')),
         Index('idx_templates_category', 'category', postgresql_where=text('category IS NOT NULL')),
