@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from jidelnicek.recipe.models.categorization import Category, Tag
-from jidelnicek.core.dependencies import DatabaseSession
+from jidelnicek.core.dependencies import DatabaseSession, init_db, close_db
 from jidelnicek.core.utils import slugify
 
 logger = logging.getLogger(__name__)
@@ -357,25 +357,32 @@ async def check_and_seed() -> bool:
     Returns:
         True if seeding was performed, False if data already exists
     """
-    async with DatabaseSession() as session:
-        # Check if any categories exist
-        stmt = select(Category).limit(1)
-        result = await session.execute(stmt)
-        has_categories = result.scalar_one_or_none() is not None
-        
-        # Check if any tags exist
-        stmt = select(Tag).limit(1)
-        result = await session.execute(stmt)
-        has_tags = result.scalar_one_or_none() is not None
-        
-        if has_categories and has_tags:
-            logger.info("Seed data already exists, skipping seeding")
-            return False
-        
-        # Perform seeding
-        logger.info("No seed data found, performing initial seeding...")
-        await seed_all(session)
-        return True
+    # Initialize database first
+    await init_db()
+    
+    try:
+        async with DatabaseSession() as session:
+            # Check if any categories exist
+            stmt = select(Category).limit(1)
+            result = await session.execute(stmt)
+            has_categories = result.scalar_one_or_none() is not None
+            
+            # Check if any tags exist
+            stmt = select(Tag).limit(1)
+            result = await session.execute(stmt)
+            has_tags = result.scalar_one_or_none() is not None
+            
+            if has_categories and has_tags:
+                logger.info("Seed data already exists, skipping seeding")
+                return False
+            
+            # Perform seeding
+            logger.info("No seed data found, performing initial seeding...")
+            await seed_all(session)
+            return True
+    finally:
+        # Clean up database connections
+        await close_db()
 
 
 if __name__ == "__main__":
