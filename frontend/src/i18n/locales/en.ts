@@ -27,6 +27,9 @@ export default {
     passwordResetSuccess: 'Password has been reset successfully',
     emailVerified: 'Email verified successfully',
     emailVerificationSent: 'Verification email sent',
+    loginRequired: 'Login Required',
+    loginToFavorite: 'Please login to add recipes to favorites',
+    loginToRate: 'Please login to rate recipes',
     
     // Validation
     emailRequired: 'Email is required',
@@ -98,6 +101,7 @@ export default {
     title: 'Recipes',
     createNew: 'Create New Recipe',
     searchPlaceholder: 'Search recipes...',
+    subtitle: 'Discover and create delicious recipes',
     filters: {
       all: 'All Recipes',
       mine: 'My Recipes',
@@ -119,6 +123,14 @@ export default {
     categories: 'Categories',
     tags: 'Tags',
     isPublic: 'Make recipe public',
+    basicInfo: 'Basic Information',
+    images: 'Images',
+    uploadImages: 'Click to upload images',
+    imageRequirements: 'Max 10 images, 5MB each (JPEG, PNG, WebP)',
+    maxImages: 'Maximum 10 images allowed',
+    ingredientName: 'Ingredient name',
+    quantity: 'Quantity',
+    recipes: 'recipes',
     
     // Difficulty levels
     difficultyLevels: {
@@ -145,6 +157,9 @@ export default {
     deleted: 'Recipe deleted',
     duplicated: 'Recipe duplicated',
     noRecipes: 'No recipes found',
+    noRecipesFound: 'No recipes match your filters',
+    linkCopied: 'Recipe link copied to clipboard',
+    ratingSubmitted: 'Your rating has been submitted',
     
     // Actions
     addIngredient: 'Add Ingredient',
@@ -152,6 +167,14 @@ export default {
     duplicate: 'Duplicate',
     share: 'Share',
     print: 'Print',
+    favorite: 'Add to favorites',
+    unfavorite: 'Remove from favorites',
+    myRecipe: 'My Recipe',
+    addToTrip: 'Add to Trip',
+    addToShoppingList: 'Add to Shopping List',
+    scaledFrom: 'Scaled from {{original}} servings',
+    createdBy: 'Created by',
+    ratings: 'ratings',
   },
   
   trips: {
@@ -319,6 +342,14 @@ export default {
     selectAll: 'Select All',
     none: 'None',
     all: 'All',
+    min: 'Min',
+    max: 'Max',
+    minutes: 'min',
+    saving: 'Saving...',
+    loadMore: 'Load More',
+    clearFilters: 'Clear Filters',
+    anonymous: 'Anonymous',
+    step: 'Step',
     
     // Time
     today: 'Today',
