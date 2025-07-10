@@ -158,6 +158,8 @@ export default {
     duplicated: 'Recipe duplicated',
     noRecipes: 'No recipes found',
     noRecipesFound: 'No recipes match your filters',
+    allCategories: 'All Categories',
+    allDifficulties: 'All Difficulties',
     linkCopied: 'Recipe link copied to clipboard',
     ratingSubmitted: 'Your rating has been submitted',
     
@@ -206,6 +208,27 @@ export default {
     mealSlot: 'Meal Slot',
     selectRecipe: 'Select Recipe',
     portions: 'Portions',
+    availableRecipes: 'Available Recipes',
+    dragRecipeHere: 'Drag a recipe here',
+    dayNumber: 'Day {{number}}',
+    copyDay: 'Copy day',
+    clearDay: 'Clear day',
+    dragInstructions: 'Drag recipes from the left to assign them to meal slots',
+    copyFirstWeek: 'Copy first week',
+    copiedDayInfo: 'Day {{day}} copied - click on another day to paste',
+    tripSummary: 'Trip Summary',
+    totalMeals: 'Total Meals',
+    uniqueRecipes: 'Unique Recipes',
+    avgDailyCalories: 'Avg Daily Calories',
+    participants: 'Participants',
+    
+    // Meal types
+    mealTypes: {
+      breakfast: 'Breakfast',
+      lunch: 'Lunch',
+      dinner: 'Dinner',
+      snack: 'Snack',
+    },
     
     // Messages
     created: 'Trip created successfully',
@@ -213,6 +236,20 @@ export default {
     deleted: 'Trip deleted',
     noTrips: 'No trips found',
     participantLimit: 'Maximum {{max}} participants allowed',
+    mealAssigned: 'Meal assigned successfully',
+    mealAssignError: 'Failed to assign meal',
+    mealRemoved: 'Meal removed successfully',
+    mealRemoveError: 'Failed to remove meal',
+    mealMovingNotSupported: 'Moving meals between slots is not yet supported',
+    dayCopied: 'Day copied to clipboard',
+    dayPasted: 'Meals pasted successfully',
+    dayPasteError: 'Failed to paste meals',
+    confirmClearDay: 'Are you sure you want to clear all meals from this day?',
+    dayCleared: 'Day cleared successfully',
+    dayClearError: 'Failed to clear day',
+    confirmCopyWeek: 'Copy the first week\'s meals to all remaining weeks?',
+    weekCopied: 'First week copied to all weeks',
+    weekCopyError: 'Failed to copy week',
   },
   
   shoppingList: {

@@ -192,29 +192,28 @@ class AuthUser(Base):
         passive_deletes=True
     )
     
-    # Trip relationships - temporarily disabled due to circular import issues
-    # trips: Mapped[List["Trip"]] = relationship(
-    #     "Trip",
-    #     back_populates="user",
-    #     cascade="all, delete-orphan",
-    #     lazy="select",
-    #     passive_deletes=True
-    # )
+    # Trip relationships
+    trips: Mapped[List["Trip"]] = relationship(
+        "Trip",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="select",
+        passive_deletes=True
+    )
     
-    # trip_templates: Mapped[List["TripTemplate"]] = relationship(
-    #     "TripTemplate",
-    #     back_populates="user",
-    #     cascade="all, delete-orphan",
-    #     lazy="select",
-    #     passive_deletes=True
-    # )
+    trip_templates: Mapped[List["TripTemplate"]] = relationship(
+        "TripTemplate",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="select",
+        passive_deletes=True
+    )
     
     # Job relationships
     jobs: Mapped[List["Job"]] = relationship(
         "Job",
         back_populates="user",
         lazy="select",
-        order_by="Job.created_at.desc()",
         passive_deletes=True
     )
     
@@ -223,7 +222,6 @@ class AuthUser(Base):
         "StoredFile",
         back_populates="user",
         lazy="select",
-        order_by="StoredFile.created_at.desc()",
         passive_deletes=True
     )
     

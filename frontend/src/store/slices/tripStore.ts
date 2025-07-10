@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import axios from 'axios'
 import type { BaseStore, PaginatedResponse, WithId, Timestamps } from '../types'
-import type { Recipe } from './recipeStore'
+import type { Recipe } from '@/types/recipe'
 
 // Trip related types
 export interface Participant {
@@ -58,6 +58,8 @@ export interface Trip extends WithId, Timestamps {
   days: DayPlan[]
   shareLink?: string
   userId: string
+  location?: string
+  isArchived?: boolean
 }
 
 export interface TripFilters {

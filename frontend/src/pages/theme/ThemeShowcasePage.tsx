@@ -13,7 +13,7 @@ import {
   ExclamationTriangleIcon, 
   InformationCircleIcon,
   XCircleIcon,
-  ClipboardCopyIcon,
+  ClipboardIcon,
   SunIcon,
   MoonIcon,
   BeakerIcon,
@@ -65,7 +65,7 @@ const ColorSwatch: React.FC<{
           Copied!
         </div>
       </div>
-      <ClipboardCopyIcon className="absolute top-2 right-2 w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+      <ClipboardIcon className="absolute top-2 right-2 w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
     </div>
   );
 };
@@ -341,7 +341,7 @@ export const ThemeShowcasePage: React.FC = () => {
 
         {/* Form Components */}
         <section>
-          <SectionHeader title="Form Components" icon={<ClipboardCopyIcon className="w-6 h-6 text-primary-500" />} />
+          <SectionHeader title="Form Components" icon={<ClipboardIcon className="w-6 h-6 text-primary-500" />} />
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <Grid cols={{ base: 1, md: 2 }} gap="md">
               {/* Text Inputs */}

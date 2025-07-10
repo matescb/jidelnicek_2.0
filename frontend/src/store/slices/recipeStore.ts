@@ -5,6 +5,9 @@ import { apiClient } from '@/api/client'
 import type { BaseStore, PaginatedResponse } from '../types'
 import type { Recipe, RecipeFilters as RecipeFiltersBase } from '@/types/recipe'
 
+// Re-export Recipe type for convenience
+export type { Recipe }
+
 // Extend the base RecipeFilters to match store expectations
 export interface RecipeFilters extends RecipeFiltersBase {
   // Additional store-specific filters

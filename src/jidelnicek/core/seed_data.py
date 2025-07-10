@@ -17,8 +17,8 @@ from sqlalchemy.exc import IntegrityError
 from jidelnicek.core.dependencies import DatabaseSession, init_db, close_db
 from jidelnicek.core.utils import slugify
 
-# Import models more specifically to avoid circular imports
-from jidelnicek.recipe.models.categorization import Category, Tag
+# Import models from base to avoid circular imports
+from jidelnicek.db.base import Category, Tag
 
 logger = logging.getLogger(__name__)
 

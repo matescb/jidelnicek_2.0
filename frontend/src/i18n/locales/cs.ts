@@ -146,6 +146,9 @@ export default {
     deleted: 'Recept byl smazán',
     duplicated: 'Recept byl duplikován',
     noRecipes: 'Nebyly nalezeny žádné recepty',
+    noRecipesFound: 'Žádné recepty neodpovídají vašim filtrům',
+    allCategories: 'Všechny kategorie',
+    allDifficulties: 'Všechny obtížnosti',
     
     // Actions
     addIngredient: 'Přidat ingredienci',
@@ -153,6 +156,9 @@ export default {
     duplicate: 'Duplikovat',
     share: 'Sdílet',
     print: 'Tisk',
+    favorite: 'Přidat do oblíbených',
+    unfavorite: 'Odebrat z oblíbených',
+    myRecipe: 'Můj recept',
   },
   
   trips: {
@@ -184,6 +190,27 @@ export default {
     mealSlot: 'Čas jídla',
     selectRecipe: 'Vybrat recept',
     portions: 'Porce',
+    availableRecipes: 'Dostupné recepty',
+    dragRecipeHere: 'Přetáhněte recept sem',
+    dayNumber: 'Den {{number}}',
+    copyDay: 'Kopírovat den',
+    clearDay: 'Vymazat den',
+    dragInstructions: 'Přetáhněte recepty zleva a přiřaďte je k časům jídel',
+    copyFirstWeek: 'Kopírovat první týden',
+    copiedDayInfo: 'Den {{day}} zkopírován - klikněte na jiný den pro vložení',
+    tripSummary: 'Shrnutí výletu',
+    totalMeals: 'Celkem jídel',
+    uniqueRecipes: 'Unikátních receptů',
+    avgDailyCalories: 'Průměr kalorií/den',
+    participants: 'Účastníci',
+    
+    // Meal types
+    mealTypes: {
+      breakfast: 'Snídaně',
+      lunch: 'Oběd',
+      dinner: 'Večeře',
+      snack: 'Svačina',
+    },
     
     // Messages
     created: 'Výlet byl úspěšně vytvořen',
@@ -191,6 +218,20 @@ export default {
     deleted: 'Výlet byl smazán',
     noTrips: 'Nebyly nalezeny žádné výlety',
     participantLimit: 'Maximálně {{max}} účastníků povoleno',
+    mealAssigned: 'Jídlo bylo úspěšně přiřazeno',
+    mealAssignError: 'Nepodařilo se přiřadit jídlo',
+    mealRemoved: 'Jídlo bylo úspěšně odebráno',
+    mealRemoveError: 'Nepodařilo se odebrat jídlo',
+    mealMovingNotSupported: 'Přesouvání jídel mezi sloty zatím není podporováno',
+    dayCopied: 'Den zkopírován do schránky',
+    dayPasted: 'Jídla byla úspěšně vložena',
+    dayPasteError: 'Nepodařilo se vložit jídla',
+    confirmClearDay: 'Opravdu chcete vymazat všechna jídla z tohoto dne?',
+    dayCleared: 'Den byl úspěšně vymazán',
+    dayClearError: 'Nepodařilo se vymazat den',
+    confirmCopyWeek: 'Kopírovat jídla z prvního týdne do všech zbývajících týdnů?',
+    weekCopied: 'První týden byl zkopírován do všech týdnů',
+    weekCopyError: 'Nepodařilo se zkopírovat týden',
   },
   
   shoppingList: {

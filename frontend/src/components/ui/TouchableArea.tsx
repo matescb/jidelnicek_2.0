@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react'
 import clsx from 'clsx'
-import { touchTargets } from '@styles/design-tokens'
+import { touchTargets } from '@/styles/design-tokens'
 
 interface TouchableAreaProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: keyof typeof touchTargets

@@ -30,7 +30,8 @@ from jidelnicek.core.database import Base
 from jidelnicek.core.dependencies import get_db, get_redis_client
 # Import all models to ensure tables are created
 from jidelnicek.db.base import *  # noqa: F401, F403
-from jidelnicek.auth.models import AuthUser
+# Get AuthUser from the imported models above
+AuthUser = globals()['AuthUser']  # AuthUser imported via db.base
 from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.auth.services.token_service import TokenService
 
