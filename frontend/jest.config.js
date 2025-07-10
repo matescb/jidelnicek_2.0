@@ -3,6 +3,14 @@ module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  globals: {
+    'import.meta': {
+      env: {
+        DEV: false,
+        VITE_API_URL: '/api/v1',
+      },
+    },
+  },
   moduleNameMapper: {
     // Handle CSS imports
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
@@ -16,7 +24,8 @@ module.exports = {
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
     '^@store/(.*)$': '<rootDir>/src/store/$1',
-    '^@stores/(.*)$': '<rootDir>/src/stores/$1',
+    '^@store$': '<rootDir>/src/store/index.ts',
+    '^@stores/(.*)$': '<rootDir>/src/store/slices/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@api/(.*)$': '<rootDir>/src/api/$1',
     '^@context/(.*)$': '<rootDir>/src/context/$1',
@@ -32,6 +41,9 @@ module.exports = {
       },
     ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$))',
+  ],
   testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverageFrom: [

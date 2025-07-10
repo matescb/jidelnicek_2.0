@@ -3,14 +3,28 @@ import { render, screen, fireEvent, waitFor, within } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { RecipeActions } from './RecipeActions'
 import { createMockRecipe, createMockUser, mockRecipeStore, mockAuthStore } from '@/test-utils'
-import * as recipeStoreModule from '@/stores/recipeStore'
-import * as authStoreModule from '@/stores/authStore'
-import { toast } from 'sonner'
+import * as recipeStoreModule from '@/store/slices/recipeStore'
+import * as authStoreModule from '@/store/slices/authStore'
 
 // Mock the stores and libraries
-jest.mock('@/stores/recipeStore')
-jest.mock('@/stores/authStore')
-jest.mock('sonner')
+jest.mock('@/store/slices/recipeStore')
+jest.mock('@/store/slices/authStore')
+
+const mockToast = {
+  success: jest.fn(),
+  error: jest.fn(),
+  info: jest.fn(),
+  warning: jest.fn(),
+}
+
+jest.mock('@/hooks/useToast', () => ({
+  useToast: () => ({
+    toast: mockToast,
+  }),
+}))
+
+// Make toast available globally for test assertions
+const toast = mockToast
 
 // Mock clipboard API
 Object.assign(navigator, {

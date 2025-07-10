@@ -4,6 +4,8 @@ import { immer } from 'zustand/middleware/immer'
 import axios from 'axios'
 import type { BaseStore, PaginatedResponse, WithId, Timestamps } from '../types'
 import type { Recipe } from '@/types/recipe'
+import { participantsApi } from '@/services/participants'
+import type { Participant as ApiParticipant, CreateParticipantRequest, UpdateParticipantRequest } from '@/services/participants'
 
 // Trip related types
 export interface Participant {
@@ -94,6 +96,10 @@ export interface TripStore extends BaseStore {
   // Shopping list state
   shoppingList: ShoppingListItem[]
   shoppingListLoading: boolean
+  
+  // Participant operation states
+  participantLoading: boolean
+  participantError: string | null
 
   // Actions
   fetchTrips: (page?: number) => Promise<void>
@@ -102,11 +108,13 @@ export interface TripStore extends BaseStore {
   updateTrip: (id: string | number, updates: Partial<Trip>) => Promise<void>
   deleteTrip: (id: string | number) => Promise<void>
   duplicateTrip: (id: string | number) => Promise<Trip>
+  clearParticipantError: () => void
   
   // Participant actions
   addParticipant: (tripId: string | number, participant: Partial<Participant>) => Promise<void>
   updateParticipant: (tripId: string | number, participantId: string, updates: Partial<Participant>) => Promise<void>
   removeParticipant: (tripId: string | number, participantId: string) => Promise<void>
+  fetchParticipantsForDay: (tripId: string | number, dayNumber: number) => Promise<any>
   
   // Meal actions
   assignMeal: (tripId: string | number, dayId: string, mealSlot: string, recipeId: string | number) => Promise<void>
@@ -147,10 +155,16 @@ export const useTripStore = create<TripStore>()(
       shoppingListLoading: false,
       loading: false,
       error: null,
+      participantLoading: false,
+      participantError: null,
 
       // Actions
       clearError: () => set((state) => {
         state.error = null
+      }),
+      
+      clearParticipantError: () => set((state) => {
+        state.participantError = null
       }),
 
       fetchTrips: async (page = 1) => {
@@ -171,8 +185,14 @@ export const useTripStore = create<TripStore>()(
 
           const response = await axios.get<PaginatedResponse<Trip>>('/api/v1/trips', { params })
           
+          // Ensure each trip has participants array initialized
+          const trips = response.data.items.map(trip => ({
+            ...trip,
+            participants: trip.participants || []
+          }))
+          
           set((state) => {
-            state.trips = response.data.items
+            state.trips = trips
             state.totalTrips = response.data.total
             state.currentPage = response.data.page
             state.loading = false
@@ -193,9 +213,28 @@ export const useTripStore = create<TripStore>()(
 
         try {
           const response = await axios.get<Trip>(`/api/v1/trips/${id}`)
+          const trip = response.data
+          
+          // If trip doesn't have participants loaded, fetch them
+          if (!trip.participants || trip.participants.length === 0) {
+            const participantsResult = await participantsApi.listParticipants(Number(id))
+            if (participantsResult.data) {
+              // Convert API participants to store format
+              trip.participants = participantsResult.data.map(p => ({
+                id: String(p.id),
+                name: p.name,
+                email: p.email,
+                mealCoefficients: {
+                  breakfast: 1,
+                  lunch: 1,
+                  dinner: 1
+                }
+              }))
+            }
+          }
           
           set((state) => {
-            state.currentTrip = response.data
+            state.currentTrip = trip
             state.loading = false
           })
         } catch (error: any) {
@@ -319,39 +358,203 @@ export const useTripStore = create<TripStore>()(
 
       // Participant actions
       addParticipant: async (tripId, participant) => {
+        set((state) => {
+          state.participantLoading = true
+          state.participantError = null
+        })
+        
         try {
-          await axios.post(`/api/v1/trips/${tripId}/participants`, participant)
-          // Refetch trip to get updated data
-          await get().fetchTrip(tripId)
+          // Convert store participant format to API format
+          const createRequest: CreateParticipantRequest = {
+            name: participant.name || '',
+            email: participant.email
+          }
+          
+          const result = await participantsApi.addParticipant(Number(tripId), createRequest)
+          
+          if (result.error) {
+            set((state) => {
+              state.participantError = result.error
+              state.participantLoading = false
+            })
+            throw new Error(result.error)
+          }
+          
+          // Optimistic update if we have a current trip
+          if (get().currentTrip?.id === tripId && result.data) {
+            set((state) => {
+              if (state.currentTrip) {
+                const newParticipant: Participant = {
+                  id: String(result.data!.id),
+                  name: result.data!.name,
+                  email: result.data!.email,
+                  arrivalDate: participant.arrivalDate,
+                  departureDate: participant.departureDate,
+                  mealCoefficients: participant.mealCoefficients || {
+                    breakfast: 1,
+                    lunch: 1,
+                    dinner: 1
+                  }
+                }
+                state.currentTrip.participants.push(newParticipant)
+                state.currentTrip.participantCount = state.currentTrip.participants.length
+              }
+              state.participantLoading = false
+            })
+          } else {
+            // Refetch trip to get updated data
+            set((state) => {
+              state.participantLoading = false
+            })
+            await get().fetchTrip(tripId)
+          }
         } catch (error: any) {
           set((state) => {
-            state.error = error.response?.data?.message || 'Failed to add participant'
+            state.participantError = error.message || 'Failed to add participant'
+            state.participantLoading = false
           })
           throw error
         }
       },
 
       updateParticipant: async (tripId, participantId, updates) => {
+        set((state) => {
+          state.participantLoading = true
+          state.participantError = null
+        })
+        
         try {
-          await axios.put(`/api/v1/trips/${tripId}/participants/${participantId}`, updates)
-          // Refetch trip to get updated data
-          await get().fetchTrip(tripId)
+          // Convert store participant format to API format
+          const updateRequest: UpdateParticipantRequest = {
+            name: updates.name,
+            email: updates.email
+          }
+          
+          const result = await participantsApi.updateParticipant(
+            Number(tripId), 
+            Number(participantId), 
+            updateRequest
+          )
+          
+          if (result.error) {
+            set((state) => {
+              state.participantError = result.error
+              state.participantLoading = false
+            })
+            throw new Error(result.error)
+          }
+          
+          // Optimistic update if we have a current trip
+          if (get().currentTrip?.id === tripId) {
+            set((state) => {
+              if (state.currentTrip) {
+                const index = state.currentTrip.participants.findIndex(
+                  p => p.id === participantId
+                )
+                if (index !== -1) {
+                  state.currentTrip.participants[index] = {
+                    ...state.currentTrip.participants[index],
+                    ...updates
+                  }
+                }
+              }
+              state.participantLoading = false
+            })
+          } else {
+            // Refetch trip to get updated data
+            set((state) => {
+              state.participantLoading = false
+            })
+            await get().fetchTrip(tripId)
+          }
         } catch (error: any) {
           set((state) => {
-            state.error = error.response?.data?.message || 'Failed to update participant'
+            state.participantError = error.message || 'Failed to update participant'
+            state.participantLoading = false
           })
           throw error
         }
       },
 
       removeParticipant: async (tripId, participantId) => {
+        set((state) => {
+          state.participantLoading = true
+          state.participantError = null
+        })
+        
         try {
-          await axios.delete(`/api/v1/trips/${tripId}/participants/${participantId}`)
-          // Refetch trip to get updated data
-          await get().fetchTrip(tripId)
+          const result = await participantsApi.removeParticipant(
+            Number(tripId),
+            Number(participantId)
+          )
+          
+          if (result.error) {
+            set((state) => {
+              state.participantError = result.error
+              state.participantLoading = false
+            })
+            throw new Error(result.error)
+          }
+          
+          // Optimistic update if we have a current trip
+          if (get().currentTrip?.id === tripId) {
+            set((state) => {
+              if (state.currentTrip) {
+                state.currentTrip.participants = state.currentTrip.participants.filter(
+                  p => p.id !== participantId
+                )
+                state.currentTrip.participantCount = state.currentTrip.participants.length
+              }
+              state.participantLoading = false
+            })
+          } else {
+            // Refetch trip to get updated data
+            set((state) => {
+              state.participantLoading = false
+            })
+            await get().fetchTrip(tripId)
+          }
         } catch (error: any) {
           set((state) => {
-            state.error = error.response?.data?.message || 'Failed to remove participant'
+            state.participantError = error.message || 'Failed to remove participant'
+            state.participantLoading = false
+          })
+          throw error
+        }
+      },
+      
+      fetchParticipantsForDay: async (tripId, dayNumber) => {
+        set((state) => {
+          state.participantLoading = true
+          state.participantError = null
+        })
+        
+        try {
+          const result = await participantsApi.getParticipantsForDay(
+            Number(tripId),
+            dayNumber
+          )
+          
+          if (result.error) {
+            set((state) => {
+              state.participantError = result.error
+              state.participantLoading = false
+            })
+            throw new Error(result.error)
+          }
+          
+          // The participants for a specific day would be handled by the component
+          // that calls this method, as we don't store day-specific participant data
+          // in the trip store state
+          set((state) => {
+            state.participantLoading = false
+          })
+          
+          return result.data
+        } catch (error: any) {
+          set((state) => {
+            state.participantError = error.message || 'Failed to fetch participants for day'
+            state.participantLoading = false
           })
           throw error
         }

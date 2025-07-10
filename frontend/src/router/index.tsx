@@ -26,6 +26,7 @@ const TripDetailPage = lazy(() => import('@pages/trips/TripDetailPage'))
 const TripCreatePage = lazy(() => import('@pages/trips/TripCreatePage'))
 const TripEditPage = lazy(() => import('@pages/trips/TripEditPage'))
 const TripPlannerPage = lazy(() => import('@pages/trips/TripPlannerPage'))
+const TripParticipantsPage = lazy(() => import('@pages/trips/TripParticipantsPage'))
 
 const ProfilePage = lazy(() => import('@pages/profile/ProfilePage'))
 const SettingsPage = lazy(() => import('@pages/profile/SettingsPage'))
@@ -131,6 +132,10 @@ export const router = createBrowserRouter([
                 path: ':id/planner',
                 element: <TripPlannerPage />,
               },
+              {
+                path: ':id/participants',
+                element: <TripParticipantsPage />,
+              },
             ],
           },
           {
@@ -180,6 +185,7 @@ export const routeConfig = {
   '/dashboard/trips/:id': { label: 'Trip Details' },
   '/dashboard/trips/:id/edit': { label: 'Edit Trip' },
   '/dashboard/trips/:id/planner': { label: 'Trip Planner' },
+  '/dashboard/trips/:id/participants': { label: 'Participants' },
   '/dashboard/profile': { label: 'Profile', icon: 'user' },
   '/dashboard/settings': { label: 'Settings', icon: 'settings' },
   ...(import.meta.env.DEV ? {

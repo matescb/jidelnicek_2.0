@@ -2,10 +2,15 @@ import React, { ReactElement } from 'react'
 import { render as rtlRender, RenderOptions } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
-import i18n from '@/i18n/config'
+// Mock i18n for tests
+const mockI18n = {
+  t: (key: string) => key,
+  changeLanguage: () => Promise.resolve(),
+  language: 'en',
+}
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from '@/context/ThemeContext'
-import { ToastProvider } from '@/context/ToastContext'
+// Toast provider not needed for tests
 
 // Create a custom render function that includes all providers
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
@@ -100,11 +105,9 @@ export function customRender(
     return (
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <I18nextProvider i18n={i18n}>
+          <I18nextProvider i18n={mockI18n as any}>
             <ThemeProvider>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
+              {children}
             </ThemeProvider>
           </I18nextProvider>
         </BrowserRouter>

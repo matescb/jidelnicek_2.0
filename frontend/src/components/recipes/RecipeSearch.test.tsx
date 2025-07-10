@@ -3,11 +3,11 @@ import { render, screen, fireEvent, waitFor, within } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { RecipeSearch } from './RecipeSearch'
 import { mockRecipeStore } from '@/test-utils'
-import * as recipeStoreModule from '@/stores/recipeStore'
+import * as recipeStoreModule from '@/store/slices/recipeStore'
 import * as debounceModule from '@/hooks/useDebounce'
 
 // Mock the store and hooks
-jest.mock('@/stores/recipeStore')
+jest.mock('@/store/slices/recipeStore')
 jest.mock('@/hooks/useDebounce')
 
 // Mock localStorage

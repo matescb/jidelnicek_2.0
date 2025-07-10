@@ -221,9 +221,14 @@ async def generate_qr_code(
     import base64
     
     # Get the invitation link
-    link = db.query(TripInvitationLink).filter(
-        TripInvitationLink.id == link_id
-    ).first()
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(TripInvitationLink).options(selectinload(TripInvitationLink.trip)).where(
+            TripInvitationLink.id == link_id
+        )
+    )
+    link = result.scalar_one_or_none()
     
     if not link:
         raise HTTPException(
@@ -232,7 +237,7 @@ async def generate_qr_code(
         )
     
     # Verify permission
-    if link.trip.owner_id != current_user.id:
+    if link.trip.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only trip owner can generate QR codes"

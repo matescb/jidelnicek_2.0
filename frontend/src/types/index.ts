@@ -112,9 +112,13 @@ export interface TripParticipant {
   tripId: string
   name: string
   email?: string
-  arrivalDate: string
-  departureDate: string
-  mealCoefficients: {
+  role: 'planner' | 'participant'
+  status: 'pending' | 'accepted' | 'declined'
+  arrivalDate?: string
+  departureDate?: string
+  mealCoefficient: number
+  snackCoefficient: number
+  mealCoefficients?: {
     breakfast: number
     lunch: number
     dinner: number
@@ -179,3 +183,6 @@ export interface PaginatedResponse<T> {
   limit: number
   totalPages: number
 }
+
+// Re-export invitation types
+export * from './invitation'

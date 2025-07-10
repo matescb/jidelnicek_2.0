@@ -358,8 +358,26 @@ const ScheduleTab: React.FC<{ trip: Trip }> = ({ trip }) => {
 
 // Participants Tab Component
 const ParticipantsTab: React.FC<{ trip: Trip }> = ({ trip }) => {
+  const navigate = useNavigate()
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="space-y-6">
+      {/* Header with action button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Trip Participants</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {trip.participants.length} participants registered
+          </p>
+        </div>
+        <Button onClick={() => navigate(`/dashboard/trips/${trip.id}/participants`)}>
+          <Users className="w-4 h-4 mr-2" />
+          Manage Participants
+        </Button>
+      </div>
+      
+      {/* Participant cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {trip.participants.map((participant) => (
         <Card key={participant.id}>
           <CardHeader>
@@ -410,6 +428,7 @@ const ParticipantsTab: React.FC<{ trip: Trip }> = ({ trip }) => {
           </CardContent>
         </Card>
       ))}
+      </div>
     </div>
   )
 }
@@ -672,7 +691,7 @@ const TripDetailPage: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/trips')}
+              onClick={() => navigate('/dashboard/trips')}
               className="shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -707,7 +726,14 @@ const TripDetailPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => navigate(`/trips/${id}/edit`)}
+              onClick={() => navigate(`/dashboard/trips/${id}/participants`)}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Participants
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/dashboard/trips/${id}/edit`)}
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit

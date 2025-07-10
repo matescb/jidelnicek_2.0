@@ -4,6 +4,18 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
 
+// Mock import.meta for Vite compatibility
+Object.defineProperty(globalThis, 'import', {
+  value: {
+    meta: {
+      env: {
+        DEV: false,
+        VITE_API_URL: '/api/v1',
+      },
+    },
+  },
+})
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

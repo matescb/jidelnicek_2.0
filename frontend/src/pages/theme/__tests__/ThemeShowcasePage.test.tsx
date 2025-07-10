@@ -1,11 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '../../../context/ThemeContext';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeShowcasePage } from '../ThemeShowcasePage';
 
 // Mock clipboard API
-const mockWriteText = vi.fn();
+const mockWriteText = jest.fn();
 Object.assign(navigator, {
   clipboard: {
     writeText: mockWriteText,
@@ -13,9 +13,9 @@ Object.assign(navigator, {
 });
 
 // Mock toast hook
-vi.mock('../../../hooks/useToast', () => ({
+jest.mock('../../../hooks/useToast', () => ({
   useToast: () => ({
-    showToast: vi.fn(),
+    showToast: jest.fn(),
   }),
 }));
 

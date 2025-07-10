@@ -2,7 +2,7 @@ import React from 'react'
 import clsx from 'clsx'
 
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline'
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success'
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -16,6 +16,7 @@ export const Badge: React.FC<BadgeProps> = ({
     secondary: 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 border-transparent',
     destructive: 'bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100 border-transparent',
     outline: 'text-gray-950 dark:text-gray-50 border-gray-200 dark:border-gray-800',
+    success: 'bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100 border-transparent',
   }
 
   return (

@@ -1133,8 +1133,8 @@
             "dependencies": [
               16
             ],
-            "details": "Develop calendar views, drag-and-drop meal planning, trip timeline, and meal assignment interface with date pickers and scheduling tools.",
-            "status": "pending",
+            "details": "Develop calendar views, drag-and-drop meal planning, trip timeline, and meal assignment interface with date pickers and scheduling tools.\n<info added on 2025-07-10T14:01:13.132Z>\nThis task is a duplicate of task 9.5 which has already been completed. The trip planning interface with calendar integration and meal scheduling has been fully implemented, including: TripWizard (multi-step creation), TripCalendarView (calendar integration), MealPlanningBoard (drag-and-drop meal planning), participant management, dietary restrictions handling, and trip statistics. All components are located in frontend/src/components/trips/\n</info added on 2025-07-10T14:01:13.132Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1144,8 +1144,8 @@
             "dependencies": [
               15
             ],
-            "details": "Build participant lists, invitation forms, role management, and user profile components with permission controls and status indicators.",
-            "status": "pending",
+            "details": "Build participant lists, invitation forms, role management, and user profile components with permission controls and status indicators.\n<info added on 2025-07-10T14:59:08.089Z>\nCompleted comprehensive participant management UI implementation including:\n\n1. **ParticipantList Component** - Full-featured participant list with:\n   - Responsive table/card layouts for desktop and mobile\n   - Advanced filtering by role and status\n   - Multi-column sorting with visual indicators\n   - Bulk selection and operations (delete, export, role change)\n   - Pagination with customizable items per page\n   - Search functionality for name/email\n   - Export to CSV capability\n   - Empty state handling\n   - Keyboard navigation support\n\n2. **ParticipantManager Modal** - Add/Edit participant form with:\n   - Form validation using react-hook-form and zod\n   - Name and email input fields\n   - Role selection (planner/participant)\n   - Status selection (pending/accepted/declined)\n   - Visual meal and snack coefficient sliders (0-2 range)\n   - Real-time coefficient value display\n   - Loading states and error handling\n   - Responsive layout\n\n3. **TripParticipantsPage** - Comprehensive participant management page with:\n   - Summary statistics cards (total, accepted, pending, declined, meal/snack portions)\n   - Multi-tab interface (Overview, Invitations, Management, History)\n   - Participant invitation integration\n   - Bulk import/export operations\n   - Invitation history tracking\n   - Responsive design with proper navigation\n\n4. **Supporting Infrastructure**:\n   - useParticipants hook for participant operations\n   - InvitationModal component for sending invites\n   - Proper TypeScript types and interfaces\n   - Integration with tripStore for state management\n   - Toast notifications for user feedback\n   - Loading and error states throughout\n\nAll components follow the established design system with proper dark mode support, accessibility features, and responsive design patterns. The implementation provides a complete participant management solution with invitation, role assignment, and bulk operation capabilities.\n</info added on 2025-07-10T14:59:08.089Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1440,7 +1440,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-10T13:58:45.929Z",
+      "updated": "2025-07-10T14:59:18.850Z",
       "description": "Tasks for master context"
     }
   }
