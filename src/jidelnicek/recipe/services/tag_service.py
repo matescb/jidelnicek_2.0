@@ -14,8 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from jidelnicek.recipe.models import Tag, RecipeTag, Recipe, RecipeIngredient
-from jidelnicek.recipe.models.ingredient import Ingredient
+from jidelnicek.recipe.models import Tag, RecipeTag, Recipe
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
+from jidelnicek.common.models.ingredient import Ingredient
 from jidelnicek.recipe.exceptions import RecipeValidationError
 from jidelnicek.core.exceptions import NotFoundError, ConflictError, ValidationError
 

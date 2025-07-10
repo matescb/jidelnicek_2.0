@@ -1,147 +1,28 @@
 """
-Ingredient models for Jidelnicek 2.0.
+Recipe ingredient model for Jidelnicek 2.0.
 
-This module defines models for ingredients and recipe-ingredient relationships
-with support for nutritional data and unit conversions.
+This module defines the RecipeIngredient model that links recipes to ingredients
+with quantities and unit conversions.
 """
 
 from datetime import datetime
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 from decimal import Decimal
 
 from sqlalchemy import (
     Boolean, Column, DateTime, String, Integer, ForeignKey, 
-    CheckConstraint, UniqueConstraint, text, Index, Text, Numeric, JSON
+    CheckConstraint, UniqueConstraint, text, Numeric
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from jidelnicek.core.database import Base
 from jidelnicek.core.utils import get_utc_now
 
 if TYPE_CHECKING:
     from .recipe import Recipe
-
-
-class Ingredient(Base):
-    """
-    Ingredient model with nutritional data as per task 3.2.
-    
-    Features:
-    - Nutritional data storage (JSON) for 99.9% accuracy
-    - Unit conversions for flexible measurements
-    - Allergen tracking
-    - Dietary flags (vegan, gluten_free, etc)
-    - Optional brand and barcode
-    """
-    __tablename__ = "recipe_ingredients"
-    
-    # Primary key
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), 
-        primary_key=True, 
-        server_default=text("gen_random_uuid()")
-    )
-    
-    # Basic information
-    name: Mapped[str] = mapped_column(
-        String(200),
-        nullable=False,
-        index=True
-    )
-    
-    brand: Mapped[Optional[str]] = mapped_column(
-        String(100),
-        comment="Optional brand name"
-    )
-    
-    barcode: Mapped[Optional[str]] = mapped_column(
-        String(50),
-        index=True,
-        comment="Optional barcode (EAN/UPC)"
-    )
-    
-    # Nutritional data per 100g as JSON
-    nutritional_data: Mapped[dict] = mapped_column(
-        JSON,
-        nullable=False,
-        default={},
-        comment="Nutritional values per 100g: calories, proteins, carbs, fats, fiber, sodium, vitamins"
-    )
-    
-    # Unit conversions as JSON
-    unit_conversions: Mapped[dict] = mapped_column(
-        JSON,
-        nullable=False,
-        default={},
-        comment="Conversion factors: g/ml/cup/tbsp/tsp"
-    )
-    
-    # Allergens array (using JSON for SQLite compatibility)
-    allergens: Mapped[Optional[List[str]]] = mapped_column(
-        JSON,
-        default=list,
-        comment="List of allergens present (stored as JSON array)"
-    )
-    
-    # Dietary flags JSON
-    dietary_flags: Mapped[dict] = mapped_column(
-        JSON,
-        nullable=False,
-        default={},
-        comment="Dietary flags: vegan, gluten_free, kosher, halal, etc"
-    )
-    
-    # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
-        server_default=text('now()'),
-        nullable=False
-    )
-    
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
-        server_default=text('now()'),
-        onupdate=get_utc_now,
-        nullable=False
-    )
-    
-    # Relationships
-    recipe_ingredients: Mapped[List["RecipeIngredient"]] = relationship(
-        "RecipeIngredient",
-        back_populates="ingredient",
-        cascade="all, delete-orphan",
-        lazy="select",
-        passive_deletes=True
-    )
-    
-    @validates('nutritional_data')
-    def validate_nutritional_data(self, key, nutritional_data):
-        """Validate nutritional data for accuracy."""
-        required_fields = ['calories', 'proteins', 'carbs', 'fats']
-        for field in required_fields:
-            if field not in nutritional_data:
-                raise ValueError(f"Nutritional data must include {field}")
-            if not isinstance(nutritional_data[field], (int, float)):
-                raise ValueError(f"{field} must be a number")
-            if nutritional_data[field] < 0:
-                raise ValueError(f"{field} cannot be negative")
-        return nutritional_data
-    
-    @validates('unit_conversions')
-    def validate_unit_conversions(self, key, unit_conversions):
-        """Validate unit conversion data."""
-        for unit, factor in unit_conversions.items():
-            if not isinstance(factor, (int, float)):
-                raise ValueError(f"Conversion factor for {unit} must be a number")
-            if factor <= 0:
-                raise ValueError(f"Conversion factor for {unit} must be positive")
-        return unit_conversions
-    
-    def __repr__(self):
-        return f"<Ingredient(id={self.id}, name={self.name}, brand={self.brand})>"
+    from jidelnicek.common.models.ingredient import Ingredient
 
 
 class RecipeIngredient(Base):
@@ -175,7 +56,7 @@ class RecipeIngredient(Base):
     
     ingredient_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("recipe_ingredients.id"),
+        ForeignKey("common_ingredients.id"),
         nullable=False,
         index=True
     )

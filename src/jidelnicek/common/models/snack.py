@@ -3,7 +3,7 @@ Snack model for quick snack items.
 """
 
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List, Dict, Any
 from uuid import UUID
 from decimal import Decimal
 
@@ -11,14 +11,13 @@ from sqlalchemy import (
     Boolean, DateTime, String, ForeignKey, 
     CheckConstraint, UniqueConstraint, text, Index, Numeric
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB, ARRAY
 from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
 
 from jidelnicek.core.database import Base
 from jidelnicek.core.utils import get_utc_now
 
-if TYPE_CHECKING:
-    from .nutritional_value import NutritionalValue
+# TYPE_CHECKING imports removed as we no longer need NutritionalValue
 
 
 class Snack(Base):
@@ -61,10 +60,28 @@ class Snack(Base):
         Numeric(precision=10, scale=2)
     )
     
-    # Nutritional reference
-    nutritional_value_id: Mapped[Optional[UUID]] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("common_nutritional_values.id")
+    # Nutritional data stored as JSON
+    nutritional_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSONB,
+        comment="Nutritional values per 100g (e.g., calories, proteins)"
+    )
+    
+    # Unit conversions stored as JSON
+    unit_conversions: Mapped[Optional[Dict[str, float]]] = mapped_column(
+        JSONB,
+        comment="Conversion factors to grams (e.g., {\"cup\": 120, \"tbsp\": 15})"
+    )
+    
+    # Allergens stored as an array of strings
+    allergens: Mapped[Optional[List[str]]] = mapped_column(
+        ARRAY(String),
+        comment="List of allergens present in the snack"
+    )
+    
+    # Dietary flags stored as JSON
+    dietary_flags: Mapped[Optional[Dict[str, bool]]] = mapped_column(
+        JSONB,
+        comment="Dietary flags (e.g., {\"vegan\": true, \"gluten_free\": false})"
     )
     
     # Flags
@@ -94,11 +111,7 @@ class Snack(Base):
         nullable=False
     )
     
-    # Relationships
-    nutritional_value: Mapped[Optional["NutritionalValue"]] = relationship(
-        "NutritionalValue",
-        back_populates="snacks"
-    )
+    # Relationships - removed NutritionalValue relationship
     
     # Table constraints
     __table_args__ = (

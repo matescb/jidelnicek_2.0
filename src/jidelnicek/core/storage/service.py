@@ -18,10 +18,10 @@ from sqlalchemy import Column, String, Integer, DateTime, Text, JSON, ForeignKey
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
 
-from jidelnicek.db.base import Base
+from jidelnicek.core.database import Base
 from jidelnicek.core.config import get_settings
 from jidelnicek.core.exceptions import (
-    NotFoundError, PermissionDeniedError, ValidationError
+    NotFoundError, PermissionError, ValidationError
 )
 from .base import (
     StorageBackend, StorageMetadata, StorageError,
@@ -29,8 +29,17 @@ from .base import (
     StoragePermissionError, CompressionType
 )
 from .local import LocalStorageBackend
-from .s3 import S3StorageBackend
-from .azure import AzureStorageBackend
+
+# Optional imports for cloud storage backends
+try:
+    from .s3 import S3StorageBackend
+except ImportError:
+    S3StorageBackend = None
+
+try:
+    from .azure import AzureStorageBackend
+except ImportError:
+    AzureStorageBackend = None
 
 
 class StoredFile(Base):
@@ -72,7 +81,7 @@ class StoredFile(Base):
     expires_at = Column(DateTime(timezone=True))  # Auto-delete after this time
     
     # Metadata
-    metadata = Column(JSON, default=dict)
+    file_metadata = Column(JSON, default=dict)
     tags = Column(JSON, default=list)
     description = Column(Text)
     
@@ -124,6 +133,8 @@ class StorageService:
                 "max_file_size": self.settings.storage_max_file_size,
             })
         elif backend_type == "s3":
+            if S3StorageBackend is None:
+                raise StorageError("S3 storage backend is not available. Install boto3 to use S3 storage.")
             return S3StorageBackend({
                 "bucket_name": self.settings.storage_s3_bucket,
                 "region": self.settings.storage_s3_region,
@@ -135,6 +146,8 @@ class StorageService:
                 "max_file_size": self.settings.storage_max_file_size,
             })
         elif backend_type == "azure":
+            if AzureStorageBackend is None:
+                raise StorageError("Azure storage backend is not available. Install azure-storage-blob to use Azure storage.")
             return AzureStorageBackend({
                 "connection_string": self.settings.storage_azure_connection_string,
                 "container_name": self.settings.storage_azure_container,

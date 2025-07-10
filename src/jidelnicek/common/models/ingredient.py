@@ -19,7 +19,7 @@ from jidelnicek.core.database import Base
 from jidelnicek.core.utils import get_utc_now
 
 if TYPE_CHECKING:
-    from jidelnicek.recipe.models import RecipeIngredient
+    from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 
 
 class Ingredient(Base):

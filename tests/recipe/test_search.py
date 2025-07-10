@@ -19,7 +19,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.recipe.models.recipe import Recipe
-from jidelnicek.recipe.models.ingredient import Ingredient, RecipeIngredient
+from jidelnicek.common.models.ingredient import Ingredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.recipe.models.categorization import Category, Tag, RecipeCategory, RecipeTag
 from jidelnicek.recipe.schemas.search import (
     SearchSortBy, SearchSortOrder, AdvancedSearchRequest

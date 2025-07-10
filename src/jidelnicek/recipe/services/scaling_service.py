@@ -16,7 +16,7 @@ from sqlalchemy.orm import selectinload
 
 from jidelnicek.core.exceptions import NotFoundError, ValidationError
 from jidelnicek.recipe.models.recipe import Recipe
-from jidelnicek.recipe.models.ingredient import RecipeIngredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.recipe.utils.scaling import RecipeScaler, CalorieScaler, ParticipantScaler
 from jidelnicek.recipe.utils.rounding import SmartRounder
 from jidelnicek.recipe.utils.constraints import ScalingConstraints

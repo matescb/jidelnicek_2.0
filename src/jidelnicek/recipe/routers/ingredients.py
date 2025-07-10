@@ -30,7 +30,8 @@ from jidelnicek.core.validation.validation import (
 )
 from jidelnicek.auth.dependencies.auth import get_current_user, get_current_user_optional, get_current_admin_user
 from jidelnicek.auth.models import AuthUser
-from jidelnicek.recipe.models.ingredient import Ingredient, RecipeIngredient
+from jidelnicek.common.models.ingredient import Ingredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.common.models.nutritional_value import NutritionalValue
 
 logger = logging.getLogger(__name__)

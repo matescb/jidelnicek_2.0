@@ -11,7 +11,7 @@ from uuid import UUID
 import time
 
 from jidelnicek.common.models import NutritionalValue
-from jidelnicek.recipe.models import RecipeIngredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 
 
 class NutritionCalculator:

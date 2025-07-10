@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from jidelnicek.recipe.utils.nutrition_calculator import NutritionCalculator
 from jidelnicek.common.models import NutritionalValue, Ingredient
-from jidelnicek.recipe.models import RecipeIngredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 
 
 class TestNutritionCalculator:

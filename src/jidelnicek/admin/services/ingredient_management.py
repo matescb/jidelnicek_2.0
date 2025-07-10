@@ -697,7 +697,7 @@ class IngredientManagementService:
     async def _count_ingredient_usage(self, ingredient_id: UUID) -> int:
         """Count how many recipes use this ingredient."""
         # Import here to avoid circular dependency
-        from jidelnicek.recipe.models import RecipeIngredient
+        from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
         
         result = await self.db.execute(
             select(func.count(RecipeIngredient.id))
@@ -712,7 +712,8 @@ class IngredientManagementService:
     ) -> List[Dict[str, Any]]:
         """Get recent recipe usage for an ingredient."""
         # Import here to avoid circular dependency
-        from jidelnicek.recipe.models import RecipeIngredient, Recipe
+        from jidelnicek.recipe.models import Recipe
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
         
         stmt = (
             select(Recipe.id, Recipe.title, Recipe.created_at)
@@ -739,7 +740,7 @@ class IngredientManagementService:
     ) -> None:
         """Update all recipe ingredients from source to target."""
         # Import here to avoid circular dependency
-        from jidelnicek.recipe.models import RecipeIngredient
+        from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
         
         stmt = (
             update(RecipeIngredient)

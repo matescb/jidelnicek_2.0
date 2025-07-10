@@ -8,7 +8,8 @@ from decimal import Decimal
 from uuid import uuid4
 
 from jidelnicek.recipe.services.recipe_service import RecipeService
-from jidelnicek.recipe.models import Recipe, RecipeIngredient, RecipeVersion
+from jidelnicek.recipe.models import Recipe, RecipeVersion
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.recipe.schemas import (
     RecipeCreate, RecipeUpdate, RecipeIngredientCreate,
     RecipeDuplicateRequest, RecipeVersionCreate

@@ -8,7 +8,8 @@ from decimal import Decimal
 from jidelnicek.core.database import Base
 from jidelnicek.common.models import Ingredient, NutritionalValue, Snack
 from jidelnicek.auth.models import User
-from jidelnicek.recipe.models import Recipe, RecipeIngredient
+from jidelnicek.recipe.models import Recipe
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 
 
 @pytest.fixture

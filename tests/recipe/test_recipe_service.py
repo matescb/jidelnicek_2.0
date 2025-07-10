@@ -16,7 +16,7 @@ from sqlalchemy import select
 
 from jidelnicek.recipe.services.recipe_service import RecipeService
 from jidelnicek.recipe.models.recipe import Recipe
-from jidelnicek.recipe.models.ingredient import RecipeIngredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.recipe.models.recipe_version import RecipeVersion
 from jidelnicek.recipe.schemas import (
     RecipeCreate, RecipeUpdate, RecipeSearch, RecipeIngredientCreate,

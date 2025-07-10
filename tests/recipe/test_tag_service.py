@@ -18,8 +18,9 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jidelnicek.recipe.services.tag_service import TagService
-from jidelnicek.recipe.models import Tag, Recipe, RecipeTag, RecipeIngredient
-from jidelnicek.recipe.models.ingredient import Ingredient
+from jidelnicek.recipe.models import Tag, Recipe, RecipeTag
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
+from jidelnicek.common.models.ingredient import Ingredient
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.core.exceptions import NotFoundError, ConflictError, ValidationError
 

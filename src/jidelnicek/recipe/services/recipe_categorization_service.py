@@ -18,7 +18,7 @@ from jidelnicek.recipe.models import (
     Recipe, Category, Tag, RecipeCategory, RecipeTag,
     RecipeIngredient
 )
-from jidelnicek.recipe.models.ingredient import Ingredient
+from jidelnicek.common.models.ingredient import Ingredient
 from jidelnicek.recipe.services.category_service import CategoryService
 from jidelnicek.recipe.services.tag_service import TagService
 from jidelnicek.recipe.exceptions import (

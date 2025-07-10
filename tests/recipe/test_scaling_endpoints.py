@@ -12,7 +12,8 @@ from httpx import AsyncClient
 
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.recipe.models.recipe import Recipe
-from jidelnicek.recipe.models.ingredient import Ingredient, RecipeIngredient
+from jidelnicek.common.models.ingredient import Ingredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.common.models.nutritional_value import NutritionalValue
 
 

@@ -15,7 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from jidelnicek.recipe.models import Recipe, RecipeIngredient, RecipeVersion, RecipeImage
+from jidelnicek.recipe.models import Recipe, RecipeVersion, RecipeImage
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.recipe.schemas import (
     RecipeCreate, RecipeUpdate, RecipeSearch,
     RecipeIngredientCreate, RecipeResponse, RecipeDetail,

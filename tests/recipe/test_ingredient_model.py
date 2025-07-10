@@ -7,7 +7,7 @@ import pytest
 from decimal import Decimal
 from uuid import uuid4
 
-from jidelnicek.recipe.models import Ingredient
+from jidelnicek.common.models.ingredient import Ingredient
 
 
 class TestIngredientModel:

@@ -29,7 +29,8 @@ from jidelnicek.core.cache import cache_key_wrapper, get_redis_client
 from jidelnicek.auth.dependencies.auth import get_current_user_optional
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.recipe.models.recipe import Recipe
-from jidelnicek.recipe.models.ingredient import RecipeIngredient, Ingredient
+from jidelnicek.common.models.ingredient import Ingredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.recipe.models.recipe_image import RecipeImage
 from jidelnicek.recipe.models.categorization import (
     Category, Tag, RecipeCategory, RecipeTag

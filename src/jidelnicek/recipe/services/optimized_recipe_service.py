@@ -20,8 +20,9 @@ from jidelnicek.core.query_helpers import (
     profile_query, QueryOptimizer, PaginationHelper, 
     query_profiler, RelationshipLoader
 )
-from jidelnicek.recipe.models import Recipe, RecipeIngredient, RecipeVersion, RecipeImage
-from jidelnicek.recipe.models.ingredient import Ingredient
+from jidelnicek.recipe.models import Recipe, RecipeVersion, RecipeImage
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
+from jidelnicek.common.models.ingredient import Ingredient
 from jidelnicek.recipe.models.categorization import RecipeCategory, RecipeTag
 from jidelnicek.recipe.schemas import (
     RecipeCreate, RecipeUpdate, RecipeSearch,

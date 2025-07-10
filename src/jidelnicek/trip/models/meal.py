@@ -50,7 +50,7 @@ class TripMeal(Base):
     
     recipe_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("recipes.id", ondelete="RESTRICT"),
+        ForeignKey("recipe_recipes.id", ondelete="RESTRICT"),
         nullable=False,
         index=True
     )

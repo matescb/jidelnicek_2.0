@@ -16,7 +16,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jidelnicek.recipe.models.recipe import Recipe
-from jidelnicek.recipe.models.ingredient import RecipeIngredient
+from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 from jidelnicek.recipe.services.recipe_service import RecipeService
 from jidelnicek.recipe.schemas import RecipeCreate, RecipeIngredientCreate
 from jidelnicek.common.models.ingredient import Ingredient
