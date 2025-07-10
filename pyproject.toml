@@ -92,6 +92,7 @@ testpaths = [
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+junit_family = "xunit2"
 
 [tool.coverage.run]
 source = ["src"]

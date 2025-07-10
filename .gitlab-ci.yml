@@ -65,7 +65,7 @@ unit-tests:
   variables:
     DATABASE_URL: "postgresql://test_user:test_password@postgres:5432/test_jidelnicek"
     REDIS_URL: "redis://redis:6379/0"
-    SECRET_KEY: "test-secret-key-for-ci"
+    SECRET_KEY: "test-secret-key-for-ci-integration-testing-32chars"
     TESTING: "true"
     ENVIRONMENT: "test"
     DB_PASSWORD: "test_password"
@@ -73,6 +73,9 @@ unit-tests:
     DB_PORT: "5432"
     DB_USER: "test_user"
     DB_NAME: "test_jidelnicek"
+    REDIS_HOST: "redis"
+    REDIS_PORT: "6379"
+    REDIS_DB: "0"
     SENTRY_DSN: "https://test@sentry.io/123456"
     CORS_ORIGINS: '["http://testserver"]'
   before_script:
@@ -84,19 +87,13 @@ unit-tests:
   script:
     # Wait for services to be ready
     - sleep 15
+    # Force correct environment variables to override GitLab injection
+    - export SECRET_KEY="test-secret-key-for-ci-integration-testing-32chars"
+    - export REDIS_HOST="redis"
+    - export REDIS_PORT="6379"
+    - export REDIS_DB="0"
     # Run unit tests with coverage and JUnit XML report
-    - poetry run pytest tests/ 
-        --cov=src/jidelnicek 
-        --cov-report=xml 
-        --cov-report=html 
-        --cov-report=term-missing 
-        --cov-fail-under=70 
-        --junitxml=junit-report.xml
-        --html=unit-test-report.html
-        --self-contained-html
-        -v 
-        --tb=short 
-        --maxfail=10 || true
+    - poetry run pytest tests/ --cov=src/jidelnicek --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=70 --junitxml=junit-report.xml --html=unit-test-report.html --self-contained-html -v --tb=short --maxfail=10 || true
     # Nutritional accuracy tests (99.9% requirement)
     - poetry run python test_scaling_accuracy_standalone.py || echo "Scaling accuracy test not found"
     - poetry run python test_categorization_accuracy.py || echo "Categorization accuracy test not found"
@@ -132,7 +129,7 @@ integration-tests:
   variables:
     DATABASE_URL: "postgresql://test_user:test_password@postgres:5432/test_jidelnicek"
     REDIS_URL: "redis://redis:6379/0"
-    SECRET_KEY: "test-secret-key-for-ci"
+    SECRET_KEY: "test-secret-key-for-ci-integration-testing-32chars"
     TESTING: "true"
     ENVIRONMENT: "test"
     DB_PASSWORD: "test_password"
@@ -140,6 +137,9 @@ integration-tests:
     DB_PORT: "5432"
     DB_USER: "test_user"
     DB_NAME: "test_jidelnicek"
+    REDIS_HOST: "redis"
+    REDIS_PORT: "6379"
+    REDIS_DB: "0"
     PERFORMANCE_THRESHOLD_MS: "200"
   before_script:
     - apt-get update && apt-get install -y curl build-essential libpq-dev
@@ -150,19 +150,17 @@ integration-tests:
   script:
     # Wait for services to be ready
     - sleep 15
+    # Force correct environment variables to override GitLab injection
+    - export SECRET_KEY="test-secret-key-for-ci-integration-testing-32chars"
+    - export REDIS_HOST="redis"
+    - export REDIS_PORT="6379"
+    - export REDIS_DB="0"
     # Run database migrations
     - poetry run alembic upgrade head
     # Seed test data
     - poetry run python src/jidelnicek/core/seed_data.py
     # Run integration tests with JUnit XML report
-    - poetry run pytest tests/auth/ tests/recipe/ tests/shopping/ tests/trip/ tests/core/
-        --junitxml=integration-test-results.xml
-        --html=integration-test-report.html
-        --self-contained-html
-        -v 
-        --tb=short 
-        --maxfail=5
-        -m "not unit" || true
+    - poetry run pytest tests/auth/ tests/recipe/ tests/shopping/ tests/trip/ tests/core/ --junitxml=integration-test-results.xml --html=integration-test-report.html --self-contained-html -v --tb=short --maxfail=5 -m "not unit" || true
   artifacts:
     reports:
       junit: integration-test-results.xml
@@ -259,7 +257,7 @@ performance-tests:
   variables:
     DATABASE_URL: "postgresql://test_user:test_password@postgres:5432/test_jidelnicek"
     REDIS_URL: "redis://redis:6379/0"
-    SECRET_KEY: "test-secret-key-for-ci"
+    SECRET_KEY: "test-secret-key-for-ci-integration-testing-32chars"
     TESTING: "true"
     ENVIRONMENT: "test"
     DB_PASSWORD: "test_password"
@@ -267,6 +265,9 @@ performance-tests:
     DB_PORT: "5432"
     DB_USER: "test_user"
     DB_NAME: "test_jidelnicek"
+    REDIS_HOST: "redis"
+    REDIS_PORT: "6379"
+    REDIS_DB: "0"
     PERFORMANCE_THRESHOLD_MS: "200"
   before_script:
     - apt-get update && apt-get install -y curl build-essential libpq-dev
@@ -277,14 +278,15 @@ performance-tests:
   script:
     # Wait for services
     - sleep 15
+    # Force correct environment variables to override GitLab injection
+    - export SECRET_KEY="test-secret-key-for-ci-integration-testing-32chars"
+    - export REDIS_HOST="redis"
+    - export REDIS_PORT="6379"
+    - export REDIS_DB="0"
     # Run database migrations
     - poetry run alembic upgrade head
     # Performance tests - API response time <200ms with JUnit XML report
-    - poetry run pytest tests/core/test_database_performance.py 
-        --junitxml=performance-test-results.xml
-        --html=performance-test-report.html
-        --self-contained-html
-        -v
+    - poetry run pytest tests/core/test_database_performance.py --junitxml=performance-test-results.xml --html=performance-test-report.html --self-contained-html -v
     # Test scaling accuracy and performance
     - poetry run python test_scaling_accuracy_standalone_fixed.py
   artifacts:
