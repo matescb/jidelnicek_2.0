@@ -19,7 +19,7 @@ from jidelnicek.auth.models import AuthUser
 from jidelnicek.trip.models import Trip, TripParticipant, TripDay, TripMeal
 from jidelnicek.trip.services.trip_service import TripService
 from jidelnicek.trip.schemas.trip import TripCloneRequest
-from jidelnicek.trip.schemas.participant import TripParticipantCreate
+from jidelnicek.trip.schemas.participant import ParticipantCreate
 from jidelnicek.core.exceptions import NotFoundError, PermissionError, ValidationError
 
 

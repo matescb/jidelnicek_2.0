@@ -4,6 +4,7 @@ import logging
 from typing import Any, Dict, Optional, Callable, TypeVar, Union
 from functools import wraps
 import asyncio
+import psutil
 
 from ..exceptions.export_exceptions import (
     ExportException,
@@ -301,8 +302,6 @@ class ExportResourceManager:
         estimated_memory_mb: int = 100
     ) -> bool:
         """Acquire resources for export operation."""
-        import psutil
-        
         # Check available memory
         available_memory = psutil.virtual_memory().available / (1024 * 1024)
         

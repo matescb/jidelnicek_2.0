@@ -3,6 +3,9 @@
 import logging
 import json
 import traceback
+import uuid
+import platform
+import psutil
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -112,7 +115,8 @@ class ExportErrorLogger:
         # Log to file
         logger.error(
             f"Export error {error_id}: {error}",
-            extra={"context": json.dumps(context), "exc_info": True}
+            extra={"context": json.dumps(context)},
+            exc_info=True  # Use exc_info as keyword argument, not in extra dict
         )
         
         # Save to database if session provided
@@ -156,14 +160,10 @@ class ExportErrorLogger:
     
     def _generate_error_id(self) -> str:
         """Generate unique error ID."""
-        from uuid import uuid4
-        return f"EXP-{datetime.utcnow().strftime('%Y%m%d')}-{str(uuid4())[:8]}"
+        return f"EXP-{datetime.utcnow().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8]}"
     
     def _get_system_info(self) -> Dict[str, Any]:
         """Get system information for debugging."""
-        import platform
-        import psutil
-        
         return {
             "platform": platform.platform(),
             "python_version": platform.python_version(),
@@ -192,10 +192,7 @@ class ExportErrorLogger:
             # Check if errors are happening in quick succession
             recent_errors = [
                 e for e in self.recent_errors
-                if self._get_pattern_key(
-                    type(e["error_type"]),
-                    e["context"]
-                ) == pattern_key
+                if f"{e['error_type']}:{e['context'].get('export_format', 'unknown')}" == pattern_key
             ]
             
             if len(recent_errors) >= 5:

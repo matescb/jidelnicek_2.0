@@ -23,10 +23,10 @@ from jidelnicek.recipe.models.schemas import (
     DietaryRestriction, SortOption, Difficulty,
     IngredientFilter, NutritionFilter
 )
-from jidelnicek.core.database.models.recipe import (
-    Recipe, RecipeIngredient, RecipeNutrition,
-    RecipeCategory, RecipeTag
+from jidelnicek.recipe.models import (
+    Recipe, RecipeIngredient, RecipeCategory, RecipeTag
 )
+from jidelnicek.common.models import NutritionalValue
 
 
 @pytest.fixture
@@ -78,7 +78,7 @@ def sample_recipes():
         average_rating=4.5,
         created_at=datetime.utcnow() - timedelta(days=7)
     )
-    recipe1.nutrition = RecipeNutrition(
+    recipe1.nutrition = NutritionalValue(
         calories=450,
         protein=Decimal("15.5"),
         carbs=Decimal("55.0"),
@@ -106,7 +106,7 @@ def sample_recipes():
         average_rating=4.2,
         created_at=datetime.utcnow() - timedelta(days=14)
     )
-    recipe2.nutrition = RecipeNutrition(
+    recipe2.nutrition = NutritionalValue(
         calories=320,
         protein=Decimal("28.0"),
         carbs=Decimal("25.0"),
@@ -134,7 +134,7 @@ def sample_recipes():
         average_rating=4.8,
         created_at=datetime.utcnow() - timedelta(days=30)
     )
-    recipe3.nutrition = RecipeNutrition(
+    recipe3.nutrition = NutritionalValue(
         calories=420,
         protein=Decimal("6.0"),
         carbs=Decimal("58.0"),

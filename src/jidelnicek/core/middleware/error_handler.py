@@ -70,10 +70,10 @@ class ExportErrorHandler:
         """Log error with full context."""
         error_data = {
             "error_type": type(error).__name__,
-            "error_message": str(error),
-            "context": context,
-            "timestamp": datetime.utcnow().isoformat(),
-            "traceback": traceback.format_exc()
+            "exception_message": str(error),  # Renamed to avoid LogRecord 'message' conflict
+            "request_context": context,       # Renamed to avoid potential conflicts
+            "error_timestamp": datetime.utcnow().isoformat(),  # Renamed from 'timestamp'
+            "error_traceback": traceback.format_exc()  # Renamed to avoid potential conflicts
         }
         
         if isinstance(error, ExportException):

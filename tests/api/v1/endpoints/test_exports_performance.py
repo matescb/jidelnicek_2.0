@@ -27,7 +27,7 @@ from jidelnicek.api.v1.schemas.export_schemas import (
     ExportStatus
 )
 from jidelnicek.auth.models import AuthUser as User
-from jidelnicek.trip.models import Trip, Day, Meal
+from jidelnicek.trip.models import Trip, TripDay, TripMeal
 from jidelnicek.recipe.models import Recipe, RecipeIngredient
 from jidelnicek.common.models import Ingredient
 
@@ -55,7 +55,7 @@ class TestExportPerformance:
         
         # Create 30 days with 3 meals each
         for day_num in range(30):
-            day = Day(
+            day = TripDay(
                 trip_id=trip.id,
                 date=trip.start_date + timedelta(days=day_num),
                 day_number=day_num + 1
@@ -65,7 +65,7 @@ class TestExportPerformance:
             
             # Add meals
             for meal_type in ["breakfast", "lunch", "dinner"]:
-                meal = Meal(
+                meal = TripMeal(
                     day_id=day.id,
                     meal_type=meal_type,
                     name=f"{meal_type.title()} Day {day_num + 1}",

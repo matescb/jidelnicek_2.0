@@ -51,6 +51,7 @@ black = "^24.10.0"
 flake8 = "^7.1.1"
 mypy = "^1.14.1"
 pre-commit = "^4.0.1"
+PyPDF2 = "^3.0.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -99,7 +100,10 @@ python_classes = "Test*"
 python_functions = "test_*"
 junit_family = "xunit2"
 markers = [
-    "slow: marks tests as slow (performance/integration tests)"
+    "slow: marks tests as slow (performance/integration tests)",
+    "integration: marks tests as integration tests", 
+    "performance: marks tests as performance tests",
+    "stress: marks tests as stress tests"
 ]
 
 [tool.coverage.run]

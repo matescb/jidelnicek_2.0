@@ -27,7 +27,7 @@ from jidelnicek.trip.schemas.meal import (
     MealAssignment, MealAssignmentCreate, RecipeSnapshot
 )
 from jidelnicek.trip.schemas.trip import TripCreate
-from jidelnicek.trip.schemas.participant import TripParticipantCreate
+from jidelnicek.trip.schemas.participant import ParticipantCreate
 from jidelnicek.core.exceptions import (
     NotFoundError, ValidationError, ConflictError
 )
@@ -202,10 +202,10 @@ async def sample_trip_with_meals(
         end_date=date(2024, 7, 17),  # 3 days
         meal_slots=["Breakfast", "Lunch", "Dinner"],
         participants=[
-            TripParticipantCreate(name="Alice", coefficient=Decimal("100.00")),
-            TripParticipantCreate(name="Bob", coefficient=Decimal("120.00")),
-            TripParticipantCreate(name="Charlie", coefficient=Decimal("80.00")),  # Child
-            TripParticipantCreate(
+            ParticipantCreate(name="Alice", coefficient=Decimal("100.00")),
+            ParticipantCreate(name="Bob", coefficient=Decimal("120.00")),
+            ParticipantCreate(name="Charlie", coefficient=Decimal("80.00")),  # Child
+            ParticipantCreate(
                 name="Dave", 
                 coefficient=Decimal("100.00"),
                 arrival_date=date(2024, 7, 16),  # Arrives day 2
@@ -623,7 +623,7 @@ class TestParticipantAttendance:
                 start_date=date(2024, 8, 1),
                 end_date=date(2024, 8, 1),
                 participants=[
-                    TripParticipantCreate(
+                    ParticipantCreate(
                         name="Alice",
                         coefficient=Decimal("100.00"),
                         meal_coefficients={

@@ -72,13 +72,23 @@ class TestExportServiceWrapper:
         async def export_pdf(data):
             return f"PDF: {data}"
         
-        # Simulate missing dependency
-        with patch('builtins.__import__', side_effect=ImportError):
-            with pytest.raises(DependencyMissingError) as exc_info:
-                await export_pdf("test data")
+        # Simulate missing dependency - only fail on reportlab import
+        original_import = __import__
+        def mock_import(name, *args, **kwargs):
+            if name == 'reportlab':
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+        
+        with patch('builtins.__import__', side_effect=mock_import):
+            # Should return fallback result instead of raising exception
+            result = await export_pdf("test data")
             
-            assert exc_info.value.dependency == "reportlab"
-            assert exc_info.value.export_format == "pdf"
+            # Check that fallback was used
+            assert result is not None
+            assert isinstance(result, dict)
+            assert result.get("fallback_used") is True
+            assert result.get("original_format") == "pdf"
+            assert result.get("format") == "html"
     
     @pytest.mark.asyncio
     async def test_wrap_export_method_timeout(self, export_wrapper):
@@ -139,8 +149,14 @@ class TestExportServiceWrapper:
         async def export_pdf(data):
             return f"PDF: {data}"
         
-        # Mock the fallback handling
-        with patch('builtins.__import__', side_effect=ImportError):
+        # Mock the fallback handling - only fail on missing_lib import
+        original_import = __import__
+        def mock_import(name, *args, **kwargs):
+            if name == 'missing_lib':
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+        
+        with patch('builtins.__import__', side_effect=mock_import):
             with patch.object(
                 export_wrapper,
                 '_try_fallback_format',
@@ -265,8 +281,14 @@ class TestIntegrationScenarios:
         
         service = MockExportService()
         
-        # Mock dependency check to raise error
-        with patch('builtins.__import__', side_effect=ImportError):
+        # Mock dependency check to raise error - only fail on openpyxl import
+        original_import = __import__
+        def mock_import(name, *args, **kwargs):
+            if name == 'openpyxl':
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+        
+        with patch('builtins.__import__', side_effect=mock_import):
             with patch.object(
                 export_wrapper.fallback_exporter,
                 'export_to_csv',

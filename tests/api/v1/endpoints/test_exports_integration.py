@@ -23,7 +23,7 @@ from jidelnicek.api.v1.schemas.export_schemas import (
     ExportStatus
 )
 from jidelnicek.auth.models import AuthUser as User
-from jidelnicek.trip.models import Trip, Day, Meal, MealSlot
+from jidelnicek.trip.models import Trip, TripDay, TripMeal, TripMealSlot
 from jidelnicek.recipe.models import Recipe, RecipeIngredient, RecipeCategory, Category
 from jidelnicek.common.models import Ingredient, NutritionalValue
 from jidelnicek.shopping.services.shopping_list_generator import ShoppingListGenerator
@@ -148,7 +148,7 @@ class TestExportIntegration:
         meal_slots = []
         
         for day_num in range(14):  # 14 days
-            day = Day(
+            day = TripDay(
                 trip_id=trip.id,
                 date=trip.start_date + timedelta(days=day_num),
                 day_number=day_num + 1,
@@ -162,7 +162,7 @@ class TestExportIntegration:
                 if meal_type == "snack" and day_num % 2 == 0:
                     continue  # Skip snack every other day
                 
-                meal_slot = MealSlot(
+                meal_slot = TripMealSlot(
                     day_id=day.id,
                     meal_type=meal_type,
                     time=f"{6 + i * 5}:00"  # 6:00, 11:00, 16:00, 21:00
@@ -172,7 +172,7 @@ class TestExportIntegration:
                 
                 # Assign recipe
                 recipe_idx = (day_num * len(meal_types) + i) % len(recipes)
-                meal = Meal(
+                meal = TripMeal(
                     meal_slot_id=meal_slot.id,
                     recipe_id=recipes[recipe_idx].id,
                     servings=trip.participant_count,

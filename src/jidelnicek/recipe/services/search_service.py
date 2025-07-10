@@ -23,13 +23,12 @@ from sqlalchemy.dialects.postgresql import TSVECTOR, TSQUERY
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
-from jidelnicek.core.database.models.recipe import (
-    Recipe, RecipeIngredient, RecipeNutrition, 
-    RecipeTag, RecipeCategory, RecipeReview
+from jidelnicek.recipe.models import (
+    Recipe, RecipeIngredient, RecipeCategory, RecipeTag
 )
-from jidelnicek.core.database.models.ingredient import Ingredient
-from jidelnicek.core.cache.redis_cache import RedisCache
-from jidelnicek.core.monitoring.metrics import metrics_collector
+from jidelnicek.common.models import Ingredient, NutritionalValue
+# from jidelnicek.core.cache.redis_cache import RedisCache
+# from jidelnicek.core.monitoring.metrics import metrics_collector
 from jidelnicek.core.exceptions import ValidationError
 from jidelnicek.recipe.models.schemas import (
     RecipeSearchRequest, RecipeSearchResponse,
@@ -82,7 +81,7 @@ class RecipeSearchService:
     def __init__(
         self,
         session: AsyncSession,
-        cache: RedisCache,
+        cache = None,  # RedisCache,
         analytics_enabled: bool = True
     ):
         self.session = session
@@ -302,16 +301,16 @@ class RecipeSearchService:
         nutrition_filter: Dict[str, Any]
     ) -> Select:
         """Apply nutritional range filters."""
-        query = query.join(RecipeNutrition)
+        query = query.join(NutritionalValue)
         
         # Calorie filter
         if 'calories_min' in nutrition_filter:
             query = query.where(
-                RecipeNutrition.calories >= nutrition_filter['calories_min']
+                NutritionalValue.calories >= nutrition_filter['calories_min']
             )
         if 'calories_max' in nutrition_filter:
             query = query.where(
-                RecipeNutrition.calories <= nutrition_filter['calories_max']
+                NutritionalValue.calories <= nutrition_filter['calories_max']
             )
             
         # Macro filters
@@ -321,11 +320,11 @@ class RecipeSearchService:
             
             if min_key in nutrition_filter:
                 query = query.where(
-                    getattr(RecipeNutrition, macro) >= nutrition_filter[min_key]
+                    getattr(NutritionalValue, macro) >= nutrition_filter[min_key]
                 )
             if max_key in nutrition_filter:
                 query = query.where(
-                    getattr(RecipeNutrition, macro) <= nutrition_filter[max_key]
+                    getattr(NutritionalValue, macro) <= nutrition_filter[max_key]
                 )
                 
         return query
@@ -346,14 +345,14 @@ class RecipeSearchService:
             elif restriction == DietaryRestriction.DAIRY_FREE:
                 query = query.where(Recipe.is_dairy_free == True)
             elif restriction == DietaryRestriction.LOW_CARB:
-                query = query.join(RecipeNutrition).where(
-                    RecipeNutrition.carbs <= 20
+                query = query.join(NutritionalValue).where(
+                    NutritionalValue.carbohydrates_g <= 20
                 )
             elif restriction == DietaryRestriction.KETO:
-                query = query.join(RecipeNutrition).where(
+                query = query.join(NutritionalValue).where(
                     and_(
-                        RecipeNutrition.carbs <= 10,
-                        RecipeNutrition.fat >= 60
+                        NutritionalValue.carbohydrates_g <= 10,
+                        NutritionalValue.fats_g >= 60
                     )
                 )
                 
@@ -418,8 +417,8 @@ class RecipeSearchService:
         elif context.sort_by == SortOption.PREP_TIME:
             query = query.order_by(Recipe.prep_time.asc())
         elif context.sort_by == SortOption.CALORIES:
-            query = query.join(RecipeNutrition).order_by(
-                RecipeNutrition.calories.asc()
+            query = query.join(NutritionalValue).order_by(
+                NutritionalValue.calories.asc()
             )
             
         return query
@@ -589,11 +588,11 @@ class RecipeSearchService:
             await self._track_filter_usage(filter_type, filter_value)
             
         # Track search performance
-        await metrics_collector.record_search_performance(
-            query_length=len(context.query),
-            filter_count=len(context.filters),
-            result_count=result_count
-        )
+        # await metrics_collector.record_search_performance(
+        #     query_length=len(context.query),
+        #     filter_count=len(context.filters),
+        #     result_count=result_count
+        # )
         
     async def _track_search_term(
         self,
@@ -794,7 +793,7 @@ class SearchAnalyticsService:
     def __init__(
         self,
         session: AsyncSession,
-        cache: RedisCache
+        cache = None  # RedisCache
     ):
         self.session = session
         self.cache = cache

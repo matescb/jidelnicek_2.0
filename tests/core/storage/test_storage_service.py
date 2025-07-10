@@ -471,10 +471,23 @@ class TestStorageService:
             for i in range(3)
         ]
         
-        # Mock database query
+        # Mock database query with different behavior for different filters
         mock_query = Mock()
+        
+        # Track filter calls to return appropriate count
+        filter_call_count = [0]  # Use list to allow modification in nested function
+        
+        def count_side_effect():
+            filter_call_count[0] += 1
+            if filter_call_count[0] == 1:
+                return 3  # First call: total_files count
+            elif filter_call_count[0] == 2:
+                return 1  # Second call: public_files count after filter
+            else:
+                return 3  # Fallback
+        
         mock_query.filter.return_value = mock_query
-        mock_query.count.return_value = 3
+        mock_query.count.side_effect = count_side_effect
         mock_query.all.return_value = files
         mock_db.query.return_value = mock_query
         
