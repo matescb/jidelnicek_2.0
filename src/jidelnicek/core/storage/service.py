@@ -15,6 +15,7 @@ from typing import Optional, Dict, Any, BinaryIO, List, Union
 from functools import lru_cache
 
 from sqlalchemy import Column, String, Integer, DateTime, Text, JSON, ForeignKey, Boolean
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
 
@@ -69,7 +70,7 @@ class StoredFile(Base):
     compression = Column(String(20), default="none")
     
     # Ownership and access
-    user_id = Column(String(36), ForeignKey("auth_users.id"), nullable=True, index=True)  # UUID as string
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=True, index=True)
     user = relationship("AuthUser", back_populates="stored_files")
     job_id = Column(String(255), ForeignKey("jobs.task_id"), nullable=True, index=True)
     job = relationship("Job", backref="stored_files")
