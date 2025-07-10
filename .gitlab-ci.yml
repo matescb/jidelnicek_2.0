@@ -63,7 +63,7 @@ unit-tests:
     - name: redis:${REDIS_VERSION}-alpine
       alias: redis
   variables:
-    DATABASE_URL: "postgresql://test_user:test_password@postgres:5432/test_jidelnicek"
+    DATABASE_URL: "postgresql+asyncpg://test_user:test_password@postgres:5432/test_jidelnicek"
     REDIS_URL: "redis://redis:6379/0"
     SECRET_KEY: "test-secret-key-for-ci-integration-testing-32chars"
     TESTING: "true"
@@ -127,7 +127,7 @@ integration-tests:
     - name: redis:${REDIS_VERSION}-alpine
       alias: redis
   variables:
-    DATABASE_URL: "postgresql://test_user:test_password@postgres:5432/test_jidelnicek"
+    DATABASE_URL: "postgresql+asyncpg://test_user:test_password@postgres:5432/test_jidelnicek"
     REDIS_URL: "redis://redis:6379/0"
     SECRET_KEY: "test-secret-key-for-ci-integration-testing-32chars"
     TESTING: "true"
@@ -255,7 +255,7 @@ performance-tests:
     - name: redis:${REDIS_VERSION}-alpine
       alias: redis
   variables:
-    DATABASE_URL: "postgresql://test_user:test_password@postgres:5432/test_jidelnicek"
+    DATABASE_URL: "postgresql+asyncpg://test_user:test_password@postgres:5432/test_jidelnicek"
     REDIS_URL: "redis://redis:6379/0"
     SECRET_KEY: "test-secret-key-for-ci-integration-testing-32chars"
     TESTING: "true"

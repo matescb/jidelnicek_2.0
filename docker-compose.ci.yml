@@ -59,7 +59,7 @@ services:
     container_name: jidelnicek_ci_app
     environment:
       # Database
-      DATABASE_URL: postgresql://test_user:test_password@postgres:5432/test_jidelnicek
+      DATABASE_URL: postgresql+asyncpg://test_user:test_password@postgres:5432/test_jidelnicek
       # Redis
       REDIS_URL: redis://redis:6379/0
       REDIS_HOST: redis
@@ -105,7 +105,7 @@ services:
     container_name: jidelnicek_ci_celery
     command: celery -A jidelnicek.core.celery_app worker --loglevel=info --concurrency=2
     environment:
-      DATABASE_URL: postgresql://test_user:test_password@postgres:5432/test_jidelnicek
+      DATABASE_URL: postgresql+asyncpg://test_user:test_password@postgres:5432/test_jidelnicek
       REDIS_URL: redis://redis:6379/0
       REDIS_HOST: redis
       REDIS_PORT: 6379
