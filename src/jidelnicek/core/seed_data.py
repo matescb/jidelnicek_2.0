@@ -364,27 +364,40 @@ async def check_and_seed() -> bool:
     
     try:
         async with DatabaseSession() as session:
-            # Check if any categories exist
-            stmt = select(Category).limit(1)
-            result = await session.execute(stmt)
-            has_categories = result.scalar_one_or_none() is not None
-            
-            # Check if any tags exist
-            stmt = select(Tag).limit(1)
-            result = await session.execute(stmt)
-            has_tags = result.scalar_one_or_none() is not None
-            
-            if has_categories and has_tags:
-                logger.info("Seed data already exists, skipping seeding")
-                return False
-            
-            # Perform seeding
-            logger.info("No seed data found, performing initial seeding...")
-            await seed_all(session)
-            return True
+            return await check_and_seed_with_session(session)
     finally:
         # Clean up database connections
         await close_db()
+
+
+async def check_and_seed_with_session(session: AsyncSession) -> bool:
+    """
+    Check if seeding is needed and perform it if necessary using provided session.
+    
+    Args:
+        session: Database session to use
+        
+    Returns:
+        True if seeding was performed, False if data already exists
+    """
+    # Check if any categories exist
+    stmt = select(Category).limit(1)
+    result = await session.execute(stmt)
+    has_categories = result.scalar_one_or_none() is not None
+    
+    # Check if any tags exist
+    stmt = select(Tag).limit(1)
+    result = await session.execute(stmt)
+    has_tags = result.scalar_one_or_none() is not None
+    
+    if has_categories and has_tags:
+        logger.info("Seed data already exists, skipping seeding")
+        return False
+    
+    # Perform seeding
+    logger.info("No seed data found, performing initial seeding...")
+    await seed_all(session)
+    return True
 
 
 if __name__ == "__main__":

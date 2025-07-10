@@ -8,6 +8,7 @@ from jidelnicek.auth.models import *  # noqa: F401, F403
 from jidelnicek.recipe.models import *  # noqa: F401, F403
 from jidelnicek.trip.models import *  # noqa: F401, F403
 from jidelnicek.core.models.job import Job, JobNotification  # noqa: F401
+from jidelnicek.core.models.user import User  # noqa: F401
 from jidelnicek.core.storage.service import StoredFile  # noqa: F401
 from jidelnicek.core.models.monitoring import PerformanceLog  # noqa: F401
 # from jidelnicek.sharing.models import *  # noqa: F401, F403 - not yet implemented

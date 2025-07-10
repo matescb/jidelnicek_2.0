@@ -31,14 +31,16 @@ def slugify(text: str) -> str:
         'hello-world'
         >>> slugify("Easy (< 30 min)")
         'easy-30-min'
+        >>> slugify("Raw/No-Cook")
+        'raw-no-cook'
     """
     # Convert to lowercase
     text = text.lower()
     
-    # Replace parentheses and special characters with spaces
-    text = re.sub(r'[(){}[\]<>]', ' ', text)
+    # Replace parentheses, slashes and special characters with spaces
+    text = re.sub(r'[(){}[\]<>/]', ' ', text)
     
-    # Replace any non-word characters (except hyphens) with spaces
+    # Replace any non-word characters (except hyphens) with empty string
     text = re.sub(r'[^\w\s-]', '', text)
     
     # Replace multiple spaces or hyphens with a single hyphen

@@ -35,8 +35,8 @@ AuthUser = globals()['AuthUser']  # AuthUser imported via db.base
 from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.auth.services.token_service import TokenService
 
-# Test database URL - use in-memory SQLite for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test database URL - use PostgreSQL for tests
+TEST_DATABASE_URL = "postgresql+asyncpg://jidelnicek:testpassword@localhost:5433/jidelnicek_test"
 
 
 @pytest.fixture(scope="session")
@@ -52,7 +52,6 @@ async def test_engine():
     """Create a test database engine."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
-        connect_args={"check_same_thread": False},
         poolclass=NullPool,
     )
     

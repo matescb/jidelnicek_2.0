@@ -31,7 +31,7 @@ class ErrorLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     # Relationships
-    user = relationship("User", back_populates="error_logs")
+    user = relationship("AuthUser")
     
     # Indexes for common queries
     __table_args__ = (

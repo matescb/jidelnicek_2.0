@@ -15,7 +15,7 @@ class Settings:
     # Database
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql://user:password@localhost/jidelnicek"
+        "postgresql+asyncpg://user:password@localhost/jidelnicek"
     )
     
     # Redis

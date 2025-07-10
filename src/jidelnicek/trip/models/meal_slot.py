@@ -112,12 +112,9 @@ class TripMealSlot(Base):
         lazy="select"
     )
     
-    meals: Mapped[list["TripMeal"]] = relationship(
-        "TripMeal",
-        back_populates="meal_slot",
-        cascade="all, delete-orphan",
-        lazy="select"
-    )
+    # Note: meals relationship removed due to lack of foreign key
+    # TripMeal.meal_slot is a string field, not a foreign key to TripMealSlot
+    # To get meals for this slot, query TripMeal by day_id and meal_type string
     
     # Table constraints
     __table_args__ = (

@@ -12,6 +12,7 @@ from jidelnicek.core.seed_data import (
     seed_tags,
     seed_all,
     check_and_seed,
+    check_and_seed_with_session,
     CATEGORY_HIERARCHY,
     DIETARY_TAGS
 )
@@ -155,8 +156,8 @@ async def test_tag_properties(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_check_and_seed_empty_db(db_session: AsyncSession):
     """Test check_and_seed on empty database."""
-    # Should return True (seeding performed)
-    result = await check_and_seed()
+    # Use the test database session
+    result = await check_and_seed_with_session(db_session)
     assert result is True
     
     # Verify data exists
@@ -176,7 +177,7 @@ async def test_check_and_seed_existing_data(db_session: AsyncSession):
     await seed_all(db_session)
     
     # Second check should return False (no seeding needed)
-    result = await check_and_seed()
+    result = await check_and_seed_with_session(db_session)
     assert result is False
 
 
