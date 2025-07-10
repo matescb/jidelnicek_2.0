@@ -307,6 +307,15 @@ export default {
     notFound: 'Resource not found',
     validation: 'Please check your input',
     server: 'Server error. Please try again later.',
+    
+    // Form errors
+    formErrors: 'Form Errors',
+    fieldErrors: 'Field Errors',
+    validationError: 'Validation Error',
+    validationErrors: 'Validation Errors',
+    clickToExpand: 'Click to view {{count}} errors',
+    formRenderError: 'Unable to display form',
+    unknownError: 'Unknown error',
   },
   
   common: {
@@ -354,6 +363,12 @@ export default {
     noData: 'No data available',
     ascending: 'Ascending',
     descending: 'Descending',
+    dismiss: 'Dismiss',
+    expand: 'Expand',
+    collapse: 'Collapse',
+    continue: 'Continue',
+    retry: 'Retry',
+    markComplete: 'Mark as Complete',
     
     // Time
     today: 'Today',
@@ -411,5 +426,35 @@ export default {
       november: 'November',
       december: 'December',
     },
+  },
+  
+  // Form submission feedback
+  form: {
+    submitting: 'Submitting...',
+    submitSuccess: 'Successfully submitted',
+    submitError: 'Submission failed',
+    progress: 'Progress: {{value}}%',
+    step: 'Step',
+    syncing: 'Syncing...',
+    synced: 'Synced',
+    syncError: 'Sync failed',
+    retryAttempt: 'Retry attempt {{current}} of {{max}}',
+    maxRetriesReached: 'Maximum retry attempts reached',
+    elapsed: 'Elapsed: {{time}}',
+    remaining: 'Remaining: {{time}}',
+    seconds_one: '{{count}} second',
+    seconds_other: '{{count}} seconds',
+    minutesSeconds: '{{minutes}}m {{seconds}}s',
+  },
+  
+  // Examples
+  examples: {
+    formSubmissionPatterns: 'Form Submission Feedback Patterns',
+    basicSubmit: 'Basic Submit Button',
+    multiStepForm: 'Multi-Step Form with Progress',
+    submissionFeedback: 'Submission Feedback Messages',
+    progressTracking: 'Progress Tracking Example',
+    optimisticUpdate: 'Optimistic Update Pattern',
+    formSkeleton: 'Form Loading Skeleton',
   },
 }

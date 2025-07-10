@@ -40,6 +40,12 @@ const RecipeListPage: React.FC = () => {
       difficulty: filters.difficulty,
       categories: filters.categories,
       tags: filters.tags,
+      minPrepTime: filters.minPrepTime,
+      maxPrepTime: filters.maxPrepTime,
+      minCalories: filters.minCalories,
+      maxCalories: filters.maxCalories,
+      isPublic: filters.isPublic,
+      isFavorite: filters.isFavorite,
       sortBy: filters.sortBy,
       sortOrder: filters.sortOrder,
       page: 1,
@@ -50,6 +56,12 @@ const RecipeListPage: React.FC = () => {
     filters.difficulty,
     filters.categories,
     filters.tags,
+    filters.minPrepTime,
+    filters.maxPrepTime,
+    filters.minCalories,
+    filters.maxCalories,
+    filters.isPublic,
+    filters.isFavorite,
     filters.sortBy,
     filters.sortOrder,
     searchRecipes
@@ -65,13 +77,13 @@ const RecipeListPage: React.FC = () => {
     navigate('/recipes/new')
   }
   
-  // Get unique categories and tags from loaded recipes
+  // Get unique categories and tags from loaded recipes with null safety
   const availableCategories = Array.from(
     new Set(recipes.flatMap(r => r.categories || []))
-  )
+  ).filter(Boolean)
   const availableTags = Array.from(
     new Set(recipes.flatMap(r => r.tags || []))
-  )
+  ).filter(Boolean)
   
   return (
     <Container>

@@ -18,7 +18,7 @@ import json
 
 from jidelnicek.core.dependencies import get_db
 from jidelnicek.auth.dependencies.auth import CurrentAdminUser, RequirePermission
-from jidelnicek.auth.dependencies.rate_limit import RateLimitDependency
+from jidelnicek.auth.dependencies.rate_limit import RateLimitDep
 from jidelnicek.admin.services import UserManagementService, AdminAuditService
 from jidelnicek.admin.schemas import (
     UserFilter, UserSort, SortField, SortOrder,
@@ -35,7 +35,7 @@ router = APIRouter(
     tags=["admin-users"],
     dependencies=[
         Depends(RequirePermission("admin:access")),
-        Depends(RateLimitDependency(tier="admin"))
+        Depends(RateLimitDep(key_prefix="admin", max_attempts=100, window_minutes=1))
     ]
 )
 
@@ -52,6 +52,9 @@ def get_request_context(request: Request) -> Dict[str, Any]:
 @router.get("/", response_model=UserListResponse)
 async def list_users(
     request: Request,
+    # Dependencies
+    db: AsyncSession = Depends(get_db),
+    admin_user: CurrentAdminUser,
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
     # Filter parameters
@@ -64,10 +67,7 @@ async def list_users(
     has_logged_in: Optional[bool] = Query(None, description="Filter by login history"),
     # Sort parameters
     sort_by: SortField = Query(SortField.CREATED_AT, description="Sort field"),
-    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order"),
-    # Dependencies
-    db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order")
 ):
     """
     List all users with pagination, filtering, and sorting.
@@ -123,7 +123,7 @@ async def search_users(
     q: str = Query(..., min_length=2, description="Search query"),
     limit: int = Query(10, ge=1, le=50, description="Maximum results"),
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """
     Search users by email.
@@ -143,7 +143,7 @@ async def search_users(
 @router.get("/statistics", response_model=UserStatistics)
 async def get_user_statistics(
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Get overall user statistics."""
     service = UserManagementService(db, admin_user)
@@ -179,7 +179,7 @@ async def get_user_detail(
     include_sessions: bool = Query(True, description="Include session info"),
     include_activity: bool = Query(True, description="Include recent activity"),
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """
     Get detailed information about a specific user.
@@ -209,7 +209,7 @@ async def create_user(
     user_data: UserCreateRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """
     Create a new user account.
@@ -250,7 +250,7 @@ async def update_user(
     user_id: UUID,
     updates: UserUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """
     Update user information.
@@ -290,7 +290,7 @@ async def suspend_user(
     reason: str = Query(..., description="Reason for suspension"),
     notify_user: bool = Query(True, description="Send notification email"),
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Suspend a user account."""
     service = UserManagementService(db, admin_user)
@@ -318,7 +318,7 @@ async def activate_user(
     reason: str = Query(..., description="Reason for activation"),
     notify_user: bool = Query(True, description="Send notification email"),
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Activate a suspended user account."""
     service = UserManagementService(db, admin_user)
@@ -345,7 +345,7 @@ async def reset_user_password(
     user_id: UUID,
     reset_data: PasswordResetRequest,
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Reset a user's password."""
     if user_id != reset_data.user_id:
@@ -385,7 +385,7 @@ async def force_logout_user(
     user_id: UUID,
     logout_data: ForceLogoutRequest,
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Force logout a user by invalidating their sessions."""
     if user_id != logout_data.user_id:
@@ -413,7 +413,7 @@ async def force_logout_user(
 async def get_user_sessions(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Get all sessions for a user."""
     service = UserManagementService(db, admin_user)
@@ -439,7 +439,7 @@ async def bulk_user_operation(
     operation: BulkUserOperation,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """
     Perform bulk operations on multiple users.
@@ -470,7 +470,7 @@ async def export_users_csv(
     created_after: Optional[datetime] = Query(None),
     created_before: Optional[datetime] = Query(None),
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Export users to CSV format."""
     # Build filter
@@ -550,7 +550,7 @@ async def list_audit_logs(
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """List audit logs with filtering."""
     filters = AuditLogFilter(
@@ -593,7 +593,7 @@ async def get_user_audit_trail(
     user_id: UUID,
     limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
-    admin_user: CurrentAdminUser = Depends()
+    admin_user: CurrentAdminUser
 ):
     """Get audit trail for a specific user."""
     service = AdminAuditService(db)

@@ -16,7 +16,7 @@ import redis.exceptions
 
 from jidelnicek.core.config import settings
 from jidelnicek.core.database import Base
-from jidelnicek.core.monitoring import setup_query_monitoring, setup_connection_pool_monitoring
+from .monitoring import setup_query_monitoring, setup_connection_pool_monitoring
 
 logger = logging.getLogger(__name__)
 

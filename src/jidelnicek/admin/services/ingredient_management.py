@@ -713,7 +713,7 @@ class IngredientManagementService:
         """Get recent recipe usage for an ingredient."""
         # Import here to avoid circular dependency
         from jidelnicek.recipe.models import Recipe
-from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
+        from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
         
         stmt = (
             select(Recipe.id, Recipe.title, Recipe.created_at)

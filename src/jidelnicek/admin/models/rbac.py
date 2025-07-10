@@ -376,11 +376,10 @@ class UserRoleAssignment(Base):
     __table_args__ = (
         UniqueConstraint(
             'user_id', 'role_id',
-            name='uq_user_role_assignment',
-            postgresql_where=text('is_active = true AND revoked_at IS NULL')
+            name='uq_user_role_assignment'
         ),
-        Index('idx_user_role_assignments_valid', 'user_id', 'role_id', 
-              postgresql_where=text('is_active = true AND revoked_at IS NULL'))
+        Index('idx_user_role_assignments_valid', 'user_id', 'role_id'),
+        Index('idx_user_role_assignments_active', 'is_active', 'revoked_at')
     )
     
     def __repr__(self):

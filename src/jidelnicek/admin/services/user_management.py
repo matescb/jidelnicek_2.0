@@ -21,7 +21,7 @@ from jidelnicek.auth.models import (
     AuthPasswordResetToken, AuthEmailVerificationToken
 )
 from jidelnicek.auth.services.email_service import EmailService
-from jidelnicek.auth.utils.password import hash_password
+from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.admin.models import AdminAuditLog, AdminAction, AdminNotification
 from jidelnicek.admin.schemas import (
     UserFilter, UserSort, SortField, SortOrder,
@@ -288,7 +288,7 @@ class UserManagementService:
         # Create user
         user = AuthUser(
             email=email.lower(),
-            password_hash=hash_password(password),
+            password_hash=PasswordHasher.hash_password(password),
             role=role.value,
             email_verified=email_verified,
             email_verified_at=get_utc_now() if email_verified else None
@@ -530,7 +530,7 @@ class UserManagementService:
             new_password = self._generate_secure_password()
         
         # Update password
-        user.password_hash = hash_password(new_password)
+        user.password_hash = PasswordHasher.hash_password(new_password)
         user.updated_at = get_utc_now()
         
         # Invalidate all sessions

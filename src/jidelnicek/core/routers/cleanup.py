@@ -12,7 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jidelnicek.auth.dependencies.auth import get_current_user, require_admin
+from jidelnicek.auth.dependencies.auth import get_current_user
+from jidelnicek.admin.routers.moderation import require_admin
 from jidelnicek.auth.models import User
 from jidelnicek.core.dependencies import get_db
 from jidelnicek.core.models.cleanup_policy import (

@@ -240,7 +240,7 @@ class Settings(BaseSettings):
         values = info.data
         from pydantic import PostgresDsn
         return str(PostgresDsn.build(
-            scheme="postgresql",
+            scheme="postgresql+asyncpg",
             username=values.get("db_user"),
             password=values.get("db_password"),
             host=values.get("db_host"),

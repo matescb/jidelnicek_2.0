@@ -26,10 +26,10 @@ from jidelnicek.auth.tasks import start_session_cleanup_background_task
 from jidelnicek.recipe.routers import categories_router, tags_router, recipes_router, search_router, scaling_router
 from jidelnicek.trip.routers import trips_router
 from jidelnicek.core.routers.jobs import router as jobs_router, export_router
-from jidelnicek.core.routers.cleanup import router as cleanup_router
+# from jidelnicek.core.routers.cleanup import router as cleanup_router
 from jidelnicek.core.routers.progress import router as progress_router
-from jidelnicek.api.v1.endpoints.exports import router as unified_export_router
-from jidelnicek.admin.routers import users_router as admin_users_router, dashboard_router as admin_dashboard_router
+# from jidelnicek.api.v1.endpoints.exports import router as unified_export_router
+# from jidelnicek.admin.routers import users_router as admin_users_router, dashboard_router as admin_dashboard_router
 from jidelnicek.core.middleware.security import (
     SecurityMiddleware,
     CSRFProtectMiddleware,
@@ -324,17 +324,17 @@ app.include_router(jobs_router)
 app.include_router(export_router)
 
 # Unified export API router
-app.include_router(unified_export_router, prefix="/api/v1")
+# app.include_router(unified_export_router, prefix="/api/v1")
 
 # Progress tracking router
 app.include_router(progress_router)
 
-# Cleanup management router
-app.include_router(cleanup_router, prefix="/api/v1")
+# Cleanup management router (temporarily disabled)
+# app.include_router(cleanup_router, prefix="/api/v1")
 
-# Admin routers
-app.include_router(admin_users_router)
-app.include_router(admin_dashboard_router)
+# Admin routers (temporarily disabled)
+# app.include_router(admin_users_router)
+# app.include_router(admin_dashboard_router)
 
 # Additional routers will be added here as they are implemented:
 # app.include_router(users.router)

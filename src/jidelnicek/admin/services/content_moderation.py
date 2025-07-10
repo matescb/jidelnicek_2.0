@@ -13,9 +13,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 from sqlalchemy.exc import IntegrityError
 
-from jidelnicek.common.models.user import User
-from jidelnicek.common.exceptions import (
-    NotFoundException, ValidationException, ForbiddenException
+from jidelnicek.core.models.user import User
+from jidelnicek.core.exceptions import (
+    NotFoundError as NotFoundException, 
+    ValidationError as ValidationException, 
+    PermissionError as ForbiddenException
 )
 from jidelnicek.admin.models.moderation import (
     ContentReport, ModerationLog, AutoModerationRule,
@@ -24,9 +26,20 @@ from jidelnicek.admin.models.moderation import (
 )
 from jidelnicek.recipe.models.recipe import Recipe
 from jidelnicek.recipe.models.review import Review
-from jidelnicek.common.services.cache import CacheService
-from jidelnicek.common.services.notification import NotificationService
-from jidelnicek.common.utils.security import sanitize_html
+from jidelnicek.core.cache import CacheService
+from jidelnicek.core.services.notification_service import NotificationService
+
+def sanitize_html(text: str) -> str:
+    """Basic HTML sanitization for moderation notes."""
+    if not text:
+        return text
+    # Basic sanitization - remove script tags and strip HTML
+    import re
+    # Remove script tags and content
+    text = re.sub(r'<script.*?</script>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # Remove other HTML tags but keep content
+    text = re.sub(r'<[^>]+>', '', text)
+    return text.strip()
 
 
 class ContentModerationService:

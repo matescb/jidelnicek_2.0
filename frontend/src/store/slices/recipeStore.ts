@@ -1,59 +1,19 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
-import axios from 'axios'
-import type { BaseStore, PaginatedResponse, WithId, Timestamps } from '../types'
+import { apiClient } from '@/api/client'
+import type { BaseStore, PaginatedResponse } from '../types'
+import type { Recipe, RecipeFilters as RecipeFiltersBase } from '@/types/recipe'
 
-// Recipe related types
-export interface Ingredient {
-  id: string
-  name: string
-  quantity: number
-  unit: string
-  category?: string
-  notes?: string
-}
-
-export interface NutritionalInfo {
-  calories: number
-  protein: number
-  carbs: number
-  fat: number
-  fiber: number
-  sodium: number
-}
-
-export interface Recipe extends WithId, Timestamps {
-  name: string
-  description: string
-  instructions: string[]
-  ingredients: Ingredient[]
-  prepTime: number
-  cookTime: number
-  servings: number
-  difficulty: 'easy' | 'medium' | 'hard'
-  categories: string[]
-  tags: string[]
-  images: string[]
-  nutritionalInfo?: NutritionalInfo
-  isPublic: boolean
-  authorId: string
-  authorName?: string
-  rating?: number
-  ratingCount?: number
-}
-
-export interface RecipeFilters {
-  search?: string
-  categories?: string[]
-  tags?: string[]
-  difficulty?: string[]
+// Extend the base RecipeFilters to match store expectations
+export interface RecipeFilters extends RecipeFiltersBase {
+  // Additional store-specific filters
   prepTimeMax?: number
   cookTimeMax?: number
   caloriesMin?: number
   caloriesMax?: number
-  isPublic?: boolean
-  authorId?: string
+  sortBy?: 'name' | 'createdAt' | 'rating' | 'prepTime' | 'calories'
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface RecipeStore extends BaseStore {
@@ -70,6 +30,17 @@ export interface RecipeStore extends BaseStore {
   // Cache for user's recipes
   userRecipes: Recipe[]
   userRecipesLoaded: boolean
+  favorites: string[]
+
+  // Computed properties
+  pagination: {
+    currentPage: number
+    pageSize: number
+    totalPages: number
+    totalItems: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+  }
 
   // Actions
   fetchRecipes: (page?: number) => Promise<void>
@@ -87,7 +58,8 @@ export interface RecipeStore extends BaseStore {
   setPageSize: (size: number) => void
   
   // Utility actions
-  searchRecipes: (query: string) => Promise<void>
+  searchRecipes: (filters: RecipeFilters & { page?: number; limit?: number }) => Promise<void>
+  loadMore: () => Promise<void>
   toggleFavorite: (id: string | number) => Promise<void>
   rateRecipe: (id: string | number, rating: number) => Promise<void>
 }
@@ -106,8 +78,23 @@ export const useRecipeStore = create<RecipeStore>()(
       sortOrder: 'desc',
       userRecipes: [],
       userRecipesLoaded: false,
+      favorites: [],
       loading: false,
       error: null,
+
+      // Computed properties
+      get pagination() {
+        const { currentPage, pageSize, totalRecipes } = get()
+        const totalPages = Math.ceil(totalRecipes / pageSize)
+        return {
+          currentPage,
+          pageSize,
+          totalPages,
+          totalItems: totalRecipes,
+          hasNextPage: currentPage < totalPages,
+          hasPreviousPage: currentPage > 1
+        }
+      },
 
       // Actions
       clearError: () => set((state) => {
@@ -130,10 +117,15 @@ export const useRecipeStore = create<RecipeStore>()(
             ...filters
           }
 
-          const response = await axios.get<PaginatedResponse<Recipe>>('/api/v1/recipes', { params })
+          const response = await apiClient.get<PaginatedResponse<Recipe>>('/recipes', { params })
           
           set((state) => {
-            state.recipes = response.data.items
+            // For page 1, replace recipes. For other pages, append (infinite scroll)
+            if (page === 1) {
+              state.recipes = response.data.items
+            } else {
+              state.recipes = [...state.recipes, ...response.data.items]
+            }
             state.totalRecipes = response.data.total
             state.currentPage = response.data.page
             state.loading = false
@@ -153,7 +145,7 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          const response = await axios.get<Recipe>(`/api/v1/recipes/${id}`)
+          const response = await apiClient.get<Recipe>(`/recipes/${id}`)
           
           set((state) => {
             state.currentRecipe = response.data
@@ -176,7 +168,7 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          const response = await axios.get<Recipe[]>('/api/v1/recipes/my-recipes')
+          const response = await apiClient.get<Recipe[]>('/recipes/my-recipes')
           
           set((state) => {
             state.userRecipes = response.data
@@ -198,7 +190,7 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          const response = await axios.post<Recipe>('/api/v1/recipes', recipeData)
+          const response = await apiClient.post<Recipe>('/recipes', recipeData)
           const newRecipe = response.data
           
           set((state) => {
@@ -223,7 +215,7 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          const response = await axios.put<Recipe>(`/api/v1/recipes/${id}`, updates)
+          const response = await apiClient.put<Recipe>(`/recipes/${id}`, updates)
           const updatedRecipe = response.data
           
           set((state) => {
@@ -262,7 +254,7 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          await axios.delete(`/api/v1/recipes/${id}`)
+          await apiClient.delete(`/recipes/${id}`)
           
           set((state) => {
             // Remove from recipes list
@@ -295,7 +287,7 @@ export const useRecipeStore = create<RecipeStore>()(
         })
 
         try {
-          const response = await axios.post<Recipe>(`/api/v1/recipes/${id}/duplicate`)
+          const response = await apiClient.post<Recipe>(`/recipes/${id}/duplicate`)
           const duplicatedRecipe = response.data
           
           set((state) => {
@@ -351,14 +343,40 @@ export const useRecipeStore = create<RecipeStore>()(
         })
       },
 
-      searchRecipes: async (query) => {
-        get().setFilters({ search: query })
-        await get().fetchRecipes(1)
+      searchRecipes: async (filters) => {
+        const { page = 1, limit, ...filterParams } = filters
+        if (limit) {
+          get().setPageSize(limit)
+        }
+        get().setFilters(filterParams)
+        if (filterParams.sortBy) {
+          get().setSorting(filterParams.sortBy as RecipeStore['sortBy'], filterParams.sortOrder as RecipeStore['sortOrder'])
+        }
+        await get().fetchRecipes(page)
+      },
+
+      loadMore: async () => {
+        const { currentPage, pagination } = get()
+        if (pagination.hasNextPage) {
+          await get().fetchRecipes(currentPage + 1)
+        }
       },
 
       toggleFavorite: async (id) => {
         try {
-          await axios.post(`/api/v1/recipes/${id}/favorite`)
+          await apiClient.post(`/recipes/${id}/favorite`)
+          
+          // Toggle in local favorites array for immediate UI update
+          set((state) => {
+            const stringId = String(id)
+            const index = state.favorites.indexOf(stringId)
+            if (index > -1) {
+              state.favorites.splice(index, 1)
+            } else {
+              state.favorites.push(stringId)
+            }
+          })
+          
           // Refetch to get updated data
           if (get().currentRecipe?.id === id) {
             await get().fetchRecipe(id)
@@ -372,7 +390,7 @@ export const useRecipeStore = create<RecipeStore>()(
 
       rateRecipe: async (id, rating) => {
         try {
-          await axios.post(`/api/v1/recipes/${id}/rate`, { rating })
+          await apiClient.post(`/recipes/${id}/rate`, { rating })
           // Refetch to get updated rating
           if (get().currentRecipe?.id === id) {
             await get().fetchRecipe(id)

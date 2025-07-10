@@ -10,7 +10,7 @@ from typing import AsyncGenerator, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jidelnicek.auth.models import AuthUser
-from jidelnicek.auth.utils.password import hash_password
+from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.admin.models import AdminAuditLog, AdminAction
 
 
@@ -19,7 +19,7 @@ async def admin_user(db_session: AsyncSession) -> AuthUser:
     """Create an admin user for testing."""
     user = AuthUser(
         email="admin@test.com",
-        password_hash=hash_password("Admin123!"),
+        password_hash=PasswordHasher.hash_password("Admin123!"),
         role="admin",
         email_verified=True,
         email_verified_at=datetime.now(timezone.utc)
@@ -35,7 +35,7 @@ async def regular_user(db_session: AsyncSession) -> AuthUser:
     """Create a regular user for testing."""
     user = AuthUser(
         email="user@test.com",
-        password_hash=hash_password("User123!"),
+        password_hash=PasswordHasher.hash_password("User123!"),
         role="user",
         email_verified=True,
         email_verified_at=datetime.now(timezone.utc)
@@ -51,7 +51,7 @@ async def inactive_user(db_session: AsyncSession) -> AuthUser:
     """Create an inactive user for testing."""
     user = AuthUser(
         email="inactive@test.com",
-        password_hash=hash_password("Inactive123!"),
+        password_hash=PasswordHasher.hash_password("Inactive123!"),
         role="user",
         is_active=False,
         email_verified=True,
@@ -68,7 +68,7 @@ async def unverified_user(db_session: AsyncSession) -> AuthUser:
     """Create an unverified user for testing."""
     user = AuthUser(
         email="unverified@test.com",
-        password_hash=hash_password("Unverified123!"),
+        password_hash=PasswordHasher.hash_password("Unverified123!"),
         role="user",
         email_verified=False
     )
@@ -85,7 +85,7 @@ async def multiple_users(db_session: AsyncSession) -> list[AuthUser]:
     for i in range(10):
         user = AuthUser(
             email=f"user{i}@test.com",
-            password_hash=hash_password(f"User{i}123!"),
+            password_hash=PasswordHasher.hash_password(f"User{i}123!"),
             role="user",
             email_verified=i % 2 == 0,  # Half verified
             is_active=i % 3 != 0,  # Some inactive

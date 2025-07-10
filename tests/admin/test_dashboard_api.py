@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 import json
 
 from fastapi import status
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from fastapi.websockets import WebSocketDisconnect
 
 from jidelnicek.admin.services.statistics import StatisticsService
@@ -23,7 +23,7 @@ class TestDashboardAPI:
         return {"Authorization": f"Bearer {admin_token}"}
     
     @pytest.mark.asyncio
-    async def test_get_dashboard_overview_no_dates(self, client: TestClient, admin_headers):
+    async def test_get_dashboard_overview_no_dates(self, async_client: AsyncClient, admin_headers):
         """Test getting dashboard overview without date filters."""
         with patch.object(StatisticsService, 'get_dashboard_overview', new_callable=AsyncMock) as mock_overview:
             mock_overview.return_value = {
@@ -40,7 +40,7 @@ class TestDashboardAPI:
                 "trends": {"user_registrations": []}
             }
             
-            response = client.get("/admin/dashboard/overview", headers=admin_headers)
+            response = await async_client.get("/admin/dashboard/overview", headers=admin_headers)
             
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -48,9 +48,9 @@ class TestDashboardAPI:
             assert data["content"]["recipes"]["total"] == 500
     
     @pytest.mark.asyncio
-    async def test_get_dashboard_overview_with_dates(self, client: TestClient, admin_headers):
+    async def test_get_dashboard_overview_with_dates(self, async_client: AsyncClient, admin_headers):
         """Test getting dashboard overview with date filters."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/overview",
             params={
                 "start_date": "2024-01-01",
@@ -62,7 +62,7 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_200_OK
     
     @pytest.mark.asyncio
-    async def test_get_user_statistics(self, client: TestClient, admin_headers):
+    async def test_get_user_statistics(self, async_client: AsyncClient, admin_headers):
         """Test getting user statistics."""
         with patch.object(StatisticsService, 'get_user_statistics', new_callable=AsyncMock) as mock_stats:
             mock_stats.return_value = {
@@ -77,7 +77,7 @@ class TestDashboardAPI:
                 "retention_rate": 50.0
             }
             
-            response = client.get(
+            response = await async_client.get(
                 "/admin/dashboard/users",
                 params={
                     "start_date": "2024-01-01",
@@ -93,9 +93,9 @@ class TestDashboardAPI:
             assert data["growth_rate"] == 15.5
     
     @pytest.mark.asyncio
-    async def test_get_content_statistics(self, client: TestClient, admin_headers):
+    async def test_get_content_statistics(self, async_client: AsyncClient, admin_headers):
         """Test getting content statistics."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/content",
             params={
                 "start_date": "2024-01-01",
@@ -107,9 +107,9 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_200_OK
     
     @pytest.mark.asyncio
-    async def test_get_activity_statistics(self, client: TestClient, admin_headers):
+    async def test_get_activity_statistics(self, async_client: AsyncClient, admin_headers):
         """Test getting activity statistics."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/activity",
             params={
                 "start_date": "2024-01-01",
@@ -121,9 +121,9 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_200_OK
     
     @pytest.mark.asyncio
-    async def test_get_system_statistics(self, client: TestClient, admin_headers):
+    async def test_get_system_statistics(self, async_client: AsyncClient, admin_headers):
         """Test getting system statistics."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/system",
             params={
                 "start_date": "2024-01-01",
@@ -135,7 +135,7 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_200_OK
     
     @pytest.mark.asyncio
-    async def test_get_popular_content(self, client: TestClient, admin_headers):
+    async def test_get_popular_content(self, async_client: AsyncClient, admin_headers):
         """Test getting popular content."""
         with patch.object(StatisticsService, 'get_popular_content', new_callable=AsyncMock) as mock_popular:
             mock_popular.return_value = {
@@ -159,7 +159,7 @@ class TestDashboardAPI:
                 "categories": []
             }
             
-            response = client.get(
+            response = await async_client.get(
                 "/admin/dashboard/popular",
                 params={"limit": 5},
                 headers=admin_headers
@@ -171,9 +171,9 @@ class TestDashboardAPI:
             assert data["recipes"][0]["name"] == "Pasta"
     
     @pytest.mark.asyncio
-    async def test_get_usage_trends(self, client: TestClient, admin_headers):
+    async def test_get_usage_trends(self, async_client: AsyncClient, admin_headers):
         """Test getting usage trends."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/trends",
             params={
                 "start_date": "2024-01-01",
@@ -186,7 +186,7 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_200_OK
     
     @pytest.mark.asyncio
-    async def test_get_metric_comparison(self, client: TestClient, admin_headers):
+    async def test_get_metric_comparison(self, async_client: AsyncClient, admin_headers):
         """Test getting metric comparison."""
         with patch.object(StatisticsService, 'get_date_range_comparison', new_callable=AsyncMock) as mock_compare:
             mock_compare.return_value = {
@@ -207,7 +207,7 @@ class TestDashboardAPI:
                 }
             }
             
-            response = client.get(
+            response = await async_client.get(
                 "/admin/dashboard/comparison",
                 params={
                     "metric": "users",
@@ -223,9 +223,9 @@ class TestDashboardAPI:
             assert data["change"]["percent"] == 66.67
     
     @pytest.mark.asyncio
-    async def test_export_statistics_json(self, client: TestClient, admin_headers):
+    async def test_export_statistics_json(self, async_client: AsyncClient, admin_headers):
         """Test exporting statistics as JSON."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/export",
             params={
                 "start_date": "2024-01-01",
@@ -238,9 +238,9 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_200_OK
     
     @pytest.mark.asyncio
-    async def test_export_statistics_csv_not_implemented(self, client: TestClient, admin_headers):
+    async def test_export_statistics_csv_not_implemented(self, async_client: AsyncClient, admin_headers):
         """Test that CSV export returns not implemented."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/export",
             params={
                 "start_date": "2024-01-01",
@@ -253,7 +253,7 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_501_NOT_IMPLEMENTED
     
     @pytest.mark.asyncio
-    async def test_health_check(self, client: TestClient, admin_headers):
+    async def test_health_check(self, async_client: AsyncClient, admin_headers):
         """Test dashboard health check."""
         with patch.object(StatisticsService, 'get_system_statistics', new_callable=AsyncMock) as mock_system:
             mock_system.return_value = {
@@ -262,7 +262,7 @@ class TestDashboardAPI:
                 "storage": {"total_size_mb": 1024.5}
             }
             
-            response = client.get("/admin/dashboard/health-check", headers=admin_headers)
+            response = await async_client.get("/admin/dashboard/health-check", headers=admin_headers)
             
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -272,7 +272,7 @@ class TestDashboardAPI:
             assert len(data["alerts"]) == 0
     
     @pytest.mark.asyncio
-    async def test_health_check_with_warnings(self, client: TestClient, admin_headers):
+    async def test_health_check_with_warnings(self, async_client: AsyncClient, admin_headers):
         """Test dashboard health check with warnings."""
         with patch.object(StatisticsService, 'get_system_statistics', new_callable=AsyncMock) as mock_system:
             mock_system.return_value = {
@@ -281,7 +281,7 @@ class TestDashboardAPI:
                 "storage": {"total_size_mb": 1024.5}
             }
             
-            response = client.get("/admin/dashboard/health-check", headers=admin_headers)
+            response = await async_client.get("/admin/dashboard/health-check", headers=admin_headers)
             
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -289,7 +289,7 @@ class TestDashboardAPI:
             assert len(data["alerts"]) == 2
     
     @pytest.mark.asyncio
-    async def test_get_widget_data_user_growth(self, client: TestClient, admin_headers):
+    async def test_get_widget_data_user_growth(self, async_client: AsyncClient, admin_headers):
         """Test getting user growth widget data."""
         with patch.object(StatisticsService, 'get_usage_trends', new_callable=AsyncMock) as mock_trends:
             mock_trends.return_value = {
@@ -301,7 +301,7 @@ class TestDashboardAPI:
                 "login_activity": []
             }
             
-            response = client.get(
+            response = await async_client.get(
                 "/admin/dashboard/widgets/user_growth",
                 params={
                     "start_date": "2024-01-01",
@@ -316,9 +316,9 @@ class TestDashboardAPI:
             assert len(data["data"]) == 2
     
     @pytest.mark.asyncio
-    async def test_get_widget_data_invalid(self, client: TestClient, admin_headers):
+    async def test_get_widget_data_invalid(self, async_client: AsyncClient, admin_headers):
         """Test getting invalid widget data."""
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/widgets/invalid_widget",
             headers=admin_headers
         )
@@ -326,11 +326,11 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_404_NOT_FOUND
     
     @pytest.mark.asyncio
-    async def test_get_widget_data_with_options(self, client: TestClient, admin_headers):
+    async def test_get_widget_data_with_options(self, async_client: AsyncClient, admin_headers):
         """Test getting widget data with options."""
         options = json.dumps({"granularity": "weekly"})
         
-        response = client.get(
+        response = await async_client.get(
             "/admin/dashboard/widgets/user_growth",
             params={
                 "start_date": "2024-01-01",
@@ -343,24 +343,24 @@ class TestDashboardAPI:
         assert response.status_code == status.HTTP_200_OK
     
     @pytest.mark.asyncio
-    async def test_refresh_cache(self, client: TestClient, admin_headers):
+    async def test_refresh_cache(self, async_client: AsyncClient, admin_headers):
         """Test refreshing dashboard cache."""
-        response = client.post("/admin/dashboard/refresh-cache", headers=admin_headers)
+        response = await async_client.post("/admin/dashboard/refresh-cache", headers=admin_headers)
         
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == "success"
     
     @pytest.mark.asyncio
-    async def test_dashboard_access_requires_admin(self, client: TestClient, user_headers):
+    async def test_dashboard_access_requires_admin(self, async_client: AsyncClient, user_headers):
         """Test that dashboard endpoints require admin role."""
-        response = client.get("/admin/dashboard/overview", headers=user_headers)
+        response = await async_client.get("/admin/dashboard/overview", headers=user_headers)
         
         assert response.status_code == status.HTTP_403_FORBIDDEN
     
     @pytest.mark.asyncio
-    async def test_dashboard_access_unauthorized(self, client: TestClient):
+    async def test_dashboard_access_unauthorized(self, async_client: AsyncClient):
         """Test that dashboard endpoints require authentication."""
-        response = client.get("/admin/dashboard/overview")
+        response = await async_client.get("/admin/dashboard/overview")
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED

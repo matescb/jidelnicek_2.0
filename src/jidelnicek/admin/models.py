@@ -6,7 +6,7 @@ including enhanced audit logging for admin actions.
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from uuid import UUID
 from enum import Enum
 
@@ -123,7 +123,7 @@ class AdminAuditLog(Base):
     
     # Additional context
     reason: Mapped[Optional[str]] = mapped_column(String(500))
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    action_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     
     # Result tracking
     success: Mapped[bool] = mapped_column(
@@ -196,7 +196,7 @@ class AdminNotification(Base):
     related_id: Mapped[Optional[UUID]] = mapped_column(PG_UUID(as_uuid=True))
     
     # Metadata
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    action_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     
     # Status
     is_read: Mapped[bool] = mapped_column(
@@ -459,7 +459,7 @@ class AuditLogArchive(Base):
     
     # Additional context
     reason: Mapped[Optional[str]] = mapped_column(String(500))
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    action_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     
     # Result tracking
     success: Mapped[bool] = mapped_column(

@@ -25,10 +25,10 @@ from pydantic import BaseModel, Field, validator
 from enum import Enum
 
 from ....auth.dependencies.auth import get_current_user
-from ....auth.dependencies.rate_limit import RateLimiter
+from ....auth.dependencies.rate_limit import RateLimitDep
 from ....auth.models import User
-from ....core.database import get_db
-from ....core.monitoring.metrics import export_metrics
+from ....core.dependencies import get_db
+# from ....core.monitoring.metrics import export_metrics
 from ....core.exceptions.export_exceptions import (
     ExportValidationError,
     ExportGenerationError
@@ -57,13 +57,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/exports", tags=["exports"])
 
 # Rate limiting
-export_rate_limiter = RateLimiter(
+export_rate_limiter = RateLimitDep(
     max_requests=100,
     window_seconds=3600,  # 100 exports per hour
     key_prefix="export"
 )
 
-batch_export_rate_limiter = RateLimiter(
+batch_export_rate_limiter = RateLimitDep(
     max_requests=10,
     window_seconds=3600,  # 10 batch exports per hour
     key_prefix="batch_export"

@@ -5,7 +5,7 @@ This module provides base service classes that implement common patterns
 for database operations with optimal query performance.
 """
 
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union, Generic
 from uuid import UUID
 from abc import ABC, abstractmethod
 
@@ -25,7 +25,7 @@ CreateSchemaType = TypeVar('CreateSchemaType')
 UpdateSchemaType = TypeVar('UpdateSchemaType')
 
 
-class BaseService(ABC):
+class BaseService(ABC, Generic[ModelType]):
     """Base service class with common database operations."""
     
     def __init__(self, session: AsyncSession):

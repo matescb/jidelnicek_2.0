@@ -96,7 +96,7 @@ class StatisticsService:
             **stats
         }
     
-    @cache_result(ttl=300)  # Cache for 5 minutes
+    @cache_result("user_stats", ttl=300)  # Cache for 5 minutes
     async def get_user_statistics(
         self,
         start_date: date,
@@ -209,7 +209,7 @@ class StatisticsService:
             "retention_rate": round((active_users / total_users * 100) if total_users > 0 else 0, 2)
         }
     
-    @cache_result(ttl=300)
+    @cache_result("content_stats", ttl=300)
     async def get_content_statistics(
         self,
         start_date: date,
@@ -318,7 +318,7 @@ class StatisticsService:
             }
         }
     
-    @cache_result(ttl=300)
+    @cache_result("activity_stats", ttl=300)
     async def get_activity_statistics(
         self,
         start_date: date,
@@ -413,7 +413,7 @@ class StatisticsService:
             "avg_session_duration_minutes": round((avg_session_duration or 0) / 60, 2)
         }
     
-    @cache_result(ttl=60)  # Cache for 1 minute (system stats change frequently)
+    @cache_result("system_stats", ttl=60)  # Cache for 1 minute (system stats change frequently)
     async def get_system_statistics(
         self,
         start_date: date,
@@ -517,7 +517,7 @@ class StatisticsService:
             }
         }
     
-    @cache_result(ttl=600)  # Cache for 10 minutes
+    @cache_result("popular_content", ttl=600)  # Cache for 10 minutes
     async def get_popular_content(
         self,
         limit: int = 10
@@ -610,7 +610,7 @@ class StatisticsService:
             "categories": top_categories
         }
     
-    @cache_result(ttl=300)
+    @cache_result("usage_trends", ttl=300)
     async def get_usage_trends(
         self,
         start_date: date,

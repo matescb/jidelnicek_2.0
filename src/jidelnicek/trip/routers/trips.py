@@ -14,6 +14,7 @@ This module provides comprehensive endpoints for trip management:
 
 from typing import Optional, List, Dict, Any
 from uuid import UUID
+from datetime import datetime
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Body, Response

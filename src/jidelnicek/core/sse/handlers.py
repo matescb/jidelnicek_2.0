@@ -17,7 +17,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from jidelnicek.auth.dependencies.auth import get_current_user
 from jidelnicek.auth.models import User
-from jidelnicek.core.cache import cache_get, RedisClient
+from jidelnicek.core.cache import cache_get, get_redis_client
 from jidelnicek.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -150,10 +150,10 @@ async def sse_progress_stream(
     yield f"event: connected\ndata: {json.dumps({'export_id': export_id})}\n\n"
     
     try:
-        async with RedisClient() as redis:
-            if not redis:
-                yield f"event: error\ndata: {json.dumps({'error': 'Redis not available'})}\n\n"
-                return
+        redis = get_redis_client()
+        if not redis:
+            yield f"event: error\ndata: {json.dumps({'error': 'Redis not available'})}\n\n"
+            return
             
             # Subscribe to progress updates using Redis pub/sub
             pubsub = redis.pubsub()
