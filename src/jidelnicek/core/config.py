@@ -6,12 +6,12 @@ for all environment variables used by the Jídelníček 2.0 application.
 """
 
 import os
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Annotated, Union
 from datetime import timedelta
 from functools import lru_cache
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic.networks import PostgresDsn, RedisDsn
 from pydantic import EmailStr
 from pydantic.networks import HttpUrl
@@ -57,10 +57,10 @@ class Settings(BaseSettings):
     redis_socket_connect_timeout: int = Field(default=5, ge=1)
     
     # CORS
-    cors_origins: List[str] = Field(default=["http://localhost:3000"])
+    cors_origins: Union[str, List[str]] = Field(default=["http://localhost:3000"])
     cors_allow_credentials: bool = Field(default=True)
-    cors_allow_methods: List[str] = Field(default=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-    cors_allow_headers: List[str] = Field(default=["*"])
+    cors_allow_methods: Union[str, List[str]] = Field(default=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+    cors_allow_headers: Union[str, List[str]] = Field(default=["*"])
     cors_max_age: int = Field(default=3600, ge=0)
     
     # Email
@@ -106,7 +106,7 @@ class Settings(BaseSettings):
     
     # File Upload
     max_upload_size: int = Field(default=10485760, ge=1)  # 10MB
-    allowed_upload_extensions: List[str] = Field(
+    allowed_upload_extensions: Union[str, List[str]] = Field(
         default=[".jpg", ".jpeg", ".png", ".gif", ".pdf", ".doc", ".docx"]
     )
     upload_path: str = Field(default="uploads")
@@ -213,7 +213,8 @@ class Settings(BaseSettings):
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
-        "case_sensitive": False
+        "case_sensitive": False,
+        "env_parse_none_str": "null"  # Don't parse empty strings as JSON
     }
     
     def __init__(self, **kwargs):
@@ -271,48 +272,62 @@ class Settings(BaseSettings):
             path=str(values.get('redis_db') or 0),
         ))
     
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", mode="after")
     @classmethod
     def parse_cors_origins(cls, v: Any) -> List[str]:
-        """Parse CORS origins from comma-separated string."""
+        """Ensure CORS origins is always a list."""
         if isinstance(v, str):
             # Handle empty string case
             if not v.strip():
                 return []
-            # Try to parse as JSON first (for backward compatibility)
-            try:
-                import json
-                parsed = json.loads(v)
-                if isinstance(parsed, list):
-                    return parsed
-            except json.JSONDecodeError:
-                pass
-            # Otherwise parse as comma-separated string
+            # Parse as comma-separated string
             return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+        return v if isinstance(v, list) else []
     
-    @field_validator("allowed_upload_extensions", mode="before")
+    @field_validator("allowed_upload_extensions", mode="after")
     @classmethod
     def parse_upload_extensions(cls, v: Any) -> List[str]:
-        """Parse allowed upload extensions from comma-separated or JSON string."""
-        if not isinstance(v, str):
-            return v
-        
-        import json
-        
-        # Handle JSON string array e.g. '["jpg", "png"]'
-        if v.strip().startswith('[') and v.strip().endswith(']'):
-            try:
-                parsed = json.loads(v)
-                if isinstance(parsed, list):
-                    # Ensure all items are strings and start with a dot
-                    return [f".{str(ext).lstrip('.')}" for ext in parsed]
-            except json.JSONDecodeError:
-                # Fallback to comma-separated parsing if JSON is invalid
-                pass
-
-        # Handle comma-separated string e.g. '.jpg,.png' or 'jpg, png'
-        return [f".{ext.strip().lstrip('.')}" for ext in v.split(',') if ext.strip()]
+        """Ensure upload extensions is always a list."""
+        if isinstance(v, str):
+            # Handle empty string case
+            if not v.strip():
+                return []
+            # Handle comma-separated string e.g. '.jpg,.png' or 'jpg, png'
+            return [f".{ext.strip().lstrip('.')}" for ext in v.split(',') if ext.strip()]
+        return v if isinstance(v, list) else []
+    
+    @field_validator("cors_allow_methods", "cors_allow_headers", mode="after")
+    @classmethod
+    def parse_string_list(cls, v: Any) -> List[str]:
+        """Parse comma-separated strings into lists."""
+        if isinstance(v, str):
+            if not v.strip():
+                return []
+            return [item.strip() for item in v.split(",") if item.strip()]
+        return v if isinstance(v, list) else []
+    
+    @field_validator(
+        "csp_report_uri", 
+        "sentry_dsn", 
+        "bakalari_api_url", 
+        "strava_api_url", 
+        "payment_gateway_url",
+        "redis_password",
+        "email_username",
+        "email_password",
+        "otel_endpoint",
+        "bakalari_api_key",
+        "strava_api_key",
+        "payment_gateway_merchant_id",
+        "payment_gateway_secret_key",
+        mode="before"
+    )
+    @classmethod
+    def empty_str_to_none(cls, v: Any) -> Any:
+        """Convert empty string to None for optional fields."""
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
     
     @field_validator("secret_key")
     @classmethod

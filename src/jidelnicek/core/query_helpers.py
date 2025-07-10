@@ -409,7 +409,7 @@ class RelationshipLoader:
     def create_recipe_with_full_details_query(session: AsyncSession):
         """Create optimized query for recipe with all details."""
         from jidelnicek.recipe.models import Recipe, RecipeImage
-from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
+        from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
         from jidelnicek.common.models.ingredient import Ingredient
         
         return session.query(Recipe).options(

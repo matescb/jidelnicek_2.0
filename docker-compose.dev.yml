@@ -95,7 +95,7 @@ services:
     image: dpage/pgadmin4:latest
     container_name: jidelnicek_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@jidelnicek.local
+      PGADMIN_DEFAULT_EMAIL: admin@localhost.localdomain
       PGADMIN_DEFAULT_PASSWORD: pgadmin_dev_2024
       PGADMIN_CONFIG_SERVER_MODE: "False"
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"

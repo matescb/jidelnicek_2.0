@@ -30,7 +30,7 @@ from jidelnicek.trip.models import (
 )
 from jidelnicek.recipe.models.recipe import Recipe
 from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
-from jidelnicek.ingredient.models import Ingredient
+from jidelnicek.common.models.ingredient import Ingredient
 from jidelnicek.trip.schemas.day_plan import (
     ParticipantAttendance,
     MealIngredientSummary,
