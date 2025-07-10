@@ -19,7 +19,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.types import ASGIApp
 
 from jidelnicek.core.config import settings
-from jidelnicek.core.cache_utils.cache import get_redis_client
+from jidelnicek.core.dependencies import RedisClient
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
@@ -421,39 +421,43 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_id = self.get_client_id(request)
         
         # Check rate limit
-        redis_client = await get_redis_client()
-        key = f"rate_limit:{client_id}"
-        
-        try:
-            # Get current request count
-            pipe = redis_client.pipeline()
-            now = time.time()
-            window_start = now - self.window_seconds
+        async with RedisClient() as redis_client:
+            if redis_client is None:
+                # If Redis is unavailable, allow the request
+                return await call_next(request)
+                
+            key = f"rate_limit:{client_id}"
             
-            # Remove old entries
-            pipe.zremrangebyscore(key, 0, window_start)
-            
-            # Count requests in current window
-            pipe.zcard(key)
-            
-            # Add current request
-            pipe.zadd(key, {str(uuid.uuid4()): now})
-            
-            # Set expiry
-            pipe.expire(key, self.window_seconds + 1)
-            
-            # Execute pipeline
-            results = await pipe.execute()
-            request_count = results[1]
-            
-            # Check if rate limit exceeded
-            if request_count >= self.requests_per_window:
-                # Calculate retry after
-                oldest_request = await redis_client.zrange(key, 0, 0, withscores=True)
-                if oldest_request:
-                    retry_after = int(oldest_request[0][1] + self.window_seconds - now)
-                else:
-                    retry_after = self.window_seconds
+            try:
+                # Get current request count
+                pipe = redis_client.pipeline()
+                now = time.time()
+                window_start = now - self.window_seconds
+                
+                # Remove old entries
+                pipe.zremrangebyscore(key, 0, window_start)
+                
+                # Count requests in current window
+                pipe.zcard(key)
+                
+                # Add current request
+                pipe.zadd(key, {str(uuid.uuid4()): now})
+                
+                # Set expiry
+                pipe.expire(key, self.window_seconds + 1)
+                
+                # Execute pipeline
+                results = await pipe.execute()
+                request_count = results[1]
+                
+                # Check if rate limit exceeded
+                if request_count >= self.requests_per_window:
+                    # Calculate retry after
+                    oldest_request = await redis_client.zrange(key, 0, 0, withscores=True)
+                    if oldest_request:
+                        retry_after = int(oldest_request[0][1] + self.window_seconds - now)
+                    else:
+                        retry_after = self.window_seconds
                 
                 return JSONResponse(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -468,25 +472,25 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                         "X-RateLimit-Reset": str(int(now + retry_after))
                     }
                 )
-            
-            # Process request
-            response = await call_next(request)
-            
-            # Add rate limit headers
-            response.headers["X-RateLimit-Limit"] = str(self.requests_per_window)
-            response.headers["X-RateLimit-Remaining"] = str(
-                max(0, self.requests_per_window - request_count - 1)
-            )
-            response.headers["X-RateLimit-Reset"] = str(int(now + self.window_seconds))
-            
-            return response
-            
-        except Exception as e:
-            # Log error but don't block request
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Rate limiting error: {e}")
-            return await call_next(request)
+                
+                # Process request
+                response = await call_next(request)
+                
+                # Add rate limit headers
+                response.headers["X-RateLimit-Limit"] = str(self.requests_per_window)
+                response.headers["X-RateLimit-Remaining"] = str(
+                    max(0, self.requests_per_window - request_count - 1)
+                )
+                response.headers["X-RateLimit-Reset"] = str(int(now + self.window_seconds))
+                
+                return response
+                
+            except Exception as e:
+                # Log error but don't block request
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Rate limiting error: {e}")
+                return await call_next(request)
 
 
 class RequestSanitizationMiddleware(BaseHTTPMiddleware):

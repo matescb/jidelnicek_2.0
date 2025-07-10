@@ -24,6 +24,8 @@ import { useTripStore } from '@/store/slices/tripStore';
 import { TripParticipant } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
+import { StatusIndicator } from './StatusIndicator';
+import { usePresence } from '@/hooks/usePresence';
 
 type SortField = 'name' | 'email' | 'role' | 'status' | 'mealCoefficient' | 'snackCoefficient';
 type SortDirection = 'asc' | 'desc';
@@ -44,6 +46,12 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
   
   const trip = trips.find(t => t.id === tripId);
   const participants = trip?.participants || [];
+  
+  // Use presence hook for real-time status
+  const { presenceState, updatePresence } = usePresence({
+    tripId: tripId || '',
+    participantId: 'current-user', // In a real app, get from auth context
+  });
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -273,8 +281,8 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="flex items-center justify-center h-64" role="status">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" data-testid="loading-spinner" />
       </div>
     );
   }
@@ -282,7 +290,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
   // Error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center">
+      <div className="flex flex-col items-center justify-center h-64 text-center" role="alert">
         <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Error loading participants</h3>
         <p className="text-gray-600">{error}</p>
@@ -568,7 +576,15 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{participant.name}</div>
+                    <div className="flex items-center gap-2">
+                      <StatusIndicator
+                        isOnline={presenceState[participant.id]?.isOnline || false}
+                        lastSeen={presenceState[participant.id]?.lastSeen}
+                        currentActivity={presenceState[participant.id]?.currentActivity}
+                        size="small"
+                      />
+                      <div className="text-sm font-medium text-gray-900">{participant.name}</div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">{participant.email}</div>
@@ -604,12 +620,14 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                       <button
                         onClick={() => onEditParticipant?.(participant)}
                         className="text-blue-600 hover:text-blue-900"
+                        data-testid="edit-participant"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteParticipant(participant)}
                         className="text-red-600 hover:text-red-900"
+                        data-testid="delete-participant"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -623,10 +641,11 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
       </div>
 
       {/* Cards for mobile */}
-      <div className="block lg:hidden space-y-4">
+      <div className="block lg:hidden space-y-4" data-testid="participant-cards">
         {paginatedParticipants.map((participant) => (
           <div
             key={participant.id}
+            data-testid="participant-card"
             className={cn(
               "bg-white rounded-lg shadow-sm border p-4",
               selectedParticipants.has(participant.id)
@@ -643,7 +662,15 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1 mr-3"
                 />
                 <div>
-                  <h3 className="text-base font-medium text-gray-900">{participant.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-base font-medium text-gray-900">{participant.name}</h3>
+                    <StatusIndicator
+                      isOnline={presenceState[participant.id]?.isOnline || false}
+                      lastSeen={presenceState[participant.id]?.lastSeen}
+                      currentActivity={presenceState[participant.id]?.currentActivity}
+                      size="small"
+                    />
+                  </div>
                   <p className="text-sm text-gray-500 flex items-center mt-1">
                     <Mail className="h-4 w-4 mr-1" />
                     {participant.email}
@@ -654,12 +681,14 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                 <button
                   onClick={() => onEditParticipant?.(participant)}
                   className="text-blue-600 hover:text-blue-900"
+                  data-testid="edit-participant"
                 >
                   <Edit2 className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteParticipant(participant)}
                   className="text-red-600 hover:text-red-900"
+                  data-testid="delete-participant"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

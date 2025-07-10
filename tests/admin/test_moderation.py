@@ -18,9 +18,10 @@ from jidelnicek.admin.models.moderation import (
     ContentType, ReportReason, ModerationStatus, ModerationAction,
     SanctionType, AppealStatus
 )
-from jidelnicek.core.models.user import User
+from jidelnicek.auth.models import AuthUser as User
 from jidelnicek.core.services.audit import AuditService
-from jidelnicek.common.exceptions import ValidationError, AuthorizationError
+from jidelnicek.core.exceptions import ValidationError
+from jidelnicek.core.exceptions import PermissionError as AuthorizationError
 
 
 @pytest.fixture

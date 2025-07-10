@@ -4,6 +4,7 @@ Tests for WebSocket functionality.
 
 import pytest
 import json
+import asyncio
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
 

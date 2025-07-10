@@ -36,6 +36,8 @@ import { Container } from '@/components/layout/Container'
 import { Stack } from '@/components/layout/Stack'
 import { useToast } from '@/hooks/useToast'
 import { useI18n } from '@/hooks/useI18n'
+import { ActivityTimeline, type Activity } from '@/components/participants/ActivityTimeline'
+import { usePresence } from '@/hooks/usePresence'
 
 // Helper function to calculate meal planning progress
 const calculateMealProgress = (trip: Trip) => {
@@ -66,35 +68,25 @@ const getStatusColor = (status: Trip['status']) => {
   }
 }
 
-// Activity Timeline Component
-const ActivityTimeline: React.FC<{ tripId: string }> = ({ tripId }) => {
-  // Mock activity data - in real app, this would come from API
-  const activities = [
-    { id: '1', type: 'meal_added', user: 'John Doe', action: 'added Spaghetti Carbonara to Day 2 Dinner', time: '2 hours ago' },
-    { id: '2', type: 'participant_added', user: 'Jane Smith', action: 'joined the trip', time: '5 hours ago' },
-    { id: '3', type: 'shopping_generated', user: 'System', action: 'generated shopping list', time: '1 day ago' },
-    { id: '4', type: 'trip_created', user: 'John Doe', action: 'created the trip', time: '3 days ago' },
-  ]
+// Activity Timeline Wrapper Component
+const ActivityTimelineWrapper: React.FC<{ tripId: string }> = ({ tripId }) => {
+  const { activities } = usePresence({
+    tripId,
+    participantId: 'current-user', // In a real app, get from auth context
+  })
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-primary rounded-full mt-1.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-900 dark:text-gray-100">
-                  <span className="font-medium">{activity.user}</span> {activity.action}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+      <CardContent className="p-0">
+        <ActivityTimeline
+          activities={activities}
+          maxItems={5}
+          compact={true}
+          showLoadMore={false}
+        />
       </CardContent>
     </Card>
   )
@@ -294,7 +286,7 @@ const OverviewTab: React.FC<{ trip: Trip }> = ({ trip }) => {
           <MealDistribution trip={trip} />
         </div>
         <div>
-          <ActivityTimeline tripId={trip.id} />
+          <ActivityTimelineWrapper tripId={trip.id} />
         </div>
       </div>
     </div>

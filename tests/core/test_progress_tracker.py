@@ -3,6 +3,7 @@ Tests for the progress tracking system.
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import json
 from datetime import datetime, timedelta
@@ -13,7 +14,7 @@ from jidelnicek.core.services.progress_tracker import (
 )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def progress_tracker():
     """Create a progress tracker instance."""
     tracker = ProgressTracker(
@@ -24,7 +25,7 @@ async def progress_tracker():
     return tracker
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def export_tracker():
     """Create an export progress tracker instance."""
     tracker = ExportProgressTracker(

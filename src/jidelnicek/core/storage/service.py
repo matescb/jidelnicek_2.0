@@ -22,7 +22,7 @@ from sqlalchemy.sql import func
 from jidelnicek.core.database import Base
 from jidelnicek.core.config import get_settings
 from jidelnicek.core.exceptions import (
-    NotFoundError, PermissionError, ValidationError
+    NotFoundError, PermissionError, PermissionDeniedError, ValidationError
 )
 from .base import (
     StorageBackend, StorageMetadata, StorageError,
@@ -368,7 +368,7 @@ class StorageService:
             raise NotFoundError(f"File not found in storage: {file_id}")
         
         # Update access statistics
-        stored_file.access_count += 1
+        stored_file.access_count = (stored_file.access_count or 0) + 1
         stored_file.last_accessed = datetime.utcnow()
         self.db.commit()
         
@@ -601,7 +601,7 @@ class StorageService:
             )
             
             # Update access count
-            stored_file.access_count += 1
+            stored_file.access_count = (stored_file.access_count or 0) + 1
             stored_file.last_accessed = datetime.utcnow()
             self.db.commit()
             

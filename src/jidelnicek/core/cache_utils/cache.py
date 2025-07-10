@@ -8,20 +8,7 @@ import json
 from typing import Optional, Any
 from functools import wraps
 
-from jidelnicek.core.dependencies import get_redis_client as _get_redis_client
-
-
-async def get_redis_client():
-    """
-    Get the Redis client instance.
-    
-    Returns:
-        Redis client instance
-    """
-    async for client in _get_redis_client():
-        if client is None:
-            raise RuntimeError("Redis client not initialized")
-        return client
+from jidelnicek.core.dependencies import RedisClient
 
 
 async def cache_get(key: str) -> Optional[Any]:
@@ -34,16 +21,19 @@ async def cache_get(key: str) -> Optional[Any]:
     Returns:
         Cached value or None
     """
-    client = await get_redis_client()
-    value = await client.get(key)
-    
-    if value is None:
-        return None
-    
-    try:
-        return json.loads(value)
-    except (json.JSONDecodeError, TypeError):
-        return value
+    async with RedisClient() as client:
+        if client is None:
+            return None
+            
+        value = await client.get(key)
+        
+        if value is None:
+            return None
+        
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return value
 
 
 async def cache_set(
@@ -62,15 +52,17 @@ async def cache_set(
     Returns:
         Success status
     """
-    client = await get_redis_client()
-    
-    try:
-        if isinstance(value, (dict, list)):
-            value = json.dumps(value)
-    except (TypeError, ValueError):
-        value = str(value)
-    
-    return await client.set(key, value, ex=expire)
+    async with RedisClient() as client:
+        if client is None:
+            return False
+            
+        try:
+            if isinstance(value, (dict, list)):
+                value = json.dumps(value)
+        except (TypeError, ValueError):
+            value = str(value)
+        
+        return await client.set(key, value, ex=expire)
 
 
 async def cache_delete(key: str) -> int:
@@ -83,8 +75,10 @@ async def cache_delete(key: str) -> int:
     Returns:
         Number of keys deleted
     """
-    client = await get_redis_client()
-    return await client.delete(key)
+    async with RedisClient() as client:
+        if client is None:
+            return 0
+        return await client.delete(key)
 
 
 async def cache_exists(key: str) -> bool:
@@ -97,8 +91,10 @@ async def cache_exists(key: str) -> bool:
     Returns:
         Existence status
     """
-    client = await get_redis_client()
-    return bool(await client.exists(key))
+    async with RedisClient() as client:
+        if client is None:
+            return False
+        return bool(await client.exists(key))
 
 
 def cached(

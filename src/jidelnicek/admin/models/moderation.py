@@ -47,6 +47,42 @@ class ModerationAction(str, enum.Enum):
     UNBAN = "unban"
     EDIT = "edit"
     RESTORE = "restore"
+    REJECT = "reject"
+    DELETE = "delete"
+
+
+class ContentType(str, enum.Enum):
+    """Types of content that can be moderated."""
+    RECIPE = "recipe"
+    COMMENT = "comment"
+    IMAGE = "image"
+    REVIEW = "review"
+    USER_PROFILE = "user_profile"
+
+
+class ModerationStatus(str, enum.Enum):
+    """Status of moderation."""
+    PENDING = "pending"
+    IN_REVIEW = "in_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    DISMISSED = "dismissed"
+
+
+class SanctionType(str, enum.Enum):
+    """Types of user sanctions."""
+    WARNING = "warning"
+    TEMPORARY_BAN = "temporary_ban"
+    PERMANENT_BAN = "permanent_ban"
+    CONTENT_REMOVAL = "content_removal"
+
+
+class AppealStatus(str, enum.Enum):
+    """Status of user appeals."""
+    PENDING = "pending"
+    IN_REVIEW = "in_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 
 class ContentReport(Base):
@@ -271,3 +307,120 @@ class ModerationQueue(Base):
     
     def __repr__(self):
         return f"<ModerationQueue(id={self.id}, content={self.content_type}:{self.content_id}, reviewed={self.reviewed})>"
+
+
+# Alias for backward compatibility
+ModerationActionLog = ModerationLog
+
+
+class UserSanction(Base):
+    """Model for user sanctions."""
+    __tablename__ = "user_sanctions"
+    
+    id = Column(Integer, primary_key=True)
+    
+    # User being sanctioned
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user = relationship("User")
+    
+    # Who issued the sanction
+    issued_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    issued_by = relationship("User", foreign_keys=[issued_by_id])
+    
+    # Sanction details
+    type = Column(SQLEnum(SanctionType), nullable=False)
+    reason = Column(Text, nullable=False)
+    
+    # Status
+    is_active = Column(Boolean, default=True)
+    
+    # Timing
+    issued_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime)
+    lifted_at = Column(DateTime)
+    lifted_by = Column(Integer, ForeignKey("users.id"))
+    lift_reason = Column(Text)
+    
+    def __repr__(self):
+        return f"<UserSanction(id={self.id}, user_id={self.user_id}, type={self.type}, active={self.is_active})>"
+
+
+class UserAppeal(Base):
+    """Model for user appeals of sanctions."""
+    __tablename__ = "user_appeals"
+    
+    id = Column(Integer, primary_key=True)
+    
+    # User making the appeal
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user = relationship("User")
+    
+    # Sanction being appealed
+    sanction_id = Column(Integer, ForeignKey("user_sanctions.id"), nullable=False)
+    sanction = relationship("UserSanction")
+    
+    # Appeal details
+    reason = Column(Text, nullable=False)
+    evidence = Column(Text)  # JSON data
+    
+    # Status
+    status = Column(SQLEnum(AppealStatus), default=AppealStatus.PENDING)
+    
+    # Review
+    reviewed_by = Column(Integer, ForeignKey("users.id"))
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
+    reviewed_at = Column(DateTime)
+    decision = Column(Text)
+    
+    # Timing
+    submitted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime)
+    
+    def __repr__(self):
+        return f"<UserAppeal(id={self.id}, user_id={self.user_id}, status={self.status})>"
+
+
+class ModerationTemplate(Base):
+    """Model for moderation response templates."""
+    __tablename__ = "moderation_templates"
+    
+    id = Column(Integer, primary_key=True)
+    
+    # Template details
+    name = Column(String(100), nullable=False)
+    response_text = Column(Text, nullable=False)
+    
+    # Usage tracking
+    usage_count = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<ModerationTemplate(id={self.id}, name={self.name})>"
+
+
+class ContentFilter(Base):
+    """Model for automated content filters."""
+    __tablename__ = "content_filters"
+    
+    id = Column(Integer, primary_key=True)
+    
+    # Filter details
+    name = Column(String(100), nullable=False)
+    filter_type = Column(String(50), nullable=False)  # keyword, regex, etc.
+    pattern = Column(Text, nullable=False)
+    action = Column(SQLEnum(ModerationAction), nullable=False)
+    severity = Column(Integer, default=5)
+    
+    # Status
+    enabled = Column(Boolean, default=True)
+    auto_report = Column(Boolean, default=False)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<ContentFilter(id={self.id}, name={self.name}, type={self.filter_type})>"

@@ -25,8 +25,8 @@ from jidelnicek.admin.models.moderation import (
     ReportReason, ModerationAction
 )
 from jidelnicek.recipe.models.recipe import Recipe
-from jidelnicek.recipe.models.review import Review
-from jidelnicek.core.cache import CacheService
+# from jidelnicek.recipe.models.review import Review  # TODO: Review model not implemented yet
+from jidelnicek.core.cache import CacheManager
 from jidelnicek.core.services.notification_service import NotificationService
 
 def sanitize_html(text: str) -> str:
@@ -48,7 +48,7 @@ class ContentModerationService:
     def __init__(
         self,
         session: Session,
-        cache_service: Optional[CacheService] = None,
+        cache_service: Optional[CacheManager] = None,
         notification_service: Optional[NotificationService] = None
     ):
         """
@@ -663,7 +663,8 @@ class ContentModerationService:
         if content_type == "recipe":
             return self.session.query(Recipe).filter_by(id=content_id).count() > 0
         elif content_type == "review":
-            return self.session.query(Review).filter_by(id=content_id).count() > 0
+            # return self.session.query(Review).filter_by(id=content_id).count() > 0  # TODO: Review model not implemented yet
+            return False  # TODO: Implement when Review model exists
         # Add more content types as needed
         return False
     
@@ -764,11 +765,13 @@ class ContentModerationService:
                     recipe.is_active = True
                     recipe.is_visible = True
         elif content_type == "review":
-            review = self.session.query(Review).filter_by(id=content_id).first()
-            if review:
-                if action == ModerationAction.REMOVE:
-                    self.session.delete(review)
-                # Add more actions as needed
+            # TODO: Review model not implemented yet
+            # review = self.session.query(Review).filter_by(id=content_id).first()
+            # if review:
+            #     if action == ModerationAction.REMOVE:
+            #         self.session.delete(review)
+            #     # Add more actions as needed
+            pass  # TODO: Implement when Review model exists
         
         # Clear cache if applicable
         if self.cache:

@@ -13,7 +13,8 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 import asyncio
 
-from jidelnicek.core.cache import cache_get, cache_set, get_redis_client
+from jidelnicek.core.cache import cache_get, cache_set
+from jidelnicek.core.dependencies import RedisClient
 from jidelnicek.core.websockets.connection_manager import connection_manager
 
 logger = logging.getLogger(__name__)
@@ -356,9 +357,9 @@ class ProgressTracker:
         )
         
         # Publish to Redis pub/sub for SSE
-        redis = get_redis_client()
-        if redis:
-            await redis.publish(progress_key, json.dumps(progress_dict))
+        async with RedisClient() as redis:
+            if redis:
+                await redis.publish(progress_key, json.dumps(progress_dict))
         
         # Send via WebSocket
         await connection_manager.send_export_progress(

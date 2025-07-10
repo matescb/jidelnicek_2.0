@@ -13,7 +13,7 @@ Tests cover all audit-related endpoints including:
 import pytest
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession

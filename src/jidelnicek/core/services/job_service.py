@@ -27,8 +27,14 @@ logger = logging.getLogger(__name__)
 class JobService(BaseService[Job]):
     """Service for managing background jobs."""
     
+    @property
+    def model(self) -> type[Job]:
+        """Return the Job model class."""
+        return Job
+    
     def __init__(self, db: AsyncSession):
-        super().__init__(Job, db)
+        super().__init__(db)
+        self.db = db  # Keep compatibility with existing code
     
     async def create_job(
         self,

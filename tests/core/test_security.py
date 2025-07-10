@@ -3,6 +3,7 @@ Test security middleware and headers.
 """
 
 import pytest
+import httpx
 from httpx import AsyncClient
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -53,9 +54,9 @@ class TestSecurityMiddleware:
             return {"status": "ok"}
         
         # Mock production environment
-        monkeypatch.setattr(settings, "is_production", True)
+        monkeypatch.setattr(settings, "environment", "production")
         
-        async with AsyncClient(app=app, base_url="https://test.com") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="https://test.com") as client:
             response = await client.get("/test")
             
             hsts_header = response.headers.get("Strict-Transport-Security")
@@ -148,7 +149,7 @@ class TestCSRFProtection:
         async def test_post():
             return {"status": "ok"}
         
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             # First GET to get CSRF token
             get_response = await client.get("/")
             csrf_token = get_response.headers.get("X-CSRF-Token")
@@ -194,7 +195,7 @@ class TestCSRFProtection:
         async def protected():
             return {"status": "ok"}
         
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             # Excluded path should work without CSRF
             response = await client.post("/auth/login", json={"data": "test"})
             assert response.status_code == 200
@@ -241,7 +242,7 @@ class TestRateLimiting:
         async def test_endpoint():
             return {"status": "ok"}
         
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             # Make requests up to the limit
             for i in range(5):
                 response = await client.get("/test")
@@ -275,7 +276,7 @@ class TestRateLimiting:
         async def limited():
             return {"status": "ok"}
         
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             # Excluded path should not be rate limited
             for _ in range(5):
                 response = await client.get("/health")
@@ -305,7 +306,7 @@ class TestRequestSanitization:
         async def upload(request: Request):
             return {"status": "ok"}
         
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             # Small request should pass
             response = await client.post(
                 "/upload",
@@ -333,7 +334,7 @@ class TestRequestSanitization:
         async def test(request: Request):
             return {"header": request.headers.get("X-Test", "")}
         
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             # Request with null byte in header should fail
             response = await client.get(
                 "/test",
@@ -377,7 +378,7 @@ class TestRequestSanitization:
         async def test():
             return {"status": "ok"}
         
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             # POST without Content-Type should fail
             response = await client.request(
                 "POST",

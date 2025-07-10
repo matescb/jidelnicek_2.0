@@ -186,3 +186,6 @@ export interface PaginatedResponse<T> {
 
 // Re-export invitation types
 export * from './invitation'
+
+// Re-export participant types
+export * from './participants'

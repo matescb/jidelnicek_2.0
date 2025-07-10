@@ -35,6 +35,7 @@ const NotFoundPage = lazy(() => import('@pages/NotFoundPage'))
 
 // Development-only pages
 const ThemeShowcasePage = lazy(() => import('@pages/theme/ThemeShowcasePage'))
+const UserProfileDemo = lazy(() => import('@pages/participants/UserProfileDemo'))
 
 export const router = createBrowserRouter([
   {
@@ -154,6 +155,10 @@ export const router = createBrowserRouter([
           path: 'theme-showcase',
           element: <ThemeShowcasePage />,
         },
+        {
+          path: 'user-profile-demo',
+          element: <UserProfileDemo />,
+        },
       ] : []),
       {
         path: '*',
@@ -190,5 +195,6 @@ export const routeConfig = {
   '/dashboard/settings': { label: 'Settings', icon: 'settings' },
   ...(import.meta.env.DEV ? {
     '/theme-showcase': { label: 'Theme Showcase', icon: 'palette' },
+    '/user-profile-demo': { label: 'User Profile Demo', icon: 'user' },
   } : {}),
 }

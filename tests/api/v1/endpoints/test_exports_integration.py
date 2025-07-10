@@ -17,16 +17,16 @@ from PyPDF2 import PdfReader
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.jidelnicek.api.v1.schemas.export_schemas import (
+from jidelnicek.api.v1.schemas.export_schemas import (
     ExportType,
     ExportFormat,
     ExportStatus
 )
-from src.jidelnicek.auth.models import User
-from src.jidelnicek.trip.models import Trip, Day, Meal, MealSlot
-from src.jidelnicek.recipe.models import Recipe, RecipeIngredient, RecipeCategory, Category
-from src.jidelnicek.common.models import Ingredient, NutritionalValue
-from src.jidelnicek.shopping.services.shopping_list_generator import ShoppingListGenerator
+from jidelnicek.auth.models import AuthUser as User
+from jidelnicek.trip.models import Trip, Day, Meal, MealSlot
+from jidelnicek.recipe.models import Recipe, RecipeIngredient, RecipeCategory, Category
+from jidelnicek.common.models import Ingredient, NutritionalValue
+from jidelnicek.shopping.services.shopping_list_generator import ShoppingListGenerator
 
 
 class TestExportIntegration:

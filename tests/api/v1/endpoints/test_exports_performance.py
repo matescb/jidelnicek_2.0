@@ -21,15 +21,15 @@ from unittest.mock import Mock, patch, AsyncMock
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.jidelnicek.api.v1.schemas.export_schemas import (
+from jidelnicek.api.v1.schemas.export_schemas import (
     ExportType,
     ExportFormat,
     ExportStatus
 )
-from src.jidelnicek.auth.models import User
-from src.jidelnicek.trip.models import Trip, Day, Meal
-from src.jidelnicek.recipe.models import Recipe, RecipeIngredient
-from src.jidelnicek.common.models import Ingredient
+from jidelnicek.auth.models import AuthUser as User
+from jidelnicek.trip.models import Trip, Day, Meal
+from jidelnicek.recipe.models import Recipe, RecipeIngredient
+from jidelnicek.common.models import Ingredient
 
 
 class TestExportPerformance:

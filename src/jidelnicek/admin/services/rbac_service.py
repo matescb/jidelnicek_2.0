@@ -26,7 +26,7 @@ from jidelnicek.admin.models.rbac import (
     Role, Permission, UserRoleAssignment, PermissionDelegation,
     role_permissions, user_roles, PermissionCategory
 )
-from jidelnicek.admin.services.audit_service import AuditService
+from jidelnicek.admin.services.audit_service import AdminAuditService
 from jidelnicek.core.cache import cache_result, invalidate_cache
 
 logger = logging.getLogger(__name__)
@@ -145,7 +145,7 @@ class RBACService:
         """Initialize RBAC service."""
         self.db = db
         self.redis = redis_client
-        self.audit_service = AuditService(db)
+        self.audit_service = AdminAuditService(db)
     
     # Permission checking methods
     

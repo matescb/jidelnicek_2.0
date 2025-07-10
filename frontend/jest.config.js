@@ -3,6 +3,8 @@ module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  modulePathIgnorePatterns: ['<rootDir>/dist/'],
+  automock: false,
   globals: {
     'import.meta': {
       env: {
@@ -12,6 +14,8 @@ module.exports = {
     },
   },
   moduleNameMapper: {
+    // Mock auth module to avoid import.meta issues
+    '^@/api/auth$': '<rootDir>/src/api/__mocks__/auth.ts',
     // Handle CSS imports
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     // Handle image imports

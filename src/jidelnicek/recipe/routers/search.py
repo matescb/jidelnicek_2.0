@@ -25,7 +25,8 @@ from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.sql import exists
 
 from jidelnicek.core.dependencies import get_db
-from jidelnicek.core.cache import cache_key_wrapper, get_redis_client
+from jidelnicek.core.cache import cache_key_wrapper
+from jidelnicek.core.dependencies import RedisClient
 from jidelnicek.auth.dependencies.auth import get_current_user_optional
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.recipe.models.recipe import Recipe
@@ -73,11 +74,11 @@ async def track_search_analytics(
         
         # Update search term popularity
         if event.query:
-            redis_client = await get_redis_client()
-            if redis_client:
-                key = f"search:popular:{datetime.utcnow().strftime('%Y%m%d')}"
-                await redis_client.zincrby(key, 1, event.query.lower())
-                await redis_client.expire(key, 86400 * 7)  # Keep for 7 days
+            async with RedisClient() as redis_client:
+                if redis_client:
+                    key = f"search:popular:{datetime.utcnow().strftime('%Y%m%d')}"
+                    await redis_client.zincrby(key, 1, event.query.lower())
+                    await redis_client.expire(key, 86400 * 7)  # Keep for 7 days
     except Exception as e:
         logger.error(f"Error tracking search analytics: {e}")
 
@@ -796,33 +797,33 @@ async def get_popular_searches(
     
     # Get popular search terms from Redis
     popular_searches = []
-    redis_client = await get_redis_client()
-    if redis_client:
-        try:
-            # Get search terms for the period
-            date_keys = []
-            current_date = datetime.utcnow()
-            for i in range(time_window.days):
-                date = current_date - timedelta(days=i)
-                date_keys.append(f"search:popular:{date.strftime('%Y%m%d')}")
-            
-            # Aggregate search counts
-            search_counts = Counter()
-            for key in date_keys:
-                terms = await redis_client.zrevrange(key, 0, 50, withscores=True)
-                for term, count in terms:
-                    search_counts[term.decode()] += int(count)
-            
-            # Get top search terms
-            for term, count in search_counts.most_common(10):
-                popular_searches.append(PopularSearch(
-                    term=term,
-                    count=count,
-                    trend="up" if count > 10 else "stable",
-                    trend_percentage=None  # TODO: Calculate trend
-                ))
-        except Exception as e:
-            logger.error(f"Error getting popular searches from Redis: {e}")
+    async with RedisClient() as redis_client:
+        if redis_client:
+            try:
+                # Get search terms for the period
+                date_keys = []
+                current_date = datetime.utcnow()
+                for i in range(time_window.days):
+                    date = current_date - timedelta(days=i)
+                    date_keys.append(f"search:popular:{date.strftime('%Y%m%d')}")
+                
+                # Aggregate search counts
+                search_counts = Counter()
+                for key in date_keys:
+                    terms = await redis_client.zrevrange(key, 0, 50, withscores=True)
+                    for term, count in terms:
+                        search_counts[term.decode()] += int(count)
+                
+                # Get top search terms
+                for term, count in search_counts.most_common(10):
+                    popular_searches.append(PopularSearch(
+                        term=term,
+                        count=count,
+                        trend="up" if count > 10 else "stable",
+                        trend_percentage=None  # TODO: Calculate trend
+                    ))
+            except Exception as e:
+                logger.error(f"Error getting popular searches from Redis: {e}")
     
     # Get trending recipes
     trending_recipes_stmt = (

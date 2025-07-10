@@ -5,13 +5,25 @@ This module provides a simpler import path for cache utilities.
 """
 
 from .cache_utils.cache import (
-    get_redis_client,
     cache_get,
     cache_set,
     cache_delete,
     cache_exists,
     cached,
 )
+
+# Add missing functions for backward compatibility
+async def cache_result(key: str, func, ttl: int = 300):
+    """Cache result of a function call."""
+    result = await cache_get(key)
+    if result is None:
+        result = await func()
+        await cache_set(key, result, ttl)
+    return result
+
+async def invalidate_cache(key: str):
+    """Invalidate cache entry."""
+    return await cache_delete(key)
 
 # Create a cache manager instance for backward compatibility
 class CacheManager:
@@ -59,7 +71,6 @@ def cache_key_wrapper(prefix: str, ttl: int = 300):
 cache_result = cache_key_wrapper
 
 __all__ = [
-    "get_redis_client",
     "cache_get",
     "cache_set",
     "cache_delete",

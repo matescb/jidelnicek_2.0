@@ -101,9 +101,9 @@ class TestFileUploadValidator:
     def mock_file(self):
         """Create mock upload file."""
         file = Mock(spec=UploadFile)
-        file.filename = "test.jpg"
-        file.content_type = "image/jpeg"
-        file.read = AsyncMock(return_value=b"fake_jpeg_data")
+        file.filename = "test.pdf"
+        file.content_type = "application/pdf"
+        file.read = AsyncMock(return_value=b"fake_pdf_data")
         file.seek = AsyncMock()
         return file
     
@@ -198,8 +198,8 @@ class TestFileUploadValidator:
     async def test_file_upload_validator_unsafe_filename(self, validator):
         """Test file validation with unsafe filename."""
         mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "../../../etc/passwd"
-        mock_file.content_type = "image/jpeg"
+        mock_file.filename = "../../../etc/passwd.pdf"
+        mock_file.content_type = "application/pdf"
         mock_file.read = AsyncMock(return_value=b"fake_data")
         mock_file.seek = AsyncMock()
         
@@ -228,14 +228,14 @@ class TestFileUploadValidator:
     async def test_file_upload_validator_magic_mime_detection(self, validator):
         """Test MIME type detection with magic library."""
         mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.jpg"
+        mock_file.filename = "test.pdf"
         mock_file.content_type = "application/octet-stream"  # Wrong content type
-        mock_file.read = AsyncMock(return_value=b"fake_jpeg_data")
+        mock_file.read = AsyncMock(return_value=b"fake_pdf_data")
         mock_file.seek = AsyncMock()
         
         with patch('jidelnicek.core.validation.validation.MAGIC_AVAILABLE', True):
             with patch('jidelnicek.core.validation.validation.magic') as mock_magic:
-                mock_magic.from_buffer.return_value = "image/jpeg"
+                mock_magic.from_buffer.return_value = "application/pdf"
                 
                 # Should pass because magic detects correct MIME type
                 result = await validator(mock_file)
@@ -245,9 +245,9 @@ class TestFileUploadValidator:
     async def test_file_upload_validator_magic_error(self, validator):
         """Test handling magic library error."""
         mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.jpg"
-        mock_file.content_type = "image/jpeg"
-        mock_file.read = AsyncMock(return_value=b"fake_jpeg_data")
+        mock_file.filename = "test.pdf"
+        mock_file.content_type = "application/pdf"
+        mock_file.read = AsyncMock(return_value=b"fake_pdf_data")
         mock_file.seek = AsyncMock()
         
         with patch('jidelnicek.core.validation.validation.MAGIC_AVAILABLE', True):
@@ -867,15 +867,15 @@ class TestConvenienceFunctions:
     async def test_validate_file_upload(self):
         """Test validate_file_upload function."""
         mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.jpg"
-        mock_file.content_type = "image/jpeg"
-        mock_file.read = AsyncMock(return_value=b"fake_jpeg_data")
+        mock_file.filename = "test.pdf"
+        mock_file.content_type = "application/pdf"
+        mock_file.read = AsyncMock(return_value=b"fake_pdf_data")
         mock_file.seek = AsyncMock()
         
         result = await validate_file_upload(
             mock_file,
             max_size=1024 * 1024,
-            allowed_extensions=[".jpg"],
+            allowed_extensions=[".pdf"],
             require_image=False
         )
         

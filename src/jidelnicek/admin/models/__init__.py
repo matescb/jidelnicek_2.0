@@ -15,6 +15,11 @@ from .admin import (
     AdminAuditLog,
     AdminNotification,
     AuditLogChecksum,
+    AuditLogArchive,
+    AuditAlert,
+    AuditMetrics,
+    IngredientModeration,
+    IngredientModerationStatus,
 )
 
 __all__ = [
@@ -31,4 +36,9 @@ __all__ = [
     "AdminAuditLog", 
     "AdminNotification",
     "AuditLogChecksum",
+    "AuditLogArchive",
+    "AuditAlert",
+    "AuditMetrics",
+    "IngredientModeration",
+    "IngredientModerationStatus",
 ]

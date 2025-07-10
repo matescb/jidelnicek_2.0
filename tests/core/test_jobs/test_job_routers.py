@@ -11,6 +11,7 @@ import uuid
 
 from fastapi import status
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from jidelnicek.core.models.job import Job, JobStatus, JobPriority, JobType
 from jidelnicek.core.schemas.job import (
@@ -37,7 +38,6 @@ def sample_job():
         queue_name="default",
         created_at=datetime.utcnow(),
         started_at=datetime.utcnow(),
-        duration=0,
         retry_count=0,
         max_retries=3,
     )
@@ -64,7 +64,7 @@ class TestJobEndpoints:
     """Test job management endpoints."""
     
     @pytest.mark.asyncio
-    async def test_create_job(self, client: TestClient, mock_job_service, mock_current_user, sample_job):
+    async def test_create_job(self, client: AsyncClient, mock_job_service, mock_current_user, sample_job):
         """Test creating a new job."""
         # Arrange
         job_data = {
@@ -83,7 +83,7 @@ class TestJobEndpoints:
                 mock_job_service.submit_job.return_value = sample_job
                 
                 # Act
-                response = client.post("/api/v1/jobs/", json=job_data)
+                response = await client.post("/api/v1/jobs/", json=job_data)
                 
                 # Assert
                 assert response.status_code == status.HTTP_201_CREATED
@@ -95,7 +95,7 @@ class TestJobEndpoints:
                 mock_job_service.submit_job.assert_called_once()
     
     @pytest.mark.asyncio
-    async def test_get_job(self, client: TestClient, mock_job_service, mock_current_user, sample_job):
+    async def test_get_job(self, client: AsyncClient, mock_job_service, mock_current_user, sample_job):
         """Test getting job details."""
         # Arrange
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
@@ -103,7 +103,7 @@ class TestJobEndpoints:
                 mock_job_service.get_job.return_value = sample_job
                 
                 # Act
-                response = client.get("/api/v1/jobs/1")
+                response = await client.get("/api/v1/jobs/1")
                 
                 # Assert
                 assert response.status_code == status.HTTP_200_OK
@@ -114,7 +114,7 @@ class TestJobEndpoints:
                 mock_job_service.get_job.assert_called_once_with(1, 1)
     
     @pytest.mark.asyncio
-    async def test_list_jobs(self, client: TestClient, mock_job_service, mock_current_user):
+    async def test_list_jobs(self, client: AsyncClient, mock_job_service, mock_current_user):
         """Test listing jobs with filters."""
         # Arrange
         jobs = [
@@ -128,7 +128,7 @@ class TestJobEndpoints:
                 mock_job_service.count.return_value = 2
                 
                 # Act
-                response = client.get(
+                response = await client.get(
                     "/api/v1/jobs/",
                     params={
                         "status": "running",
@@ -147,7 +147,7 @@ class TestJobEndpoints:
                 assert data["limit"] == 10
     
     @pytest.mark.asyncio
-    async def test_cancel_job(self, client: TestClient, mock_job_service, mock_current_user, sample_job):
+    async def test_cancel_job(self, client: AsyncClient, mock_job_service, mock_current_user, sample_job):
         """Test cancelling a job."""
         # Arrange
         sample_job.status = JobStatus.CANCELLED
@@ -158,7 +158,7 @@ class TestJobEndpoints:
                     mock_job_service.cancel_job.return_value = sample_job
                     
                     # Act
-                    response = client.post("/api/v1/jobs/1/cancel")
+                    response = await client.post("/api/v1/jobs/1/cancel")
                     
                     # Assert
                     assert response.status_code == status.HTTP_200_OK
@@ -168,7 +168,7 @@ class TestJobEndpoints:
                     mock_cache_delete.assert_called_once_with("job:1")
     
     @pytest.mark.asyncio
-    async def test_retry_job(self, client: TestClient, mock_job_service, mock_current_user):
+    async def test_retry_job(self, client: AsyncClient, mock_job_service, mock_current_user):
         """Test retrying a failed job."""
         # Arrange
         new_job = Job(
@@ -185,7 +185,7 @@ class TestJobEndpoints:
                 mock_job_service.retry_job.return_value = new_job
                 
                 # Act
-                response = client.post("/api/v1/jobs/1/retry")
+                response = await client.post("/api/v1/jobs/1/retry")
                 
                 # Assert
                 assert response.status_code == status.HTTP_201_CREATED
@@ -195,7 +195,7 @@ class TestJobEndpoints:
                 assert data["retry_count"] == 1
     
     @pytest.mark.asyncio
-    async def test_delete_job(self, client: TestClient, mock_job_service, mock_current_user, sample_job):
+    async def test_delete_job(self, client: AsyncClient, mock_job_service, mock_current_user, sample_job):
         """Test deleting a completed job."""
         # Arrange
         sample_job.status = JobStatus.COMPLETED
@@ -207,7 +207,7 @@ class TestJobEndpoints:
                     mock_job_service.delete_job.return_value = None
                     
                     # Act
-                    response = client.delete("/api/v1/jobs/1")
+                    response = await client.delete("/api/v1/jobs/1")
                     
                     # Assert
                     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -215,7 +215,7 @@ class TestJobEndpoints:
                     mock_cache_delete.assert_called_once_with("job:1")
     
     @pytest.mark.asyncio
-    async def test_delete_job_not_terminal(self, client: TestClient, mock_job_service, mock_current_user, sample_job):
+    async def test_delete_job_not_terminal(self, client: AsyncClient, mock_job_service, mock_current_user, sample_job):
         """Test deleting a running job (should fail)."""
         # Arrange
         sample_job.status = JobStatus.RUNNING
@@ -225,14 +225,14 @@ class TestJobEndpoints:
                 mock_job_service.get_job.return_value = sample_job
                 
                 # Act
-                response = client.delete("/api/v1/jobs/1")
+                response = await client.delete("/api/v1/jobs/1")
                 
                 # Assert
                 assert response.status_code == status.HTTP_400_BAD_REQUEST
                 assert "Cannot delete job in running state" in response.json()["detail"]
     
     @pytest.mark.asyncio
-    async def test_get_job_statistics(self, client: TestClient, mock_job_service, mock_current_user):
+    async def test_get_job_statistics(self, client: AsyncClient, mock_job_service, mock_current_user):
         """Test getting job statistics."""
         # Arrange
         stats = {
@@ -258,7 +258,7 @@ class TestJobEndpoints:
                 mock_job_service.get_job_statistics.return_value = stats
                 
                 # Act
-                response = client.get("/api/v1/jobs/statistics/summary")
+                response = await client.get("/api/v1/jobs/statistics/summary")
                 
                 # Assert
                 assert response.status_code == status.HTTP_200_OK
@@ -267,7 +267,7 @@ class TestJobEndpoints:
                 assert data["success_rate"] == 80.0
     
     @pytest.mark.asyncio
-    async def test_export_shopping_list(self, client: TestClient, mock_job_service, mock_current_user):
+    async def test_export_shopping_list(self, client: AsyncClient, mock_job_service, mock_current_user):
         """Test creating a shopping list export job."""
         # Arrange
         export_data = {
@@ -293,7 +293,7 @@ class TestJobEndpoints:
                 mock_job_service.submit_job.return_value = created_job
                 
                 # Act
-                response = client.post("/api/v1/jobs/export/shopping-list", json=export_data)
+                response = await client.post("/api/v1/jobs/export/shopping-list", json=export_data)
                 
                 # Assert
                 assert response.status_code == status.HTTP_201_CREATED
@@ -309,7 +309,7 @@ class TestJobEndpoints:
                 assert create_call.kwargs["priority"] == JobPriority.HIGH
     
     @pytest.mark.asyncio
-    async def test_export_trip_data(self, client: TestClient, mock_job_service, mock_current_user):
+    async def test_export_trip_data(self, client: AsyncClient, mock_job_service, mock_current_user):
         """Test creating a trip data export job."""
         # Arrange
         export_data = {
@@ -335,7 +335,7 @@ class TestJobEndpoints:
                 mock_job_service.submit_job.return_value = created_job
                 
                 # Act
-                response = client.post("/api/v1/jobs/export/trip", json=export_data)
+                response = await client.post("/api/v1/jobs/export/trip", json=export_data)
                 
                 # Assert
                 assert response.status_code == status.HTTP_201_CREATED
@@ -344,7 +344,7 @@ class TestJobEndpoints:
                 assert "Trip 456" in data["name"]
     
     @pytest.mark.asyncio
-    async def test_export_recipes(self, client: TestClient, mock_job_service, mock_current_user):
+    async def test_export_recipes(self, client: AsyncClient, mock_job_service, mock_current_user):
         """Test creating a recipe export job."""
         # Arrange
         export_data = {
@@ -369,7 +369,7 @@ class TestJobEndpoints:
                 mock_job_service.submit_job.return_value = created_job
                 
                 # Act
-                response = client.post("/api/v1/jobs/export/recipes", json=export_data)
+                response = await client.post("/api/v1/jobs/export/recipes", json=export_data)
                 
                 # Assert
                 assert response.status_code == status.HTTP_201_CREATED
@@ -378,7 +378,7 @@ class TestJobEndpoints:
                 assert "(5)" in data["name"]
     
     @pytest.mark.asyncio
-    async def test_download_export(self, client: TestClient, mock_current_user, tmp_path):
+    async def test_download_export(self, client: AsyncClient, mock_current_user, tmp_path):
         """Test downloading an exported file."""
         # Arrange
         export_id = str(uuid.uuid4())
@@ -395,7 +395,7 @@ class TestJobEndpoints:
         with patch('jidelnicek.core.routers.jobs.get_current_user', return_value=mock_current_user):
             with patch('jidelnicek.core.routers.jobs.cache_get', return_value=export_data):
                 # Act
-                response = client.get(f"/api/v1/exports/{export_id}/download")
+                response = await client.get(f"/api/v1/exports/{export_id}/download")
                 
                 # Assert
                 assert response.status_code == status.HTTP_200_OK
@@ -403,7 +403,7 @@ class TestJobEndpoints:
                 assert response.content == b"PDF content"
     
     @pytest.mark.asyncio
-    async def test_download_export_not_found(self, client: TestClient, mock_current_user):
+    async def test_download_export_not_found(self, client: AsyncClient, mock_current_user):
         """Test downloading a non-existent export."""
         # Arrange
         export_id = str(uuid.uuid4())
@@ -411,14 +411,14 @@ class TestJobEndpoints:
         with patch('jidelnicek.core.routers.jobs.get_current_user', return_value=mock_current_user):
             with patch('jidelnicek.core.routers.jobs.cache_get', return_value=None):
                 # Act
-                response = client.get(f"/api/v1/exports/{export_id}/download")
+                response = await client.get(f"/api/v1/exports/{export_id}/download")
                 
                 # Assert
                 assert response.status_code == status.HTTP_404_NOT_FOUND
                 assert "Export not found" in response.json()["detail"]
     
     @pytest.mark.asyncio
-    async def test_download_export_access_denied(self, client: TestClient, mock_current_user):
+    async def test_download_export_access_denied(self, client: AsyncClient, mock_current_user):
         """Test downloading an export created by another user."""
         # Arrange
         export_id = str(uuid.uuid4())
@@ -431,7 +431,7 @@ class TestJobEndpoints:
         with patch('jidelnicek.core.routers.jobs.get_current_user', return_value=mock_current_user):
             with patch('jidelnicek.core.routers.jobs.cache_get', return_value=export_data):
                 # Act
-                response = client.get(f"/api/v1/exports/{export_id}/download")
+                response = await client.get(f"/api/v1/exports/{export_id}/download")
                 
                 # Assert
                 assert response.status_code == status.HTTP_403_FORBIDDEN
