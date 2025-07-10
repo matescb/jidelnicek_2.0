@@ -118,6 +118,12 @@ async def async_client(db_session: AsyncSession, mock_redis: AsyncMock) -> Async
 
 
 @pytest_asyncio.fixture(scope="function")
+async def client(async_client: AsyncClient) -> AsyncClient:
+    """Alias for async_client to match test expectations."""
+    return async_client
+
+
+@pytest_asyncio.fixture(scope="function")
 async def existing_user(db_session: AsyncSession) -> AuthUser:
     """Create an existing user for tests."""
     user = AuthUser(

@@ -14,9 +14,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-from jidelnicek.recipe.models.categorization import Category, Tag
 from jidelnicek.core.dependencies import DatabaseSession, init_db, close_db
 from jidelnicek.core.utils import slugify
+
+# Import models more specifically to avoid circular imports
+from jidelnicek.recipe.models.categorization import Category, Tag
 
 logger = logging.getLogger(__name__)
 

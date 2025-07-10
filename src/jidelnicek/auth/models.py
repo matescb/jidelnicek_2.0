@@ -192,26 +192,22 @@ class AuthUser(Base):
         passive_deletes=True
     )
     
-    # Trip relationships
-    trips: Mapped[List["Trip"]] = relationship(
-        "Trip",
-        back_populates="user",
-        cascade="all, delete-orphan",
-        lazy="select",
-        order_by="Trip.created_at.desc()",
-        passive_deletes=True,
-        foreign_keys="Trip.user_id"
-    )
+    # Trip relationships - temporarily disabled due to circular import issues
+    # trips: Mapped[List["Trip"]] = relationship(
+    #     "Trip",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan",
+    #     lazy="select",
+    #     passive_deletes=True
+    # )
     
-    trip_templates: Mapped[List["TripTemplate"]] = relationship(
-        "TripTemplate",
-        back_populates="user",
-        cascade="all, delete-orphan",
-        lazy="select",
-        order_by="TripTemplate.created_at.desc()",
-        passive_deletes=True,
-        foreign_keys="TripTemplate.user_id"
-    )
+    # trip_templates: Mapped[List["TripTemplate"]] = relationship(
+    #     "TripTemplate",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan",
+    #     lazy="select",
+    #     passive_deletes=True
+    # )
     
     # Job relationships
     jobs: Mapped[List["Job"]] = relationship(

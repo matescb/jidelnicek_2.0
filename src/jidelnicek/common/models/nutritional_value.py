@@ -83,18 +83,8 @@ class NutritionalValue(Base):
     vitamin_e_mg: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=10, scale=2))
     vitamin_k_ug: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=10, scale=2))
     
-    # Relationships
-    ingredients: Mapped[List["Ingredient"]] = relationship(
-        "Ingredient",
-        back_populates="nutritional_value",
-        cascade="all, delete-orphan"
-    )
-    
-    snacks: Mapped[List["Snack"]] = relationship(
-        "Snack",
-        back_populates="nutritional_value",
-        cascade="all, delete-orphan"
-    )
+    # Note: Relationships with Ingredient and Snack are handled via JSONB fields
+    # in those models rather than foreign key relationships
     
     @validates('calories', 'proteins_g', 'carbohydrates_g', 'fats_g')
     def validate_required_nutrients(self, key, value):

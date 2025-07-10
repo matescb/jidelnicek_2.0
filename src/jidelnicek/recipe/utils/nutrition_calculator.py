@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Union
 from uuid import UUID
 import time
 
-from jidelnicek.common.models import NutritionalValue
+# from jidelnicek.common.models import NutritionalValue  # Temporarily disabled
 from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
 
 

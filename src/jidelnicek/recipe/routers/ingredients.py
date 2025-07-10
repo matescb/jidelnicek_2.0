@@ -32,7 +32,7 @@ from jidelnicek.auth.dependencies.auth import get_current_user, get_current_user
 from jidelnicek.auth.models import AuthUser
 from jidelnicek.common.models.ingredient import Ingredient
 from jidelnicek.recipe.models.recipe_ingredient import RecipeIngredient
-from jidelnicek.common.models.nutritional_value import NutritionalValue
+# from jidelnicek.common.models.nutritional_value import NutritionalValue  # Temporarily disabled
 
 logger = logging.getLogger(__name__)
 
