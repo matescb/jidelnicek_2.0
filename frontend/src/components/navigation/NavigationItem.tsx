@@ -17,13 +17,15 @@ interface NavigationItemProps {
   isOpen: boolean;
   currentPath: string;
   level?: number;
+  miniMode?: boolean;
 }
 
 export const NavigationItem: React.FC<NavigationItemProps> = ({ 
   item, 
   isOpen, 
   currentPath,
-  level = 0 
+  level = 0,
+  miniMode = false
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -97,6 +99,21 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
     </>
   );
 
+  // Wrapper for mini mode tooltip
+  const wrapWithTooltip = (content: React.ReactNode) => {
+    if (!isOpen && miniMode) {
+      return (
+        <div className="relative group/tooltip">
+          {content}
+          <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+            {item.label}
+          </div>
+        </div>
+      );
+    }
+    return content;
+  };
+
   const linkClasses = cn(
     'group flex items-center rounded-md px-2 py-2 text-sm font-medium transition-colors',
     level > 0 && 'ml-4',
@@ -108,31 +125,37 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
   return (
     <>
       {item.external ? (
-        <a
-          href={item.path}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={linkClasses}
-        >
-          {linkContent}
-        </a>
+        wrapWithTooltip(
+          <a
+            href={item.path}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkClasses}
+          >
+            {linkContent}
+          </a>
+        )
       ) : hasChildren ? (
-        <button
-          onClick={handleClick}
-          className={`${linkClasses} w-full`}
-        >
-          {linkContent}
-        </button>
+        wrapWithTooltip(
+          <button
+            onClick={handleClick}
+            className={`${linkClasses} w-full`}
+          >
+            {linkContent}
+          </button>
+        )
       ) : (
-        <NavLink
-          to={item.path}
-          className={({ isActive }) => cn(
-            linkClasses,
-            isActive && 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-          )}
-        >
-          {linkContent}
-        </NavLink>
+        wrapWithTooltip(
+          <NavLink
+            to={item.path}
+            className={({ isActive }) => cn(
+              linkClasses,
+              isActive && 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
+            )}
+          >
+            {linkContent}
+          </NavLink>
+        )
       )}
 
       {/* Nested Items */}
@@ -145,6 +168,7 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
               isOpen={isOpen}
               currentPath={currentPath}
               level={level + 1}
+              miniMode={miniMode}
             />
           ))}
         </div>

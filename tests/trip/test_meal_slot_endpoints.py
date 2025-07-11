@@ -3,6 +3,7 @@ Tests for trip meal slot API endpoints.
 """
 
 import pytest
+import pytest_asyncio
 from uuid import uuid4
 
 from httpx import AsyncClient
@@ -11,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jidelnicek.trip.models import Trip, TripDay, TripMealSlot
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_with_days(db_session: AsyncSession, test_user):
     """Create a test trip with days."""
     trip = Trip(
@@ -38,7 +39,7 @@ async def trip_with_days(db_session: AsyncSession, test_user):
     return trip
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def source_trip_with_meal_slots(db_session: AsyncSession, test_user):
     """Create a source trip with meal slots configured."""
     trip = Trip(

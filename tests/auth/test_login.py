@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,7 +24,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.auth.services.user_service import UserService
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_user(db_session: AsyncSession) -> AuthUser:
     """Create a test user for login tests."""
     user = AuthUser(
@@ -44,7 +45,7 @@ async def test_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def inactive_user(db_session: AsyncSession) -> AuthUser:
     """Create an inactive test user."""
     user = AuthUser(
@@ -59,7 +60,7 @@ async def inactive_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def locked_user(db_session: AsyncSession) -> AuthUser:
     """Create a locked test user."""
     user = AuthUser(

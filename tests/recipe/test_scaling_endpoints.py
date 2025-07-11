@@ -3,6 +3,7 @@ Tests for recipe scaling API endpoints.
 """
 
 import pytest
+import pytest_asyncio
 from decimal import Decimal
 from uuid import uuid4
 from typing import Dict, Any
@@ -23,7 +24,7 @@ pytestmark = pytest.mark.asyncio
 class TestRecipeScalingEndpoints:
     """Test recipe scaling preview endpoints."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def auth_headers(self, async_client: AsyncClient) -> Dict[str, str]:
         """Create authenticated user and return auth headers."""
         # Register user
@@ -44,7 +45,7 @@ class TestRecipeScalingEndpoints:
         
         return {"Authorization": f"Bearer {token}"}
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def sample_recipe(self, db_session, existing_user) -> Recipe:
         """Create a sample recipe with ingredients."""
         # Create nutritional values

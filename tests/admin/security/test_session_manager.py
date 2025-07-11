@@ -3,6 +3,8 @@ Tests for admin session management.
 """
 
 import pytest
+import pytest_asyncio
+import asyncio
 from datetime import datetime, timedelta
 from uuid import uuid4
 import secrets
@@ -45,7 +47,7 @@ def regular_user():
     )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def session_manager(async_db, redis_client):
     """Create session manager instance."""
     return SessionManager(async_db, redis_client)
@@ -312,5 +314,3 @@ class TestSessionManager:
         assert len(active) == 0
 
 
-# Import asyncio
-import asyncio

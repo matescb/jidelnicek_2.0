@@ -10,6 +10,7 @@ These tests verify the tag functionality including:
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta, timezone
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_tags(db_session: AsyncSession) -> list[Tag]:
     """Create test tags with various characteristics."""
     tags = [
@@ -51,7 +52,7 @@ async def test_tags(db_session: AsyncSession) -> list[Tag]:
     return tags
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_user(db_session: AsyncSession) -> AuthUser:
     """Create a test user."""
     user = AuthUser(
@@ -71,7 +72,7 @@ async def test_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_recipe_with_tags(
     db_session: AsyncSession,
     test_user: AuthUser,

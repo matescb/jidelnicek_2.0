@@ -1,5 +1,5 @@
-module.exports = {
-  preset: 'ts-jest',
+export default {
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
@@ -10,6 +10,8 @@ module.exports = {
       env: {
         DEV: false,
         VITE_API_URL: '/api/v1',
+        VITE_API_BASE_URL: 'http://localhost:8000',
+        VITE_USE_MOCK_AUTH: 'true',
       },
     },
   },
@@ -22,6 +24,8 @@ module.exports = {
     '^@/utils/apiClient$': '<rootDir>/src/api/__mocks__/client.ts',
     // Mock @mui/lab components
     '^@mui/lab$': '<rootDir>/src/__mocks__/@mui/lab.ts',
+    // Mock vitest for Jest compatibility
+    '^vitest$': '<rootDir>/src/__mocks__/vitest.ts',
     // Handle CSS imports
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     // Handle image imports
@@ -36,17 +40,19 @@ module.exports = {
     '^@store/(.*)$': '<rootDir>/src/store/$1',
     '^@store$': '<rootDir>/src/store/index.ts',
     '^@stores/(.*)$': '<rootDir>/src/store/slices/$1',
+    '^.*stores/(.*)$': '<rootDir>/src/store/slices/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@api/(.*)$': '<rootDir>/src/api/$1',
     '^@context/(.*)$': '<rootDir>/src/context/$1',
     '^@lib/(.*)$': '<rootDir>/src/lib/$1',
+    '^@styles/(.*)$': '<rootDir>/src/styles/$1',
   },
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
         tsconfig: {
-          jsx: 'react',
+          jsx: 'react-jsx',
         },
         useESM: true,
       },

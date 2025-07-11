@@ -9,6 +9,7 @@ This module tests the coefficient calculator functionality including:
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, timedelta
 from decimal import Decimal
 from uuid import uuid4
@@ -28,7 +29,7 @@ from jidelnicek.trip.models.day import TripDay
 from jidelnicek.trip.models.meal import TripMeal
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_trip(db_session: AsyncSession, test_user):
     """Create a sample trip with participants and days."""
     # Create trip

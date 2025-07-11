@@ -10,6 +10,14 @@ export * from './ThemeToggle';
 export * from './ThemeToggleAdvanced';
 export * from './LanguageSelector';
 
+// Export new responsive navigation components
+export * from './NavigationContext';
+export * from './ResponsiveNav';
+export * from './MegaMenu';
+export * from './MobileBottomNav';
+export * from './CollapsibleSidebar';
+export * from './SearchModal';
+
 // Export breadcrumb system
 export * from './breadcrumbs';
 

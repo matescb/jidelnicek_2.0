@@ -10,6 +10,7 @@ Tests cover:
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -22,7 +23,7 @@ from jidelnicek.admin.models.rbac import Role, Permission
 from jidelnicek.admin.services.rbac_service import RBACService
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def super_admin_user(db_session: AsyncSession) -> AuthUser:
     """Create a super admin user."""
     user = AuthUser(
@@ -50,7 +51,7 @@ async def super_admin_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def admin_token(super_admin_user: AuthUser, async_client: AsyncClient) -> str:
     """Get auth token for super admin user."""
     # Set password for login
@@ -73,7 +74,7 @@ async def admin_token(super_admin_user: AuthUser, async_client: AsyncClient) -> 
     return response.json()["access_token"]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def regular_user(db_session: AsyncSession) -> AuthUser:
     """Create a regular user."""
     user = AuthUser(
@@ -88,7 +89,7 @@ async def regular_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def regular_token(regular_user: AuthUser, async_client: AsyncClient) -> str:
     """Get auth token for regular user."""
     from jidelnicek.auth.utils.password import hash_password

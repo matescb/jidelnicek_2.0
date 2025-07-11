@@ -7,6 +7,7 @@ and various cloning scenarios.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal
 from uuid import uuid4, UUID
@@ -29,7 +30,7 @@ pytestmark = pytest.mark.asyncio
 class TestTripCloningEndpoint:
     """Test trip cloning API endpoint."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def auth_headers(self, async_client: AsyncClient) -> Dict[str, str]:
         """Create authenticated user and return auth headers."""
         # Register user
@@ -50,7 +51,7 @@ class TestTripCloningEndpoint:
         
         return {"Authorization": f"Bearer {token}"}
         
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def other_auth_headers(self, async_client: AsyncClient) -> Dict[str, str]:
         """Create another authenticated user for permission testing."""
         # Register user
@@ -71,7 +72,7 @@ class TestTripCloningEndpoint:
         
         return {"Authorization": f"Bearer {token}"}
         
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def sample_trip_with_meals(
         self,
         async_client: AsyncClient,
@@ -488,12 +489,12 @@ class TestTripCloningEndpoint:
 class TestTripCloningService:
     """Test trip cloning service method directly."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def trip_service(self, db_session):
         """Create trip service instance."""
         return TripService(db_session)
         
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def test_user(self, db_session) -> AuthUser:
         """Create a test user."""
         user = AuthUser(
@@ -507,7 +508,7 @@ class TestTripCloningService:
         await db_session.refresh(user)
         return user
         
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def test_trip(self, db_session, test_user) -> Trip:
         """Create a test trip with participants and meals."""
         trip = Trip(
@@ -711,7 +712,7 @@ class TestTripCloningService:
 class TestTripCloningEdgeCases:
     """Test edge cases and error conditions for trip cloning."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def auth_headers(self, async_client: AsyncClient) -> Dict[str, str]:
         """Create authenticated user and return auth headers."""
         register_data = {

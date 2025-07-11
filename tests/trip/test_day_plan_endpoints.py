@@ -7,6 +7,7 @@ shopping lists, nutrition calculations, and export functionality.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from uuid import uuid4, UUID
@@ -48,7 +49,7 @@ class MockRecipe:
 class TestDayPlanEndpoints:
     """Test day plan API endpoints."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def auth_headers(self, async_client: AsyncClient) -> Dict[str, str]:
         """Create authenticated user and return auth headers."""
         # Register user
@@ -69,7 +70,7 @@ class TestDayPlanEndpoints:
         
         return {"Authorization": f"Bearer {token}"}
         
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def other_auth_headers(self, async_client: AsyncClient) -> Dict[str, str]:
         """Create another authenticated user for permission testing."""
         # Register user
@@ -90,7 +91,7 @@ class TestDayPlanEndpoints:
         
         return {"Authorization": f"Bearer {token}"}
         
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def sample_recipes(self) -> List[Dict[str, Any]]:
         """Create sample recipe data for testing."""
         return [
@@ -198,7 +199,7 @@ class TestDayPlanEndpoints:
             }
         ]
         
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def sample_trip_with_meals(
         self,
         async_client: AsyncClient,

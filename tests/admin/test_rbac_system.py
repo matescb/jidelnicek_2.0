@@ -11,6 +11,7 @@ Tests cover:
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -25,13 +26,13 @@ from jidelnicek.admin.models.rbac import (
 from jidelnicek.admin.services.rbac_service import RBACService
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def rbac_service(db_session, redis_client):
     """Create RBAC service instance."""
     return RBACService(db_session, redis_client)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def initialized_rbac(db_session, rbac_service):
     """Initialize RBAC system with default roles and permissions."""
     await rbac_service.initialize_system_roles_and_permissions()
@@ -39,7 +40,7 @@ async def initialized_rbac(db_session, rbac_service):
     return rbac_service
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_users(db_session):
     """Create test users."""
     users = []

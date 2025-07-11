@@ -92,6 +92,7 @@ strict_equality = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
+asyncio_mode = "auto"
 testpaths = [
     "tests",
 ]

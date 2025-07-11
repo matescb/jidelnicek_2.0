@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   root: true,
   env: {
     browser: true,
@@ -10,6 +10,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
+    '@typescript-eslint/recommended',
   ],
   ignorePatterns: ['dist', '.eslintrc.js', 'vite.config.ts'],
   parser: '@typescript-eslint/parser',

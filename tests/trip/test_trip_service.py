@@ -7,6 +7,7 @@ duplicate functionality, and share link generation.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal
 from uuid import uuid4, UUID
@@ -39,7 +40,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_owner(db_session: AsyncSession) -> AuthUser:
     """Create a user who owns trips."""
     user = AuthUser(
@@ -62,7 +63,7 @@ async def trip_owner(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def other_user(db_session: AsyncSession) -> AuthUser:
     """Create another user for permission testing."""
     user = AuthUser(
@@ -85,7 +86,7 @@ async def other_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_trip_data() -> TripCreate:
     """Create sample trip data for testing."""
     return TripCreate(
@@ -101,13 +102,13 @@ async def sample_trip_data() -> TripCreate:
     )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_service(db_session: AsyncSession) -> TripService:
     """Create TripService instance."""
     return TripService(db_session)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_trip(
     db_session: AsyncSession,
     trip_owner: AuthUser,

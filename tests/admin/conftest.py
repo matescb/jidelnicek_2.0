@@ -3,6 +3,7 @@ Test fixtures for admin module.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timezone
 from uuid import uuid4
 from typing import AsyncGenerator, Dict, Any
@@ -14,7 +15,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.admin.models import AdminAuditLog, AdminAction
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def admin_user(db_session: AsyncSession) -> AuthUser:
     """Create an admin user for testing."""
     user = AuthUser(
@@ -30,7 +31,7 @@ async def admin_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def regular_user(db_session: AsyncSession) -> AuthUser:
     """Create a regular user for testing."""
     user = AuthUser(
@@ -46,7 +47,7 @@ async def regular_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def inactive_user(db_session: AsyncSession) -> AuthUser:
     """Create an inactive user for testing."""
     user = AuthUser(
@@ -63,7 +64,7 @@ async def inactive_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def unverified_user(db_session: AsyncSession) -> AuthUser:
     """Create an unverified user for testing."""
     user = AuthUser(
@@ -78,7 +79,7 @@ async def unverified_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def multiple_users(db_session: AsyncSession) -> list[AuthUser]:
     """Create multiple users for testing bulk operations."""
     users = []
@@ -102,7 +103,7 @@ async def multiple_users(db_session: AsyncSession) -> list[AuthUser]:
     return users
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def audit_logs(
     db_session: AsyncSession,
     admin_user: AuthUser,

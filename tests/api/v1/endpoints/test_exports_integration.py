@@ -5,6 +5,7 @@ Tests the complete export flow with actual database records and file generation.
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import json
 import csv
@@ -32,7 +33,7 @@ from jidelnicek.shopping.services.shopping_list_generator import ShoppingListGen
 class TestExportIntegration:
     """Integration tests for export functionality."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def complete_trip_data(
         self,
         db_session: AsyncSession,

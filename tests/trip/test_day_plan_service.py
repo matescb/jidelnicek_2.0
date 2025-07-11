@@ -7,6 +7,7 @@ participant attendance tracking, and export functionality.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from uuid import uuid4, UUID
@@ -61,7 +62,7 @@ class MockRecipe:
         }
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_owner(db_session: AsyncSession) -> AuthUser:
     """Create a user who owns trips."""
     user = AuthUser(
@@ -84,7 +85,7 @@ async def trip_owner(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_recipes() -> List[MockRecipe]:
     """Create sample recipes for testing."""
     return [
@@ -186,7 +187,7 @@ async def sample_recipes() -> List[MockRecipe]:
     ]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_trip_with_meals(
     db_session: AsyncSession,
     trip_owner: AuthUser,
@@ -254,7 +255,7 @@ async def sample_trip_with_meals(
     return trip
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def day_plan_service(db_session: AsyncSession) -> DayPlanService:
     """Create DayPlanService instance."""
     return DayPlanService(db_session)

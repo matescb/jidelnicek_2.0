@@ -6,7 +6,7 @@ export * from './CollapsibleSection'
 export * from './SwipeableListItem'
 export * from './Pagination'
 export * from './SortSelector'
-// export * from './Tooltip'
+export * from './Tooltip'
 // Re-export loading components from the new loading directory
 export * from './loading'
 export * from './skeleton'

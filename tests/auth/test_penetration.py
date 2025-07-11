@@ -11,6 +11,7 @@ This module simulates various attack scenarios:
 """
 
 import pytest
+import pytest_asyncio
 import time
 import asyncio
 import statistics
@@ -29,7 +30,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.auth.services.token_service import TokenService
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def target_users(db_session: AsyncSession) -> List[AuthUser]:
     """Create target users for penetration tests."""
     users = []

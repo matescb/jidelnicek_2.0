@@ -9,6 +9,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch, MagicMock
 import pytest
+import pytest_asyncio
 from fastapi import HTTPException, Request, status
 from redis.asyncio import Redis
 
@@ -30,7 +31,7 @@ from jidelnicek.auth.services.captcha_service import (
 )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def mock_redis():
     """Create a mock Redis client."""
     redis = AsyncMock(spec=Redis)
@@ -320,7 +321,7 @@ class TestPreconfiguredRateLimiters:
 class TestCaptchaService:
     """Test CAPTCHA service functionality."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def captcha_service(self, mock_redis):
         """Create CAPTCHA service instance."""
         return CaptchaService(mock_redis)

@@ -10,6 +10,7 @@ This module tests system behavior under load:
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import time
 import statistics
@@ -29,7 +30,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.core.config import settings
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def load_test_users(db_session: AsyncSession) -> List[Tuple[str, str]]:
     """Create users for load testing."""
     users = []

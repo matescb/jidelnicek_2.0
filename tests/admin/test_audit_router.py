@@ -11,6 +11,7 @@ Tests cover all audit-related endpoints including:
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from typing import Dict, Any, List
@@ -24,7 +25,7 @@ from jidelnicek.auth.models import AuthUser
 from jidelnicek.core.utils import get_utc_now
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def admin_token(async_client: AsyncClient, admin_user: AuthUser) -> str:
     """Get authentication token for admin user."""
     response = await async_client.post(
@@ -38,13 +39,13 @@ async def admin_token(async_client: AsyncClient, admin_user: AuthUser) -> str:
     return response.json()["access_token"]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def audit_headers(admin_token: str) -> Dict[str, str]:
     """Get headers with admin authentication."""
     return {"Authorization": f"Bearer {admin_token}"}
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_audit_logs(
     db_session: AsyncSession,
     admin_user: AuthUser

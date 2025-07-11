@@ -10,6 +10,7 @@ These tests verify the category functionality including:
 """
 
 import pytest
+import pytest_asyncio
 from uuid import uuid4
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_categories(db_session: AsyncSession) -> list[Category]:
     """Create test categories with hierarchical structure."""
     # Create parent categories
@@ -78,7 +79,7 @@ async def test_categories(db_session: AsyncSession) -> list[Category]:
     return [main_dishes, desserts, pasta, pizza, cakes]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def admin_user(db_session: AsyncSession) -> AuthUser:
     """Create an admin user for testing."""
     user = AuthUser(
@@ -98,7 +99,7 @@ async def admin_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def regular_user(db_session: AsyncSession) -> AuthUser:
     """Create a regular user for testing."""
     user = AuthUser(
@@ -118,7 +119,7 @@ async def regular_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_recipe_with_category(
     db_session: AsyncSession,
     regular_user: AuthUser,

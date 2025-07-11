@@ -1,6 +1,7 @@
 """Tests for export error handling and recovery."""
 
 import pytest
+import pytest_asyncio
 from unittest.mock import Mock, AsyncMock, patch
 import asyncio
 from datetime import datetime, timedelta

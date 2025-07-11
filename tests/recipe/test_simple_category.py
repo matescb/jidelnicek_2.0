@@ -3,6 +3,7 @@ Simple test to verify category endpoints work.
 """
 
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +13,7 @@ from jidelnicek.recipe.models.categorization import Category
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def simple_category(db_session: AsyncSession) -> Category:
     """Create a simple test category."""
     category = Category(

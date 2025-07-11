@@ -12,6 +12,7 @@ Tests all export formats, types, and features including:
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import json
 import io
@@ -41,7 +42,7 @@ from jidelnicek.recipe.models import Recipe
 class TestExportAPI:
     """Test suite for export API endpoints."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def test_user(self, db_session: AsyncSession) -> User:
         """Create a test user."""
         user = User(
@@ -54,7 +55,7 @@ class TestExportAPI:
         await db_session.commit()
         return user
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def test_trip(self, db_session: AsyncSession, test_user: User) -> Trip:
         """Create a test trip."""
         trip = Trip(
@@ -68,7 +69,7 @@ class TestExportAPI:
         await db_session.commit()
         return trip
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def test_recipe(self, db_session: AsyncSession, test_user: User) -> Recipe:
         """Create a test recipe."""
         recipe = Recipe(

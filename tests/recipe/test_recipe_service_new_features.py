@@ -3,6 +3,7 @@ Tests for new RecipeService features: duplicate recipe and version tracking.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
@@ -22,7 +23,7 @@ from jidelnicek.recipe.exceptions import (
 class TestRecipeServiceDuplicateFeature:
     """Test duplicate recipe functionality."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def sample_recipe(self, db_session, sample_user, sample_ingredient):
         """Create a sample recipe for testing."""
         recipe_data = RecipeCreate(
@@ -141,7 +142,7 @@ class TestRecipeServiceDuplicateFeature:
 class TestRecipeServiceVersionTracking:
     """Test version tracking functionality."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def sample_recipe(self, db_session, sample_user, sample_ingredient):
         """Create a sample recipe for testing."""
         recipe_data = RecipeCreate(

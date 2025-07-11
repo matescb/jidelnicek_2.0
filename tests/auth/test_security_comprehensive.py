@@ -11,6 +11,7 @@ This module tests various security aspects including:
 """
 
 import pytest
+import pytest_asyncio
 import jwt
 import json
 import base64
@@ -30,7 +31,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.core.config import settings
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_user(db_session: AsyncSession) -> AuthUser:
     """Create a test user for security tests."""
     user = AuthUser(
@@ -46,7 +47,7 @@ async def test_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def admin_user(db_session: AsyncSession) -> AuthUser:
     """Create an admin user for privilege escalation tests."""
     user = AuthUser(
@@ -62,7 +63,7 @@ async def admin_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def auth_tokens(test_user: AuthUser, db_session: AsyncSession, redis_client):
     """Generate valid auth tokens for testing."""
     token_service = TokenService(db_session, redis_client)

@@ -12,6 +12,7 @@ Tests cover:
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 import asyncio
@@ -31,13 +32,13 @@ from jidelnicek.auth.models import AuthUser
 from jidelnicek.core.utils import get_utc_now
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def audit_system(db_session: AsyncSession) -> AdvancedAuditSystem:
     """Create an audit system instance."""
     return AdvancedAuditSystem(db_session)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def admin_user(db_session: AsyncSession) -> AuthUser:
     """Create a test admin user."""
     user = AuthUser(

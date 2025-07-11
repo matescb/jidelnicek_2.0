@@ -3,8 +3,6 @@ export * from './Grid'
 export * from './Stack'
 export * from './AspectRatio'
 export * from './ResponsiveWrapper'
-export * from './Header'
-export * from './Sidebar'
-export * from './DashboardLayout'
-export * from './AuthLayout'
-export * from './RootLayout'
+
+// Export enhanced grid system
+export * from './grid'

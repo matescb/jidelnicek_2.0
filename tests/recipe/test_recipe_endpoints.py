@@ -7,6 +7,7 @@ pagination, filtering, and search functionality.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
@@ -29,7 +30,7 @@ from jidelnicek.auth.services.token_service import TokenService
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def recipe_owner(db_session: AsyncSession) -> AuthUser:
     """Create a user who owns recipes."""
     user = AuthUser(
@@ -52,7 +53,7 @@ async def recipe_owner(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def other_user(db_session: AsyncSession) -> AuthUser:
     """Create another user for permission testing."""
     user = AuthUser(
@@ -75,7 +76,7 @@ async def other_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def recipe_owner_token(
     recipe_owner: AuthUser, 
     db_session: AsyncSession, 
@@ -87,7 +88,7 @@ async def recipe_owner_token(
     return access_token
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def other_user_token(
     other_user: AuthUser, 
     db_session: AsyncSession, 
@@ -99,19 +100,19 @@ async def other_user_token(
     return access_token
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def recipe_owner_headers(recipe_owner_token: str) -> Dict[str, str]:
     """Create auth headers for recipe owner."""
     return {"Authorization": f"Bearer {recipe_owner_token}"}
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def other_user_headers(other_user_token: str) -> Dict[str, str]:
     """Create auth headers for other user."""
     return {"Authorization": f"Bearer {other_user_token}"}
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_nutritional_value(db_session: AsyncSession) -> NutritionalValue:
     """Create a sample nutritional value for testing."""
     nutritional_value = NutritionalValue(
@@ -130,7 +131,7 @@ async def sample_nutritional_value(db_session: AsyncSession) -> NutritionalValue
     return nutritional_value
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_ingredient(db_session: AsyncSession, sample_nutritional_value: NutritionalValue) -> Ingredient:
     """Create a sample ingredient for testing."""
     ingredient = Ingredient(
@@ -145,7 +146,7 @@ async def sample_ingredient(db_session: AsyncSession, sample_nutritional_value: 
     return ingredient
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_ingredient_2(db_session: AsyncSession, sample_nutritional_value: NutritionalValue) -> Ingredient:
     """Create another sample ingredient for testing."""
     ingredient = Ingredient(
@@ -160,7 +161,7 @@ async def sample_ingredient_2(db_session: AsyncSession, sample_nutritional_value
     return ingredient
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_recipe(
     db_session: AsyncSession, 
     recipe_owner: AuthUser, 
@@ -189,7 +190,7 @@ async def sample_recipe(
     return recipe
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def published_recipe(
     db_session: AsyncSession, 
     recipe_owner: AuthUser, 

@@ -10,6 +10,7 @@ Tests performance characteristics including:
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import time
 import psutil
@@ -35,7 +36,7 @@ from jidelnicek.common.models import Ingredient
 class TestExportPerformance:
     """Performance test suite for export API."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def large_trip(
         self,
         db_session: AsyncSession,
@@ -76,7 +77,7 @@ class TestExportPerformance:
         await db_session.commit()
         return trip
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def many_recipes(
         self,
         db_session: AsyncSession,

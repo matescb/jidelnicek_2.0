@@ -3,6 +3,7 @@ Tests for two-factor authentication.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta
 from uuid import uuid4
 import pyotp
@@ -52,7 +53,7 @@ def mock_sms_service():
     return MockSMSService()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def two_factor_auth(async_db, redis_client, mock_sms_service):
     """Create two-factor auth instance."""
     return TwoFactorAuth(async_db, mock_sms_service, redis_client)

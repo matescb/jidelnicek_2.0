@@ -11,6 +11,7 @@ These tests verify the recipe categorization functionality including:
 """
 
 import pytest
+import pytest_asyncio
 from uuid import uuid4
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +26,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def recipe_owner(db_session: AsyncSession) -> AuthUser:
     """Create a recipe owner user."""
     user = AuthUser(
@@ -45,7 +46,7 @@ async def recipe_owner(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def other_user(db_session: AsyncSession) -> AuthUser:
     """Create another user (not recipe owner)."""
     user = AuthUser(
@@ -65,7 +66,7 @@ async def other_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_recipe(
     db_session: AsyncSession,
     recipe_owner: AuthUser
@@ -88,7 +89,7 @@ async def test_recipe(
     return recipe
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_categories(db_session: AsyncSession) -> list[Category]:
     """Create test categories."""
     categories = [
@@ -128,7 +129,7 @@ async def test_categories(db_session: AsyncSession) -> list[Category]:
     return categories
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_tags(db_session: AsyncSession) -> list[Tag]:
     """Create test tags."""
     tags = [

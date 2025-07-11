@@ -5,6 +5,7 @@ This module provides common fixtures used across all recipe test modules.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timezone
 from decimal import Decimal
 
@@ -16,7 +17,7 @@ from jidelnicek.auth.models import AuthUser
 from jidelnicek.auth.utils.password import PasswordHasher
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_user(db_session: AsyncSession) -> AuthUser:
     """Create a sample user for testing."""
     user = AuthUser(
@@ -39,7 +40,7 @@ async def sample_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_nutritional_value(db_session: AsyncSession) -> NutritionalValue:
     """Create a sample nutritional value for testing."""
     nutritional_value = NutritionalValue(
@@ -58,7 +59,7 @@ async def sample_nutritional_value(db_session: AsyncSession) -> NutritionalValue
     return nutritional_value
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_ingredient(db_session: AsyncSession, sample_nutritional_value: NutritionalValue) -> Ingredient:
     """Create a sample ingredient for testing."""
     ingredient = Ingredient(

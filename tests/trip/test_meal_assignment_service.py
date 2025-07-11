@@ -3,6 +3,7 @@ Tests for trip meal assignment service.
 """
 
 import pytest
+import pytest_asyncio
 from uuid import uuid4, UUID
 from datetime import datetime, date
 from decimal import Decimal
@@ -56,7 +57,7 @@ class MockIngredient:
         self.is_required = is_required
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_with_meal_slots(db_session: AsyncSession, test_user):
     """Create a test trip with days and meal slots."""
     trip = Trip(
@@ -112,7 +113,7 @@ async def trip_with_meal_slots(db_session: AsyncSession, test_user):
     return trip
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def mock_recipes():
     """Create mock recipes for testing."""
     return [
@@ -159,13 +160,13 @@ async def mock_recipes():
     ]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def meal_assignment_service(db_session: AsyncSession):
     """Create meal assignment service instance."""
     return MealAssignmentService(db_session)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_with_assignments(db_session: AsyncSession, trip_with_meal_slots, mock_recipes):
     """Create a trip with some meal assignments."""
     trip = trip_with_meal_slots

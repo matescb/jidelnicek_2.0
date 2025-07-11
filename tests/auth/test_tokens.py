@@ -6,6 +6,7 @@ and various error conditions.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 import jwt

@@ -5,6 +5,7 @@ This module tests the moderation workflow for user-submitted ingredients.
 """
 
 import pytest
+import pytest_asyncio
 from uuid import uuid4
 from datetime import datetime
 from unittest.mock import AsyncMock, patch
@@ -47,7 +48,7 @@ def moderation_service(db_session: AsyncSession, admin_user: AuthUser):
     return IngredientModerationService(db_session, admin_user)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_ingredient(
     db_session: AsyncSession,
     regular_user: AuthUser

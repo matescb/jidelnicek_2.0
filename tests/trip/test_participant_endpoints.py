@@ -3,6 +3,7 @@ Tests for trip participant API endpoints.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, timedelta
 from decimal import Decimal
 from uuid import uuid4
@@ -13,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jidelnicek.trip.models import Trip, TripParticipant, TripDay
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_with_days(db_session: AsyncSession, test_user):
     """Create a test trip with days."""
     trip = Trip(

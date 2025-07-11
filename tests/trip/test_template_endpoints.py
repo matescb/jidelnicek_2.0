@@ -7,6 +7,7 @@ template browsing, and creating trips from templates.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from uuid import uuid4, UUID
@@ -19,7 +20,7 @@ pytestmark = pytest.mark.asyncio
 
 
 # Shared fixtures for authentication
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def auth_headers(async_client: AsyncClient) -> Dict[str, str]:
     """Create authenticated user and return auth headers."""
     # Register user
@@ -41,7 +42,7 @@ async def auth_headers(async_client: AsyncClient) -> Dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def other_auth_headers(async_client: AsyncClient) -> Dict[str, str]:
     """Create another authenticated user for permission testing."""
     # Register user
@@ -313,7 +314,7 @@ class TestCreateTemplateEndpoint:
 class TestListTemplatesEndpoint:
     """Test GET /trips/templates endpoint."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def templates_setup(
         self,
         async_client: AsyncClient,
@@ -553,7 +554,7 @@ class TestListTemplatesEndpoint:
 class TestGetTemplateEndpoint:
     """Test GET /trips/templates/{template_id} endpoint."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def template_setup(
         self,
         async_client: AsyncClient,
@@ -700,7 +701,7 @@ class TestGetTemplateEndpoint:
 class TestUpdateTemplateEndpoint:
     """Test PUT /trips/templates/{template_id} endpoint."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def template_setup(
         self,
         async_client: AsyncClient,
@@ -982,7 +983,7 @@ class TestDeleteTemplateEndpoint:
 class TestDuplicateTemplateEndpoint:
     """Test POST /trips/templates/{template_id}/duplicate endpoint."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def template_with_assignments(
         self,
         async_client: AsyncClient,
@@ -1139,7 +1140,7 @@ class TestDuplicateTemplateEndpoint:
 class TestBrowsePublicTemplatesEndpoint:
     """Test GET /trips/templates/public endpoint."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def public_templates_setup(
         self,
         async_client: AsyncClient,
@@ -1348,7 +1349,7 @@ class TestTemplateStatsEndpoint:
 class TestCreateTripFromTemplateEndpoint:
     """Test POST /trips/from-template endpoint."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture(scope="function")
     async def template_for_trip(
         self,
         async_client: AsyncClient,

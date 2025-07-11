@@ -1,0 +1,497 @@
+/* Base Typography Styles - Responsive and Fluid */
+
+/* CSS Custom Properties for Typography */
+:root {
+  /* Font Families */
+  --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-secondary: Georgia, 'Times New Roman', Times, serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Base Font Size - Fluid Typography */
+  --font-size-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  
+  /* Font Scale - Fluid Sizes */
+  --font-size-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --font-size-sm: clamp(0.875rem, 0.825rem + 0.25vw, 1rem);
+  --font-size-md: var(--font-size-base);
+  --font-size-lg: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+  --font-size-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);
+  --font-size-3xl: clamp(1.875rem, 1.65rem + 1.125vw, 2.25rem);
+  --font-size-4xl: clamp(2.25rem, 1.95rem + 1.5vw, 3rem);
+  --font-size-5xl: clamp(3rem, 2.5rem + 2.5vw, 4rem);
+  
+  /* Display Sizes - For Hero Text */
+  --font-size-display-sm: clamp(2rem, 1.75rem + 1.25vw, 2.5rem);
+  --font-size-display-md: clamp(2.5rem, 2rem + 2.5vw, 3.5rem);
+  --font-size-display-lg: clamp(3rem, 2.25rem + 3.75vw, 4.5rem);
+  --font-size-display-xl: clamp(3.5rem, 2.5rem + 5vw, 5.5rem);
+  
+  /* Line Heights - Responsive */
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+  
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+  
+  /* Font Weights */
+  --font-weight-thin: 100;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+  
+  /* Spacing - Responsive */
+  --spacing-xs: clamp(0.25rem, 0.2rem + 0.25vw, 0.375rem);
+  --spacing-sm: clamp(0.5rem, 0.45rem + 0.25vw, 0.625rem);
+  --spacing-md: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+  --spacing-lg: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);
+  --spacing-xl: clamp(2rem, 1.8rem + 1vw, 2.5rem);
+  --spacing-2xl: clamp(3rem, 2.7rem + 1.5vw, 3.75rem);
+  
+  /* Optimal Reading Width */
+  --reading-width-narrow: 45ch;
+  --reading-width-normal: 65ch;
+  --reading-width-wide: 75ch;
+  
+  /* Text Colors - using existing theme variables */
+  --text-primary: hsl(var(--foreground));
+  --text-secondary: hsl(var(--muted-foreground));
+  --primary: hsl(var(--primary));
+  --primary-dark: hsl(var(--primary));
+  --bg-secondary: hsl(var(--secondary));
+  --border: hsl(var(--border));
+}
+
+/* Base Typography Reset */
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Headings - Fluid Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-lg);
+}
+
+h2 {
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-lg);
+}
+
+h3 {
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-snug);
+  margin-bottom: var(--spacing-md);
+}
+
+h4 {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-snug);
+  margin-bottom: var(--spacing-md);
+}
+
+h5 {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-sm);
+}
+
+h6 {
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Paragraph Styles */
+p {
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+  max-width: var(--reading-width-normal);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Increase line height for better mobile readability */
+  body {
+    line-height: var(--line-height-relaxed);
+  }
+  
+  /* Slightly larger tap targets for links */
+  a {
+    padding: 0.125rem 0;
+  }
+  
+  /* Better spacing on mobile */
+  h1, h2, h3 {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  p {
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+/* Small Mobile Optimizations */
+@media (max-width: 480px) {
+  /* Prevent orphans and improve text wrapping */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  /* Increase touch target size */
+  a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* Lists */
+ul, ol {
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-lg);
+  max-width: var(--reading-width-normal);
+}
+
+li {
+  margin-bottom: var(--spacing-xs);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Mobile List Optimizations */
+@media (max-width: 768px) {
+  ul, ol {
+    padding-left: var(--spacing-md);
+  }
+  
+  li {
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.1em;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary-dark);
+  text-decoration-color: var(--primary-dark);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Code Typography */
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+code {
+  background-color: var(--bg-secondary);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+pre {
+  background-color: var(--bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: var(--spacing-md);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Blockquotes */
+blockquote {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-md);
+  border-left: 4px solid var(--border);
+  font-style: italic;
+  color: var(--text-secondary);
+  max-width: var(--reading-width-normal);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* Utility Classes */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* Reading Width Constraints */
+.reading-narrow {
+  max-width: var(--reading-width-narrow);
+}
+
+.reading-normal {
+  max-width: var(--reading-width-normal);
+}
+
+.reading-wide {
+  max-width: var(--reading-width-wide);
+}
+
+/* Responsive Alignment */
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-justify {
+  text-align: justify;
+}
+
+@media (max-width: 768px) {
+  .mobile\:text-left {
+    text-align: left;
+  }
+  
+  .mobile\:text-center {
+    text-align: center;
+  }
+  
+  .mobile\:text-right {
+    text-align: right;
+  }
+}
+
+/* Font Weight Utilities */
+.font-thin {
+  font-weight: var(--font-weight-thin);
+}
+
+.font-light {
+  font-weight: var(--font-weight-light);
+}
+
+.font-normal {
+  font-weight: var(--font-weight-normal);
+}
+
+.font-medium {
+  font-weight: var(--font-weight-medium);
+}
+
+.font-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.font-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+.font-extrabold {
+  font-weight: var(--font-weight-extrabold);
+}
+
+.font-black {
+  font-weight: var(--font-weight-black);
+}
+
+/* Line Height Utilities */
+.leading-tight {
+  line-height: var(--line-height-tight);
+}
+
+.leading-snug {
+  line-height: var(--line-height-snug);
+}
+
+.leading-normal {
+  line-height: var(--line-height-normal);
+}
+
+.leading-relaxed {
+  line-height: var(--line-height-relaxed);
+}
+
+.leading-loose {
+  line-height: var(--line-height-loose);
+}
+
+/* Letter Spacing Utilities */
+.tracking-tighter {
+  letter-spacing: var(--letter-spacing-tighter);
+}
+
+.tracking-tight {
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.tracking-normal {
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.tracking-wide {
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.tracking-wider {
+  letter-spacing: var(--letter-spacing-wider);
+}
+
+.tracking-widest {
+  letter-spacing: var(--letter-spacing-widest);
+}
+
+/* Font Size Utilities */
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+
+.text-base {
+  font-size: var(--font-size-base);
+}
+
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+
+.text-xl {
+  font-size: var(--font-size-xl);
+}
+
+.text-2xl {
+  font-size: var(--font-size-2xl);
+}
+
+.text-3xl {
+  font-size: var(--font-size-3xl);
+}
+
+.text-4xl {
+  font-size: var(--font-size-4xl);
+}
+
+.text-5xl {
+  font-size: var(--font-size-5xl);
+}
+
+/* Display Size Utilities */
+.text-display-sm {
+  font-size: var(--font-size-display-sm);
+  line-height: var(--line-height-tight);
+}
+
+.text-display-md {
+  font-size: var(--font-size-display-md);
+  line-height: var(--line-height-tight);
+}
+
+.text-display-lg {
+  font-size: var(--font-size-display-lg);
+  line-height: var(--line-height-tight);
+}
+
+.text-display-xl {
+  font-size: var(--font-size-display-xl);
+  line-height: var(--line-height-tight);
+}
+
+/* Text Color Utilities */
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.text-muted-foreground\/70 {
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+.text-primary {
+  color: hsl(var(--primary));
+}
+
+.text-destructive {
+  color: hsl(var(--destructive));
+}
+
+.text-green-600 {
+  color: rgb(22 163 74);
+}
+
+.dark .text-green-600 {
+  color: rgb(74 222 128);
+}
+
+.text-yellow-600 {
+  color: rgb(202 138 4);
+}
+
+.dark .text-yellow-600 {
+  color: rgb(250 204 21);
+}

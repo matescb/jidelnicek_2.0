@@ -3,6 +3,7 @@ Tests for trip participant service.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import date, timedelta
 from decimal import Decimal
 from uuid import uuid4
@@ -22,7 +23,7 @@ from jidelnicek.trip.schemas.participant import (
 )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip(db_session: AsyncSession, test_user):
     """Create a test trip."""
     trip = Trip(
@@ -48,7 +49,7 @@ async def trip(db_session: AsyncSession, test_user):
     return trip
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def participant_service(db_session: AsyncSession):
     """Create participant service instance."""
     return ParticipantService(db_session)

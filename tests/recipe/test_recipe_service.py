@@ -7,6 +7,7 @@ and authorization checks.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import uuid4, UUID
@@ -37,7 +38,7 @@ from jidelnicek.auth.utils.password import PasswordHasher
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def recipe_owner(db_session: AsyncSession) -> AuthUser:
     """Create a user who owns recipes."""
     user = AuthUser(
@@ -60,7 +61,7 @@ async def recipe_owner(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def other_user(db_session: AsyncSession) -> AuthUser:
     """Create another user for permission testing."""
     user = AuthUser(
@@ -83,7 +84,7 @@ async def other_user(db_session: AsyncSession) -> AuthUser:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_nutritional_value(db_session: AsyncSession) -> NutritionalValue:
     """Create a sample nutritional value for testing."""
     nutritional_value = NutritionalValue(
@@ -102,7 +103,7 @@ async def sample_nutritional_value(db_session: AsyncSession) -> NutritionalValue
     return nutritional_value
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_ingredient(db_session: AsyncSession, sample_nutritional_value: NutritionalValue) -> Ingredient:
     """Create a sample ingredient for testing."""
     ingredient = Ingredient(
@@ -117,7 +118,7 @@ async def sample_ingredient(db_session: AsyncSession, sample_nutritional_value: 
     return ingredient
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_ingredient_2(db_session: AsyncSession, sample_nutritional_value: NutritionalValue) -> Ingredient:
     """Create another sample ingredient for testing."""
     ingredient = Ingredient(
@@ -132,7 +133,7 @@ async def sample_ingredient_2(db_session: AsyncSession, sample_nutritional_value
     return ingredient
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def sample_recipe(
     db_session: AsyncSession, 
     recipe_owner: AuthUser, 
@@ -161,7 +162,7 @@ async def sample_recipe(
     return recipe
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def published_recipe(
     db_session: AsyncSession, 
     recipe_owner: AuthUser, 

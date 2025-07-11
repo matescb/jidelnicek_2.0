@@ -3,9 +3,11 @@ Tests for the cleanup service.
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock
+from sqlalchemy import select
 
 from jidelnicek.core.services.cleanup_service import CleanupService
 from jidelnicek.core.models.cleanup_policy import (
@@ -14,13 +16,13 @@ from jidelnicek.core.models.cleanup_policy import (
 from jidelnicek.auth.models import User
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def cleanup_service(db_session):
     """Create cleanup service instance."""
     return CleanupService(db_session)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def test_user(db_session):
     """Create a test user."""
     user = User(
@@ -35,7 +37,7 @@ async def test_user(db_session):
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def cleanup_policy(db_session):
     """Create a test cleanup policy."""
     policy = CleanupPolicy(

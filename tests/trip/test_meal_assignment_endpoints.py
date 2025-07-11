@@ -6,6 +6,7 @@ The endpoints follow the expected RESTful patterns based on the service implemen
 """
 
 import pytest
+import pytest_asyncio
 from uuid import uuid4, UUID
 from unittest.mock import MagicMock, patch
 
@@ -42,7 +43,7 @@ class MockRecipe:
         self.user_id = user_id or uuid4()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_with_meal_slots(db_session: AsyncSession, existing_user):
     """Create a test trip with days and meal slots."""
     trip = Trip(
@@ -97,7 +98,7 @@ async def trip_with_meal_slots(db_session: AsyncSession, existing_user):
     return trip
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def mock_recipes(existing_user):
     """Create mock recipes for testing."""
     return [
@@ -128,7 +129,7 @@ async def mock_recipes(existing_user):
     ]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def trip_with_assignments(db_session: AsyncSession, trip_with_meal_slots, mock_recipes):
     """Create a trip with some meal assignments."""
     trip = trip_with_meal_slots
@@ -158,7 +159,7 @@ async def trip_with_assignments(db_session: AsyncSession, trip_with_meal_slots, 
     return trip, [meal1, meal2]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def authenticated_client(async_client: AsyncClient, auth_headers: dict) -> AsyncClient:
     """Create an authenticated client."""
     async_client.headers.update(auth_headers)
