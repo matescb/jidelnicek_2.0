@@ -4,6 +4,8 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 
 import enTranslations from './locales/en'
 import csTranslations from './locales/cs'
+import arTranslations from './locales/ar'
+import { pluralizationResolver, ordinalFormatter } from './pluralization'
 
 export const languages = {
   en: { 
@@ -20,6 +22,13 @@ export const languages = {
     flag: '🇨🇿',
     dir: 'ltr'
   },
+  ar: { 
+    code: 'ar', 
+    name: 'Arabic', 
+    nativeName: 'العربية',
+    flag: '🇸🇦',
+    dir: 'rtl'
+  },
 } as const
 
 export type LanguageCode = keyof typeof languages
@@ -27,6 +36,7 @@ export type LanguageCode = keyof typeof languages
 const resources = {
   en: { translation: enTranslations },
   cs: { translation: csTranslations },
+  ar: { translation: arTranslations },
 }
 
 i18n
@@ -68,8 +78,20 @@ i18n
             currency: lng === 'cs' ? 'CZK' : 'EUR'
           }).format(value)
         }
+        // Ordinal formatting
+        if (format === 'ordinal' && typeof value === 'number') {
+          return ordinalFormatter(value, format, lng)
+        }
         return value
       }
+    },
+    
+    // Pluralization rules
+    pluralSeparator: '_',
+    contextSeparator: '_',
+    pluralResolver: (count: number, options: any) => {
+      const lng = options.lng || i18n.language
+      return pluralizationResolver(lng)(count)
     },
     
     // React specific options
@@ -101,7 +123,8 @@ i18n
 export const changeLanguage = (lng: LanguageCode) => {
   i18n.changeLanguage(lng)
   document.documentElement.lang = lng
-  document.documentElement.dir = languages[lng].dir
+  // Direction is now handled by DirectionalProvider
+  // which listens to language changes
 }
 
 // Helper to get current language info

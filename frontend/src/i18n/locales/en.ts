@@ -675,4 +675,79 @@ export default {
     guest: 'Guest',
     member: 'Member',
   },
+  
+  // Pluralization examples
+  plurals: {
+    // Simple plural forms for English (one/other)
+    recipe_one: '{{count}} recipe',
+    recipe_other: '{{count}} recipes',
+    
+    participant_one: '{{count}} participant',
+    participant_other: '{{count}} participants',
+    
+    day_one: '{{count}} day',
+    day_other: '{{count}} days',
+    
+    ingredient_one: '{{count}} ingredient',
+    ingredient_other: '{{count}} ingredients',
+    
+    meal_one: '{{count}} meal',
+    meal_other: '{{count}} meals',
+    
+    item_one: '{{count}} item',
+    item_other: '{{count}} items',
+    
+    minute_one: '{{count}} minute',
+    minute_other: '{{count}} minutes',
+    
+    hour_one: '{{count}} hour',
+    hour_other: '{{count}} hours',
+    
+    // With additional context
+    recipeCount_one: 'You have {{count}} recipe',
+    recipeCount_other: 'You have {{count}} recipes',
+    
+    participantJoined_one: '{{count}} participant joined',
+    participantJoined_other: '{{count}} participants joined',
+    
+    // Zero form (optional in English, defaults to other)
+    notification_zero: 'No notifications',
+    notification_one: '{{count}} notification',
+    notification_other: '{{count}} notifications',
+    
+    // Complex message with plurals
+    recipesInTrip_one: 'This trip contains {{count}} recipe for {{participants}} people',
+    recipesInTrip_other: 'This trip contains {{count}} recipes for {{participants}} people',
+    
+    // Negative number support
+    daysRemaining_one: '{{count}} day remaining',
+    daysRemaining_other: '{{count}} days remaining',
+    
+    // Ordinal examples (using formatter)
+    place: '{{ordinal}} place',
+    floor: '{{ordinal}} floor',
+    attempt: '{{ordinal}} attempt',
+    week: 'Week {{ordinal}}',
+  },
+  
+  // Context examples (gender/formality not common in English)
+  contexts: {
+    // User actions with minimal context in English
+    userAction: '{{name}} {{action}}',
+    userAction_past: '{{name}} {{action}}',
+    
+    // Welcome messages with formality (rare in English)
+    welcome: 'Welcome',
+    welcome_formal: 'Welcome',
+    welcome_informal: 'Hi there',
+    
+    // Possessive forms
+    recipesOwner: "{{name}}'s recipes",
+    tripOwner: "{{name}}'s trip",
+    
+    // Professional contexts
+    greeting: 'Hello {{name}}',
+    greeting_formal: 'Dear {{name}}',
+    greeting_informal: 'Hey {{name}}',
+  },
 }

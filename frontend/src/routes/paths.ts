@@ -11,11 +11,11 @@ export const PATHS = {
   
   // Auth
   AUTH: {
-    LOGIN: '/login',
-    REGISTER: '/register',
-    FORGOT_PASSWORD: '/forgot-password',
-    RESET_PASSWORD: '/reset-password/:token',
-    VERIFY_EMAIL: '/verify-email/:token',
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password/:token',
+    VERIFY_EMAIL: '/auth/verify-email/:token',
   },
   
   // Dashboard
@@ -23,24 +23,24 @@ export const PATHS = {
   
   // Recipes
   RECIPES: {
-    LIST: '/recipes',
-    CREATE: '/recipes/new',
-    DETAIL: '/recipes/:id',
-    EDIT: '/recipes/:id/edit',
-    CATEGORIES: '/recipes/categories',
-    SEARCH: '/recipes/search',
+    LIST: '/dashboard/recipes',
+    CREATE: '/dashboard/recipes/new',
+    DETAIL: '/dashboard/recipes/:id',
+    EDIT: '/dashboard/recipes/:id/edit',
+    CATEGORIES: '/dashboard/recipes/categories',
+    SEARCH: '/dashboard/recipes/search',
   },
   
   // Trips
   TRIPS: {
-    LIST: '/trips',
-    CREATE: '/trips/new',
-    DETAIL: '/trips/:id',
-    EDIT: '/trips/:id/edit',
-    CALENDAR: '/trips/calendar',
-    PARTICIPANTS: '/trips/:id/participants',
-    PLANNER: '/trips/:id/planner',
-    SHOPPING: '/trips/:id/shopping-list',
+    LIST: '/dashboard/trips',
+    CREATE: '/dashboard/trips/new',
+    DETAIL: '/dashboard/trips/:id',
+    EDIT: '/dashboard/trips/:id/edit',
+    CALENDAR: '/dashboard/trips/calendar',
+    PARTICIPANTS: '/dashboard/trips/:id/participants',
+    PLANNER: '/dashboard/trips/:id/planner',
+    SHOPPING: '/dashboard/trips/:id/shopping-list',
   },
   
   // Ingredients
@@ -60,10 +60,10 @@ export const PATHS = {
   
   // User
   USER: {
-    PROFILE: '/profile',
-    SETTINGS: '/profile/settings',
-    PREFERENCES: '/profile/preferences',
-    NOTIFICATIONS: '/profile/notifications',
+    PROFILE: '/dashboard/profile',
+    SETTINGS: '/dashboard/settings',
+    PREFERENCES: '/dashboard/profile/preferences',
+    NOTIFICATIONS: '/dashboard/profile/notifications',
   },
   
   // Admin
@@ -87,10 +87,11 @@ export const PATHS = {
   // Examples (development only)
   EXAMPLES: {
     ROOT: '/examples',
-    THEME: '/examples/theme',
+    THEME: '/theme-showcase',
     TOAST: '/examples/toast',
     FORMS: '/examples/forms',
-    ANIMATIONS: '/examples/animations',
+    ANIMATIONS: '/animation-showcase',
+    USER_PROFILE: '/user-profile-demo',
   },
 } as const;
 
@@ -100,24 +101,24 @@ export const PATHS = {
 export const pathBuilders = {
   // Auth
   auth: {
-    resetPassword: (token: string) => `/reset-password/${token}`,
-    verifyEmail: (token: string) => `/verify-email/${token}`,
+    resetPassword: (token: string) => `/auth/reset-password/${token}`,
+    verifyEmail: (token: string) => `/auth/verify-email/${token}`,
   },
   
   // Recipes
   recipes: {
-    detail: (id: string | number) => `/recipes/${id}`,
-    edit: (id: string | number) => `/recipes/${id}/edit`,
-    search: (query?: string) => query ? `/recipes/search?q=${encodeURIComponent(query)}` : '/recipes/search',
+    detail: (id: string | number) => `/dashboard/recipes/${id}`,
+    edit: (id: string | number) => `/dashboard/recipes/${id}/edit`,
+    search: (query?: string) => query ? `/dashboard/recipes/search?q=${encodeURIComponent(query)}` : '/dashboard/recipes/search',
   },
   
   // Trips
   trips: {
-    detail: (id: string | number) => `/trips/${id}`,
-    edit: (id: string | number) => `/trips/${id}/edit`,
-    participants: (id: string | number) => `/trips/${id}/participants`,
-    planner: (id: string | number) => `/trips/${id}/planner`,
-    shoppingList: (id: string | number) => `/trips/${id}/shopping-list`,
+    detail: (id: string | number) => `/dashboard/trips/${id}`,
+    edit: (id: string | number) => `/dashboard/trips/${id}/edit`,
+    participants: (id: string | number) => `/dashboard/trips/${id}/participants`,
+    planner: (id: string | number) => `/dashboard/trips/${id}/planner`,
+    shoppingList: (id: string | number) => `/dashboard/trips/${id}/shopping-list`,
   },
   
   // Ingredients

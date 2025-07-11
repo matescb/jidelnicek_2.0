@@ -14,6 +14,7 @@ import {
 import { useTheme } from '../../hooks/useTheme';
 import { UserRole } from '../../routes/types';
 import { cn } from '../../lib/utils';
+import { PATHS } from '../../routes/paths';
 
 interface UserMenuProps {
   user: any; // TODO: Use proper User type
@@ -71,7 +72,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
             <Menu.Item>
               {({ active }) => (
                 <Link
-                  to="/profile"
+                  to={PATHS.USER.PROFILE}
                   className={cn(
                     'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200',
                     active && 'bg-gray-100 dark:bg-gray-700'
@@ -86,7 +87,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
             <Menu.Item>
               {({ active }) => (
                 <Link
-                  to="/settings"
+                  to={PATHS.USER.SETTINGS}
                   className={cn(
                     'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200',
                     active && 'bg-gray-100 dark:bg-gray-700'
@@ -103,7 +104,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               <Menu.Item>
                 {({ active }) => (
                   <Link
-                    to="/admin"
+                    to={PATHS.ADMIN.DASHBOARD}
                     className={cn(
                       'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200',
                       active && 'bg-gray-100 dark:bg-gray-700'

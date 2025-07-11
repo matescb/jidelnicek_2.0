@@ -33,6 +33,10 @@ const SettingsPage = lazy(() => import('@pages/profile/SettingsPage'))
 
 const NotFoundPage = lazy(() => import('@pages/NotFoundPage'))
 
+// Component-based pages (wrapping existing components)
+const ShoppingListView = lazy(() => import('@components/trips/ShoppingListView'))
+const TripCalendarView = lazy(() => import('@components/trips/TripCalendarView'))
+
 // Development-only pages
 const ThemeShowcasePage = lazy(() => import('@pages/theme/ThemeShowcasePage'))
 const UserProfileDemo = lazy(() => import('@pages/participants/UserProfileDemo'))
@@ -138,6 +142,10 @@ export const router = createBrowserRouter([
                 path: ':id/participants',
                 element: <TripParticipantsPage />,
               },
+              {
+                path: 'calendar',
+                element: <TripCalendarView />,
+              },
             ],
           },
           {
@@ -149,6 +157,69 @@ export const router = createBrowserRouter([
             element: <SettingsPage />,
           },
         ],
+      },
+      // Admin routes (outside dashboard layout)
+      {
+        path: 'admin',
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <DashboardLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: <DashboardPage />,
+          },
+          {
+            path: 'users',
+            element: <DashboardPage />, // Placeholder
+          },
+          {
+            path: 'users/:id',
+            element: <DashboardPage />, // Placeholder
+          },
+          {
+            path: 'moderation',
+            element: <DashboardPage />, // Placeholder
+          },
+          {
+            path: 'reports',
+            element: <DashboardPage />, // Placeholder
+          },
+          {
+            path: 'settings',
+            element: <DashboardPage />, // Placeholder
+          },
+        ],
+      },
+      // Shopping lists routes
+      {
+        path: 'shopping-lists',
+        element: (
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: <ShoppingListView />,
+          },
+          {
+            path: ':id',
+            element: <ShoppingListView />, // Placeholder for detail view
+          },
+        ],
+      },
+      // Error routes
+      {
+        path: '403',
+        element: <NotFoundPage />, // Placeholder
+      },
+      {
+        path: '500',
+        element: <NotFoundPage />, // Placeholder
       },
       // Development-only routes
       ...(import.meta.env.DEV ? [

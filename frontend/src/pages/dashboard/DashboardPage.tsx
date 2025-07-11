@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@hooks/useAuth'
 import { useTripStore } from '@/store/slices/tripStore'
 import { CalculationSummary } from '@/components/dashboard'
+import { pathBuilders } from '@/routes/paths'
 
 const DashboardPage: React.FC = () => {
   const { t } = useTranslation()
@@ -30,13 +31,13 @@ const DashboardPage: React.FC = () => {
     
     switch(metric) {
       case 'cost':
-        navigate(`/trips/${activeTrip}#cost`)
+        navigate(`${pathBuilders.trips.detail(activeTrip)}#cost`)
         break
       case 'nutrition':
-        navigate(`/trips/${activeTrip}#nutrition`)
+        navigate(`${pathBuilders.trips.detail(activeTrip)}#nutrition`)
         break
       case 'shopping':
-        navigate(`/trips/${activeTrip}#shopping`)
+        navigate(`${pathBuilders.trips.detail(activeTrip)}#shopping`)
         break
     }
   }

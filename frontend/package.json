@@ -59,6 +59,8 @@
   },
   "devDependencies": {
     "@storybook/addon-docs": "^9.0.16",
+    "glob": "^10.3.10",
+    "i18next-parser": "^8.13.0",
     "@storybook/addon-onboarding": "^9.0.16",
     "@storybook/react-vite": "^9.0.16",
     "@tailwindcss/forms": "^0.5.7",
@@ -98,7 +100,17 @@
     "test:coverage": "jest --coverage",
     "test:ui": "jest --updateSnapshot",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "i18n:extract": "node src/i18n/scripts/extract-keys.js",
+    "i18n:validate": "node src/i18n/scripts/validate-translations.js",
+    "i18n:sync": "node src/i18n/scripts/sync-translations.js",
+    "i18n:sync:auto": "node src/i18n/scripts/sync-translations.js --non-interactive",
+    "i18n:types": "node src/i18n/scripts/generate-types.js",
+    "i18n:coverage": "node -e \"import('./src/i18n/management/index.ts').then(m => m.default.generateCoverageReport())\"",
+    "i18n:parser": "i18next --config i18next-parser.config.js",
+    "i18n:check": "npm run i18n:extract && npm run i18n:validate",
+    "i18n:update": "npm run i18n:extract && npm run i18n:sync:auto && npm run i18n:types",
+    "i18n:cli": "node src/i18n/scripts/cli.js"
   },
   "browserslist": {
     "production": [

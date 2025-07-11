@@ -438,4 +438,120 @@ export default {
       selectTripPrompt: 'Vyberte nebo vytvořte výlet pro zobrazení real-time kalkulací',
     },
   },
+  
+  // Pluralization examples - Czech has 3 forms: one (1), few (2-4), many (5+)
+  plurals: {
+    // Basic plural forms
+    recipe_one: '{{count}} recept',
+    recipe_few: '{{count}} recepty',
+    recipe_many: '{{count}} receptů',
+    
+    participant_one: '{{count}} účastník',
+    participant_few: '{{count}} účastníci',
+    participant_many: '{{count}} účastníků',
+    
+    day_one: '{{count}} den',
+    day_few: '{{count}} dny',
+    day_many: '{{count}} dní',
+    
+    ingredient_one: '{{count}} ingredience',
+    ingredient_few: '{{count}} ingredience',
+    ingredient_many: '{{count}} ingrediencí',
+    
+    meal_one: '{{count}} jídlo',
+    meal_few: '{{count}} jídla',
+    meal_many: '{{count}} jídel',
+    
+    item_one: '{{count}} položka',
+    item_few: '{{count}} položky',
+    item_many: '{{count}} položek',
+    
+    minute_one: '{{count}} minuta',
+    minute_few: '{{count}} minuty',
+    minute_many: '{{count}} minut',
+    
+    hour_one: '{{count}} hodina',
+    hour_few: '{{count}} hodiny',
+    hour_many: '{{count}} hodin',
+    
+    // With additional context
+    recipeCount_one: 'Máte {{count}} recept',
+    recipeCount_few: 'Máte {{count}} recepty',
+    recipeCount_many: 'Máte {{count}} receptů',
+    
+    participantJoined_one: 'Připojil se {{count}} účastník',
+    participantJoined_few: 'Připojili se {{count}} účastníci',
+    participantJoined_many: 'Připojilo se {{count}} účastníků',
+    
+    // Zero form
+    notification_zero: 'Žádné notifikace',
+    notification_one: '{{count}} notifikace',
+    notification_few: '{{count}} notifikace',
+    notification_many: '{{count}} notifikací',
+    
+    // Complex message with plurals
+    recipesInTrip_one: 'Tento výlet obsahuje {{count}} recept pro {{participants}} lidí',
+    recipesInTrip_few: 'Tento výlet obsahuje {{count}} recepty pro {{participants}} lidí',
+    recipesInTrip_many: 'Tento výlet obsahuje {{count}} receptů pro {{participants}} lidí',
+    
+    // Remaining time
+    daysRemaining_one: 'Zbývá {{count}} den',
+    daysRemaining_few: 'Zbývají {{count}} dny',
+    daysRemaining_many: 'Zbývá {{count}} dní',
+    
+    // Ordinal examples (Czech uses dot notation)
+    place: '{{ordinal}} místo',
+    floor: '{{ordinal}} patro',
+    attempt: '{{ordinal}} pokus',
+    week: '{{ordinal}} týden',
+  },
+  
+  // Context examples - Czech has rich gender and formality systems
+  contexts: {
+    // User actions with gender context
+    userAction: '{{name}} {{action}}',
+    userAction_masculine: '{{name}} {{action}}',
+    userAction_feminine: '{{name}} {{action}}',
+    userAction_neuter: '{{name}} {{action}}',
+    
+    // Past tense with gender
+    userArrived_masculine: '{{name}} přišel',
+    userArrived_feminine: '{{name}} přišla',
+    userArrived_neuter: '{{name}} přišlo',
+    
+    userCreated_masculine: '{{name}} vytvořil',
+    userCreated_feminine: '{{name}} vytvořila',
+    userCreated_neuter: '{{name}} vytvořilo',
+    
+    // Welcome messages with formality
+    welcome: 'Vítejte',
+    welcome_formal: 'Dobrý den',
+    welcome_informal: 'Ahoj',
+    
+    greeting: 'Zdravím {{name}}',
+    greeting_formal: 'Dobrý den, {{name}}',
+    greeting_informal: 'Ahoj {{name}}',
+    
+    // Addressing with formality and gender
+    addressUser_formal_masculine: 'Vážený pane {{name}}',
+    addressUser_formal_feminine: 'Vážená paní {{name}}',
+    addressUser_informal_masculine: 'Milý {{name}}',
+    addressUser_informal_feminine: 'Milá {{name}}',
+    
+    // Possessive forms with gender
+    recipesOwner_masculine: 'Recepty uživatele {{name}}',
+    recipesOwner_feminine: 'Recepty uživatelky {{name}}',
+    
+    // Complex context with both gender and formality
+    thankYou_formal_masculine: 'Děkujeme Vám, pane {{name}}',
+    thankYou_formal_feminine: 'Děkujeme Vám, paní {{name}}',
+    thankYou_informal_masculine: 'Díky, {{name}}',
+    thankYou_informal_feminine: 'Díky, {{name}}',
+    
+    // Professional titles
+    doctor_masculine: 'doktor',
+    doctor_feminine: 'doktorka',
+    chef_masculine: 'kuchař',
+    chef_feminine: 'kuchařka',
+  },
 }

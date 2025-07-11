@@ -1,116 +1,149 @@
-import type { TFunction } from 'i18next'
-import type enTranslations from './locales/en'
+import enTranslations from './locales/en'
 
-// Define the shape of our translations based on the English translations
-export type TranslationKeys = typeof enTranslations
+// Get the type of the English translations (our source of truth)
+export type TranslationResource = typeof enTranslations
 
-// Create a dot-notation type for all translation keys
-type DotPrefix<T extends string> = T extends '' ? '' : `${T}.`
+// Recursive type to generate dot-notation paths from nested object
+export type DotNotationPaths<T extends Record<string, any>, Prefix extends string = ''> = {
+  [K in keyof T]: T[K] extends Record<string, any>
+    ? K extends string
+      ? T[K] extends (...args: any[]) => any
+        ? never
+        : DotNotationPaths<T[K], `${Prefix}${Prefix extends '' ? '' : '.'}${K}`>
+      : never
+    : K extends string
+    ? `${Prefix}${Prefix extends '' ? '' : '.'}${K}`
+    : never
+}[keyof T]
 
-type DotNestedKeys<T> = (
-  T extends object ?
-    { [K in Exclude<keyof T, symbol>]: 
-        `${DotPrefix<K & string>}${DotNestedKeys<T[K]>}` 
-    }[Exclude<keyof T, symbol>]
-  : ''
-) extends infer D ? Extract<D, string> : never
+// Get all translation keys as dot notation paths
+export type TranslationKey = DotNotationPaths<TranslationResource>
 
-export type TranslationKey = DotNestedKeys<TranslationKeys>
+// Get the type of a specific translation value by its key
+export type TranslationValue<K extends TranslationKey> = K extends `${infer NS}.${infer Rest}`
+  ? NS extends keyof TranslationResource
+    ? Rest extends string
+      ? GetNestedValue<TranslationResource[NS], Rest>
+      : never
+    : never
+  : K extends keyof TranslationResource
+  ? TranslationResource[K]
+  : never
 
-// Namespace types
-export type Namespace = 'common' | 'auth' | 'recipes' | 'trips' | 'admin' | 'validation' | 'errors'
+// Helper type to get nested value from object using dot notation
+type GetNestedValue<T, Path extends string> = Path extends `${infer Key}.${infer Rest}`
+  ? Key extends keyof T
+    ? GetNestedValue<T[Key], Rest>
+    : never
+  : Path extends keyof T
+  ? T[Path]
+  : never
 
-// Language info type
-export interface LanguageInfo {
-  code: string
-  name: string
-  nativeName: string
-  flag: string
-  dir: 'ltr' | 'rtl'
-  dateFormat?: string
-  currency?: string
-  numberFormat?: string
-}
+// Extract interpolation parameters from a translation string
+export type InterpolationParams<T extends string> = T extends `${string}{{${infer Param}}}${infer Rest}`
+  ? Param extends `${infer P}, ${string}`
+    ? { [K in P]: string | number } & InterpolationParams<Rest>
+    : { [K in Param]: string | number } & InterpolationParams<Rest>
+  : {}
 
-// Translation context types for gender/formal variations
-export interface TranslationContext {
-  gender?: 'male' | 'female' | 'neutral'
-  formal?: boolean
-  count?: number
-}
-
-// Translation options extending i18next options
-export interface TranslationOptions {
-  ns?: Namespace | Namespace[]
-  context?: TranslationContext
+// Options for translation functions
+export interface TranslationOptions<T extends string = string> {
   defaultValue?: string
-  fallbackLng?: string
-  interpolation?: Record<string, any>
   count?: number
+  context?: string
+  replace?: InterpolationParams<T>
+  interpolation?: Record<string, any>
+  lng?: string
+  fallbackLng?: string | string[]
+  ns?: string | string[]
+  keySeparator?: string | false
+  nsSeparator?: string | false
+  returnObjects?: boolean
+  returnDetails?: boolean
+  joinArrays?: string
+  postProcess?: string | string[]
 }
+
+// Namespace type
+export type TranslationNamespace = keyof TranslationResource
 
 // Type-safe translation function
-export type TypedTFunction = TFunction<Namespace, TranslationKeys>
+export type TypedTFunction = <K extends TranslationKey>(
+  key: K,
+  options?: TranslationOptions<TranslationValue<K> extends string ? TranslationValue<K> : string>
+) => TranslationValue<K> extends string ? string : TranslationValue<K>
 
-// Missing translation info
+// Translation exists function
+export type TranslationExistsFunction = (key: TranslationKey, options?: { lng?: string; ns?: string }) => boolean
+
+// Dynamic key builder type
+export type KeyBuilder<NS extends TranslationNamespace> = {
+  [K in keyof TranslationResource[NS]]: TranslationResource[NS][K] extends Record<string, any>
+    ? KeyBuilder<NS> & {
+        [SubK in keyof TranslationResource[NS][K]]: TranslationResource[NS][K][SubK] extends Record<string, any>
+          ? KeyBuilder<NS>
+          : () => string
+      }
+    : () => string
+}
+
+// Plural suffixes supported by i18next
+export type PluralSuffix = '_zero' | '_one' | '_two' | '_few' | '_many' | '_other'
+
+// Development mode types
 export interface MissingTranslation {
   key: string
-  namespace: string
-  language: string
+  namespace?: string
+  language?: string
   timestamp: Date
-  defaultValue?: string
 }
 
-// Language pack metadata
-export interface LanguagePackMeta {
-  version: string
-  lastUpdated: string
-  completeness: number
-  namespaces: Namespace[]
+// Translation component props
+export interface TransProps<K extends TranslationKey = TranslationKey> {
+  i18nKey: K
+  values?: TranslationOptions<TranslationValue<K> extends string ? TranslationValue<K> : string>['replace']
+  components?: Record<string, React.ReactElement>
+  children?: React.ReactNode
+  shouldUnescape?: boolean
+  parent?: React.ReactNode | null
+  count?: number
+  context?: string
+  defaults?: string
+  ns?: string | string[]
+  t?: TypedTFunction
 }
 
-// Backend sync configuration
-export interface BackendConfig {
-  apiUrl: string
-  apiKey?: string
-  syncInterval?: number
-  cacheStrategy?: 'localStorage' | 'sessionStorage' | 'memory'
+// Export namespace types for convenience
+export type AuthTranslations = TranslationResource['auth']
+export type NavigationTranslations = TranslationResource['navigation']
+export type RecipesTranslations = TranslationResource['recipes']
+export type TripsTranslations = TranslationResource['trips']
+export type CommonTranslations = TranslationResource['common']
+export type ErrorsTranslations = TranslationResource['errors']
+export type NutritionTranslations = TranslationResource['nutrition']
+export type SettingsTranslations = TranslationResource['settings']
+
+// Language code type
+export type LanguageCode = 'en' | 'cs'
+
+// Missing key report type
+export interface MissingKeyReport {
+  totalKeys: number
+  missingKeys: {
+    [language: string]: string[]
+  }
+  coveragePercentage: {
+    [language: string]: number
+  }
+  timestamp: Date
 }
 
-// Pluralization rules
-export interface PluralizationRule {
-  languages: string[]
-  rule: (count: number) => number
-}
-
-// Format function types
-export type FormatFunction = (value: any, format?: string, lng?: string, options?: any) => string
-
-// Translation file structure
-export interface TranslationFile {
-  [key: string]: string | TranslationFile
-}
-
-// Validation result
-export interface ValidationResult {
-  isValid: boolean
-  errors: ValidationError[]
-  warnings: ValidationWarning[]
-  coverage: number
-}
-
-export interface ValidationError {
-  type: 'missing_key' | 'type_mismatch' | 'invalid_interpolation'
-  key: string
-  language: string
-  namespace: string
-  message: string
-}
-
-export interface ValidationWarning {
-  type: 'unused_key' | 'duplicate_key' | 'inconsistent_format'
-  key: string
-  language: string
-  namespace: string
-  message: string
+// Translation metadata
+export interface TranslationMetadata {
+  key: TranslationKey
+  namespace: TranslationNamespace
+  hasInterpolation: boolean
+  interpolationParams?: string[]
+  supportsPluralForms: boolean
+  isContextual: boolean
 }

@@ -8,6 +8,7 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '@/i18n'
 import { router } from '@/router'
 import { LoadingScreen } from '@components/common/LoadingScreen'
+import { DirectionalProvider } from '@/components/rtl'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -23,13 +24,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
-        <ThemeProvider>
-          <ToastProvider>
-            <Suspense fallback={<LoadingScreen />}>
-              <RouterProvider router={router} />
-            </Suspense>
-          </ToastProvider>
-        </ThemeProvider>
+        <DirectionalProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <Suspense fallback={<LoadingScreen />}>
+                <RouterProvider router={router} />
+              </Suspense>
+            </ToastProvider>
+          </ThemeProvider>
+        </DirectionalProvider>
       </I18nextProvider>
     </QueryClientProvider>
   )

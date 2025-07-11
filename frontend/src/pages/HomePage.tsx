@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@hooks/useAuth'
+import { PATHS } from '@/routes/paths'
 
 const HomePage: React.FC = () => {
   const { t } = useTranslation()
@@ -20,7 +21,7 @@ const HomePage: React.FC = () => {
           <div className="space-x-4">
             {isAuthenticated ? (
               <Link
-                to="/dashboard"
+                to={PATHS.DASHBOARD}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
               >
                 {t('home.goToDashboard', 'Go to Dashboard')}
@@ -28,13 +29,13 @@ const HomePage: React.FC = () => {
             ) : (
               <>
                 <Link
-                  to="/auth/register"
+                  to={PATHS.AUTH.REGISTER}
                   className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
                 >
                   {t('home.getStarted', 'Get Started')}
                 </Link>
                 <Link
-                  to="/auth/login"
+                  to={PATHS.AUTH.LOGIN}
                   className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   {t('home.login', 'Login')}
@@ -102,19 +103,19 @@ const HomePage: React.FC = () => {
             </h3>
             <div className="flex justify-center gap-4 flex-wrap">
               <Link
-                to="/theme-showcase"
+                to={PATHS.EXAMPLES.THEME}
                 className="text-primary-600 dark:text-primary-400 hover:underline"
               >
                 Theme Showcase
               </Link>
               <Link
-                to="/animation-showcase"
+                to={PATHS.EXAMPLES.ANIMATIONS}
                 className="text-primary-600 dark:text-primary-400 hover:underline"
               >
                 Animation Showcase
               </Link>
               <Link
-                to="/user-profile-demo"
+                to={PATHS.EXAMPLES.USER_PROFILE}
                 className="text-primary-600 dark:text-primary-400 hover:underline"
               >
                 User Profile Demo

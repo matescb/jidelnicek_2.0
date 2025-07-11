@@ -4,6 +4,8 @@
 /* Import typography system */
 @import './typography/typography.css';
 @import './typography/prose.css';
+/* Import RTL utilities */
+@import './rtl.css';
 
 @tailwind base;
 @tailwind components;

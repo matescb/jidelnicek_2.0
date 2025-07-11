@@ -56,7 +56,7 @@ from jidelnicek.auth.dependencies.auth import CurrentUser, CurrentUserOptional
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/auth", tags=["authentication"])
+router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
 
 @router.get(

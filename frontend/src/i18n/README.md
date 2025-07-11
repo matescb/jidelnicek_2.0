@@ -1,282 +1,508 @@
-# Enhanced i18n Configuration for Jidelnicek 2.0
+# i18n Quick Reference
 
-This directory contains an enhanced internationalization (i18n) setup for the React application with advanced features including namespace support, lazy loading, pluralization, context variations, and more.
+Welcome to the Jídelníček internationalization system. This README provides a quick overview of the i18n features and links to detailed documentation.
 
-## Features
+## 📚 Documentation
 
-### 1. **Namespace Support**
-- Organize translations into logical namespaces (auth, recipes, trips, admin, etc.)
-- Lazy load namespaces on demand to improve initial bundle size
-- Type-safe namespace references
+- **[i18n Guide](../../docs/i18n-guide.md)** - Complete guide for using i18n features
+- **[Developer Reference](../../docs/i18n-reference.md)** - Comprehensive API reference
+- **[Migration Guide](../../docs/i18n-migration.md)** - How to migrate existing components
 
-### 2. **Lazy Loading**
-- Translation files are loaded only when needed
-- Reduces initial bundle size
-- Automatic loading when components request specific namespaces
+## 🚀 Quick Start
 
-### 3. **Enhanced Pluralization**
-- Support for complex pluralization rules (Czech has 3 forms!)
-- Automatic plural form selection based on language rules
-- Type-safe plural keys
+```tsx
+import { useTranslation } from 'react-i18next'
 
-### 4. **Context Support**
-- Gender variations (male/female/neutral)
-- Formality levels (formal/informal)
-- Automatic context-based translation selection
-
-### 5. **Advanced Formatting**
-- Date/time formatting with multiple styles
-- Number formatting (decimal, percent, compact, scientific)
-- Currency formatting with locale-specific defaults
-- List formatting
-- Relative time (e.g., "2 hours ago")
-- File size formatting
-- Duration formatting
-
-### 6. **Backend Integration**
-- Sync translations with backend API
-- Report missing translations
-- Update translations dynamically
-- Caching strategies (localStorage, sessionStorage, memory)
-
-### 7. **Developer Tools**
-- Missing translation tracking
-- Translation validation
-- Dev tools UI component
-- Export/import functionality
-
-### 8. **Type Safety**
-- Full TypeScript support
-- Type-safe translation keys
-- Autocomplete for translation keys
-- Type checking for interpolation values
-
-## Usage
-
-### Basic Setup
-
-```typescript
-// Import the enhanced configuration
-import i18n from '@/i18n/index.enhanced'
-
-// In your main App component
-import { I18nextProvider } from 'react-i18next'
-
-function App() {
+function MyComponent() {
+  const { t } = useTranslation()
+  
   return (
-    <I18nextProvider i18n={i18n}>
-      {/* Your app */}
-    </I18nextProvider>
+    <div>
+      <h1>{t('common.welcome')}</h1>
+      <p>{t('common.greeting', { name: 'Alice' })}</p>
+    </div>
   )
 }
 ```
 
-### Using Translations
+## 🌐 Supported Languages
 
-#### Basic Usage
+- **English** (`en`) - Reference language
+- **Czech** (`cs`) - Complex pluralization
+- **Arabic** (`ar`) - RTL support
+
+## ✨ Key Features
+
+- **Type-safe translations** with TypeScript
+- **Complex pluralization** for all languages
+- **Context support** (gender, formality)
+- **Number & date formatting** with locale awareness
+- **RTL support** with directional components
+- **Translation management** tools and scripts
+- **Lazy loading** for performance
+
+## 📁 Architecture Overview
+
+```
+src/i18n/
+├── components/          # React components (LanguageSwitcher, etc.)
+├── hooks/              # Custom hooks (useTypedTranslation, useFormatting)
+├── locales/            # Translation files
+│   ├── en.ts          # English translations
+│   ├── cs.ts          # Czech translations
+│   └── ar.ts          # Arabic translations
+├── scripts/            # CLI tools for translation management
+├── utils/              # Formatting, validation, helpers
+└── types.ts            # TypeScript definitions
+```
+
+## 🛠️ Common Tasks
+
+### Add New Translation
+
+1. Add to English file (`/locales/en.ts`)
+2. Run `npm run i18n:sync` to sync to other languages
+3. Add translations for Czech and Arabic
+4. Run `npm run i18n:types` to update TypeScript types
+
+### Check Translation Coverage
+
+```bash
+npm run i18n:coverage
+```
+
+### Extract and Validate
+
+```bash
+npm run i18n:check
+```
+
+### Full Update Workflow
+
+```bash
+npm run i18n:update
+```
+
+## 🔧 Advanced Features
+
+### Pluralization
+
+```tsx
+import { PluralText } from '@/components/i18n/PluralComponents'
+
+<PluralText i18nKey="plurals.recipe" count={5} />
+// Outputs: "5 receptů" (Czech), "5 recipes" (English)
+```
+
+### Context Support
+
+```tsx
+import { ContextualText } from '@/components/i18n/PluralComponents'
+
+<ContextualText 
+  i18nKey="contexts.userArrived" 
+  context={{ gender: 'feminine' }}
+  values={{ name: 'Marie' }}
+/>
+// Outputs: "Marie přišla" (Czech feminine form)
+```
+
+### Formatting
+
+```tsx
+import { Formatted } from '@/i18n/formatting'
+
+<Formatted.Number value={1234.56} />         // 1,234.56
+<Formatted.Currency value={99.99} />         // €99.99
+<Formatted.Date value={new Date()} />        // 1/11/2025
+<Formatted.RelativeTime value={yesterday} /> // yesterday
+```
+
+## 📖 Detailed Feature Documentation
+
+## Pluralization
+
+### Overview
+
+The application supports complex pluralization rules for three languages:
+
+- **English**: Simple rules (one/other)
+- **Czech**: Complex rules (one/few/many)
+- **Arabic**: Most complex rules (zero/one/two/few/many/other)
+
+### Czech Pluralization Rules
+
+```
+1 → one (1 recept)
+2-4 → few (2 recepty, 3 recepty, 4 recepty)
+5+ → many (5 receptů, 10 receptů)
+
+Special: Numbers ending in 2,3,4 (except 12,13,14) use 'few'
+- 22 → few (22 recepty)
+- 102 → few (102 recepty)
+- 12 → many (12 receptů)
+```
+
+### Arabic Pluralization Rules
+
+```
+0 → zero (لا توجد وصفات)
+1 → one (وصفة واحدة)
+2 → two (وصفتان)
+3-10 → few (3 وصفات)
+11-99 → many (20 وصفة)
+100+ → other (100 وصفة)
+```
+
+### Translation File Structure
+
 ```typescript
-import { useEnhancedTranslation } from '@/i18n/hooks/useTypedTranslation'
+// English
+plurals: {
+  recipe_one: '{{count}} recipe',
+  recipe_other: '{{count}} recipes',
+}
 
-function MyComponent() {
-  const { t } = useEnhancedTranslation('recipes')
-  
-  return <h1>{t('recipes.title')}</h1>
+// Czech
+plurals: {
+  recipe_one: '{{count}} recept',
+  recipe_few: '{{count}} recepty',
+  recipe_many: '{{count}} receptů',
+}
+
+// Arabic
+plurals: {
+  recipe_zero: 'لا توجد وصفات',
+  recipe_one: 'وصفة واحدة',
+  recipe_two: 'وصفتان',
+  recipe_few: '{{count}} وصفات',
+  recipe_many: '{{count}} وصفة',
+  recipe_other: '{{count}} وصفة',
 }
 ```
 
-#### With Context (Gender/Formality)
-```typescript
-const { t, tContext } = useContextualTranslation('auth', {
-  gender: 'female',
-  formal: true
-})
+## Context Support
 
-// Uses context automatically
-<p>{t('auth.welcome')}</p>
+### Gender Context
 
-// Override context
-<p>{tContext('auth.welcome', { gender: 'male' })}</p>
-```
-
-#### Pluralization
-```typescript
-const { tPlural } = usePluralTranslation('recipes')
-
-<p>{tPlural('recipes.ingredient', count)}</p>
-// Outputs: "1 ingredient" or "5 ingredients"
-```
-
-#### Advanced Formatting
-```typescript
-const { tFormat } = useFormattedTranslation('common')
-
-<p>{tFormat('common.date', { date: new Date() }, { date: 'date:long' })}</p>
-<p>{tFormat('common.price', { price: 29.99 }, { price: 'currency:EUR' })}</p>
-```
-
-### Language Switching
+Supports masculine, feminine, and neuter forms:
 
 ```typescript
-import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher'
+// Czech
+contexts: {
+  userArrived_masculine: '{{name}} přišel',
+  userArrived_feminine: '{{name}} přišla',
+  userArrived_neuter: '{{name}} přišlo',
+}
 
-// Dropdown variant
-<LanguageSwitcher variant="dropdown" />
-
-// Inline buttons
-<LanguageSwitcher variant="inline" />
-
-// Modal variant
-<LanguageSwitcher variant="modal" />
-
-// Programmatic
-const { changeLanguage } = useEnhancedTranslation()
-await changeLanguage('cs')
+// Arabic
+contexts: {
+  userCreated_masculine: '{{name}} أنشأ',
+  userCreated_feminine: '{{name}} أنشأت',
+}
 ```
 
-### Development Tools
+### Formality Context
+
+Supports formal and informal variations:
 
 ```typescript
-import { TranslationDevTools } from '@/i18n/components/TranslationDevTools'
-
-// Add to your app in development
-{process.env.NODE_ENV === 'development' && (
-  <TranslationDevTools position="bottom-right" />
-)}
+contexts: {
+  welcome_formal: 'Dobrý den',     // Czech formal
+  welcome_informal: 'Ahoj',        // Czech informal
+  
+  greeting_formal: 'Dear {{name}}', // English formal
+  greeting_informal: 'Hey {{name}}', // English informal
+}
 ```
 
-## File Structure
+### Combined Contexts
 
-```
-i18n/
-├── index.ts                    # Current basic configuration
-├── index.enhanced.ts           # Enhanced configuration (use this!)
-├── types.ts                    # TypeScript types and interfaces
-├── components/
-│   ├── LanguageSwitcher.tsx  # Language switching UI
-│   └── TranslationDevTools.tsx # Dev tools UI
-├── hooks/
-│   └── useTypedTranslation.ts # Type-safe React hooks
-├── utils/
-│   ├── backend.ts             # Backend integration
-│   ├── formatting.ts          # Format functions
-│   ├── lazy-loading.ts        # Namespace lazy loading
-│   ├── missing-tracker.ts     # Track missing translations
-│   ├── pluralization.ts       # Pluralization rules
-│   └── validation.ts          # Translation validation
-├── locales/
-│   ├── en.ts                  # English (legacy, for backwards compatibility)
-│   ├── cs.ts                  # Czech (legacy, for backwards compatibility)
-│   └── namespaces/            # New namespace-based structure
-│       ├── common/
-│       ├── auth/
-│       ├── recipes/
-│       ├── trips/
-│       ├── admin/
-│       ├── validation/
-│       └── errors/
-└── examples/
-    └── usage.tsx              # Usage examples
+Can combine multiple contexts:
 
+```typescript
+contexts: {
+  thankYou_formal_masculine: 'Děkujeme Vám, pane {{name}}',
+  thankYou_formal_feminine: 'Děkujeme Vám, paní {{name}}',
+  thankYou_informal_masculine: 'Díky, {{name}}',
+  thankYou_informal_feminine: 'Díky, {{name}}',
+}
 ```
 
-## Migration Guide
+## Ordinal Numbers
 
-To migrate from the current setup to the enhanced configuration:
+Each language has its own ordinal formatting:
 
-1. **Update imports:**
-   ```typescript
-   // Old
-   import i18n from '@/i18n'
-   
-   // New
-   import i18n from '@/i18n/index.enhanced'
-   ```
+- **English**: 1st, 2nd, 3rd, 4th, 21st, 22nd, etc.
+- **Czech**: 1., 2., 3., 4., etc.
+- **Arabic**: ال1, ال2, ال3, etc.
 
-2. **Update hooks:**
-   ```typescript
-   // Old
-   const { t } = useTranslation()
-   
-   // New (with type safety!)
-   const { t } = useEnhancedTranslation('recipes')
-   ```
+## Components
 
-3. **Split translations into namespaces:**
-   - Move auth-related translations to `locales/namespaces/auth/`
-   - Move recipe translations to `locales/namespaces/recipes/`
-   - etc.
+### PluralText
 
-4. **Add context variations:**
-   ```typescript
-   // Add gender/formal variations
-   welcome: 'Welcome back!',
-   welcome_male: 'Welcome back, sir!',
-   welcome_female: 'Welcome back, madam!',
-   welcome_formal: 'Welcome back, esteemed user!',
-   ```
+Renders text with proper pluralization:
 
-5. **Update plurals:**
-   ```typescript
-   // Old
-   ingredients: '{{count}} ingredients',
-   
-   // New (supports Czech pluralization)
-   ingredient_one: '{{count}} ingredient',
-   ingredient_few: '{{count}} ingredience',  // Czech 2-4
-   ingredient_many: '{{count}} ingrediencí', // Czech 5+
-   ```
+```tsx
+import { PluralText } from '@/components/i18n/PluralComponents'
 
-## Configuration
+// Simple usage
+<PluralText i18nKey="plurals.recipe" count={5} />
+// Output: "5 receptů" (Czech)
 
-### Environment Variables
-
-```env
-# Enable backend sync
-VITE_I18N_USE_BACKEND=true
-VITE_I18N_API_URL=https://api.example.com/translations
-VITE_I18N_API_KEY=your-api-key
+// With interpolation
+<PluralText 
+  i18nKey="plurals.recipesInTrip" 
+  count={3}
+  values={{ participants: 10 }}
+/>
+// Output: "Tento výlet obsahuje 3 recepty pro 10 lidí"
 ```
 
-### Backend API Endpoints
+### ContextualText
 
-If using backend sync, implement these endpoints:
+Renders text with context variations:
 
-- `GET /api/translations?language=en&namespace=recipes` - Fetch translations
-- `POST /api/translations/missing` - Report missing translations
-- `POST /api/translations/update` - Update a translation
+```tsx
+import { ContextualText } from '@/components/i18n/PluralComponents'
+
+// Gender context
+<ContextualText 
+  i18nKey="contexts.userArrived" 
+  context={{ gender: 'feminine' }}
+  values={{ name: 'Marie' }}
+/>
+// Output: "Marie přišla" (Czech)
+
+// Formality context
+<ContextualText 
+  i18nKey="contexts.welcome" 
+  context={{ formality: 'formal' }}
+/>
+// Output: "Dobrý den" (Czech)
+
+// Combined context
+<ContextualText 
+  i18nKey="contexts.thankYou" 
+  context={{ gender: 'masculine', formality: 'formal' }}
+  values={{ name: 'Novák' }}
+/>
+// Output: "Děkujeme Vám, pane Novák" (Czech)
+```
+
+### OrdinalText
+
+Renders ordinal numbers:
+
+```tsx
+import { OrdinalText } from '@/components/i18n/PluralComponents'
+
+// Just the ordinal
+<OrdinalText value={1} />
+// Output: "1st" (English), "1." (Czech), "ال1" (Arabic)
+
+// With translation key
+<OrdinalText value={3} i18nKey="plurals.place" />
+// Output: "3rd place" (English), "3. místo" (Czech)
+```
+
+### PluralContextText
+
+Combines pluralization and context:
+
+```tsx
+import { PluralContextText } from '@/components/i18n/PluralComponents'
+
+<PluralContextText 
+  i18nKey="plurals.participantJoined"
+  count={2}
+  context={{ gender: 'feminine' }}
+/>
+// Output varies by language and handles both plural and gender
+```
+
+## Hooks
+
+### usePlural
+
+Programmatic access to pluralization:
+
+```tsx
+import { usePlural } from '@/components/i18n/PluralComponents'
+
+const Component = () => {
+  const { plural, ordinal } = usePlural()
+  
+  const recipeText = plural('plurals.recipe', 5)
+  // "5 receptů" (Czech)
+  
+  const position = ordinal(1)
+  // "1st" (English)
+  
+  return <div>{recipeText}, {position}</div>
+}
+```
+
+### useContext
+
+Programmatic access to contextual translations:
+
+```tsx
+import { useContext } from '@/components/i18n/PluralComponents'
+
+const Component = () => {
+  const { contextual } = useContext()
+  
+  const greeting = contextual('contexts.greeting', {
+    formality: 'formal'
+  }, {
+    name: 'Smith'
+  })
+  // "Dear Smith" (English formal)
+  
+  return <div>{greeting}</div>
+}
+```
+
+### usePluralContext
+
+Combines plural and context features:
+
+```tsx
+import { usePluralContext } from '@/components/i18n/PluralComponents'
+
+const Component = () => {
+  const { pluralContext, ordinal } = usePluralContext()
+  
+  const message = pluralContext(
+    'plurals.participantJoined',
+    3,
+    { gender: 'masculine' }
+  )
+  
+  return <div>{message}</div>
+}
+```
+
+## Examples
+
+### Recipe Counter
+
+```tsx
+const RecipeCounter = ({ count }: { count: number }) => (
+  <div>
+    <PluralText i18nKey="plurals.recipeCount" count={count} />
+  </div>
+)
+
+// count=0: "Nemáte žádné recepty" (Czech)
+// count=1: "Máte 1 recept" (Czech)
+// count=3: "Máte 3 recepty" (Czech)
+// count=5: "Máte 5 receptů" (Czech)
+```
+
+### User Actions
+
+```tsx
+const UserAction = ({ user }: { user: User }) => (
+  <ContextualText 
+    i18nKey="contexts.userCreated"
+    context={{ gender: user.gender }}
+    values={{ name: user.name }}
+  />
+)
+
+// Male user: "Jan vytvořil" (Czech)
+// Female user: "Marie vytvořila" (Czech)
+```
+
+### Leaderboard
+
+```tsx
+const LeaderboardEntry = ({ position, name }: Props) => (
+  <div>
+    <OrdinalText value={position} i18nKey="plurals.place" />
+    {' - '}
+    {name}
+  </div>
+)
+
+// position=1: "1st place - John" (English)
+// position=2: "2. místo - Marie" (Czech)
+```
+
+### Trip Summary
+
+```tsx
+const TripSummary = ({ recipes, participants }: Props) => (
+  <PluralText 
+    i18nKey="plurals.recipesInTrip"
+    count={recipes}
+    values={{ participants }}
+  />
+)
+
+// recipes=0, participants=5: 
+// "لا تحتوي هذه الرحلة على أي وصفات" (Arabic)
+// recipes=3, participants=10:
+// "This trip contains 3 recipes for 10 people" (English)
+```
 
 ## Best Practices
 
-1. **Always use namespaces** - Don't put everything in 'common'
-2. **Load only what you need** - Use namespace-specific hooks
-3. **Provide context** - Use gender/formal variations where appropriate
-4. **Track missing translations** - Use dev tools in development
-5. **Validate regularly** - Run validation to ensure consistency
-6. **Use type-safe hooks** - Leverage TypeScript for better DX
+1. **Always provide all plural forms** for languages that need them
+2. **Test with edge cases**: 0, 1, 2, 5, 11, 21, 100, etc.
+3. **Use context variations** when the translation depends on user attributes
+4. **Combine features** when needed (plural + context)
+5. **Leverage TypeScript** for type safety with translation keys
+6. **Keep translations consistent** across all plural forms
+7. **Document special cases** in your translation files
+
+## Adding New Languages
+
+To add a new language with complex pluralization:
+
+1. Add pluralization rules in `/src/i18n/pluralization/index.ts`
+2. Add the language to the `pluralizationResolver`
+3. Create translation files with all required plural forms
+4. Test with various numbers to ensure correctness
+
+Example for Polish (similar to Czech):
+
+```typescript
+export const polishPluralRules = (count: number): string => {
+  if (count === 1) return 'one'
+  
+  const lastDigit = count % 10
+  const lastTwoDigits = count % 100
+  
+  if (lastDigit >= 2 && lastDigit <= 4 && 
+      (lastTwoDigits < 12 || lastTwoDigits > 14)) {
+    return 'few'
+  }
+  
+  return 'many'
+}
+```
 
 ## Troubleshooting
 
-### Translations not loading
-- Check if namespace is properly imported
-- Verify lazy loading is working
-- Check browser console for errors
+### Common Issues
 
-### Type errors
-- Run `npm run type-check`
-- Ensure translation keys match type definitions
-- Update types when adding new translations
+1. **Missing plural form**: Ensure all required forms are provided
+2. **Wrong plural form selected**: Check the pluralization rules
+3. **Context not working**: Verify the context key format (e.g., `_masculine`)
+4. **Ordinals not displaying**: Check the formatter is registered
 
-### Performance issues
-- Enable lazy loading for large namespaces
-- Use production build for testing
-- Check if backend sync is causing delays
+### Debug Mode
 
-## Future Enhancements
+Enable debug mode to see which keys are being resolved:
 
-- [ ] Right-to-left (RTL) language support
-- [ ] Translation memory integration
-- [ ] A/B testing for translations
-- [ ] Machine translation integration
-- [ ] Crowdsourced translation platform
-- [ ] Version control for translations
-- [ ] Translation analytics
+```typescript
+i18n.init({
+  debug: true,
+  // ... other options
+})
+```
+
+This will log all translation lookups to the console.
