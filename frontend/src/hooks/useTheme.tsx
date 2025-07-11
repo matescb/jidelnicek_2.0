@@ -70,7 +70,6 @@ export function useTheme(): UseThemeReturn {
 }
 
 // Optional: Theme context provider
-import { createContext, useContext, ReactNode } from 'react';
 
 const ThemeContext = createContext<UseThemeReturn | undefined>(undefined);
 

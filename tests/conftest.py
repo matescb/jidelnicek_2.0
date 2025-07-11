@@ -266,6 +266,28 @@ async def auth_headers(existing_user: AuthUser, db_session: AsyncSession, mock_r
     }
 
 
+@pytest_asyncio.fixture(scope="function") 
+async def admin_headers(admin_user: AuthUser, db_session: AsyncSession, mock_redis: AsyncMock) -> dict:
+    """Create authentication headers for admin user."""
+    token_service = TokenService(db_session, mock_redis)
+    access_token, _ = token_service.generate_access_token(admin_user)
+    
+    return {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+
+@pytest_asyncio.fixture(scope="function")
+async def admin_regular_user_headers(existing_user: AuthUser, db_session: AsyncSession, mock_redis: AsyncMock) -> dict:
+    """Create authentication headers for regular user (non-admin) to test admin access restrictions."""
+    token_service = TokenService(db_session, mock_redis)
+    access_token, _ = token_service.generate_access_token(existing_user)
+    
+    return {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+
 @pytest_asyncio.fixture(scope="function")
 async def unverified_auth_headers(unverified_user: AuthUser, db_session: AsyncSession, mock_redis: AsyncMock) -> dict:
     """Create authentication headers for an unverified user."""

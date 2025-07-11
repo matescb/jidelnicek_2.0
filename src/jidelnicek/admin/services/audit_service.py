@@ -289,7 +289,7 @@ class AdminAuditService:
         result = await self.db.execute(query)
         actions_by_type = {
             action.value: count
-            for action, count in result
+            for action, count in result.fetchall()
         }
         
         # Success rate
@@ -300,7 +300,7 @@ class AdminAuditService:
         if where_clause is not None:
             query = query.where(where_clause)
         result = await self.db.execute(query)
-        success_stats = dict(result)
+        success_stats = dict(result.fetchall())
         
         success_rate = (
             (success_stats.get(True, 0) / total_actions * 100)
@@ -320,7 +320,7 @@ class AdminAuditService:
         
         # Get admin details
         most_active = []
-        for admin_id, count in result:
+        for admin_id, count in result.fetchall():
             admin_result = await self.db.execute(
                 select(AuthUser).where(AuthUser.id == admin_id)
             )
@@ -343,3 +343,55 @@ class AdminAuditService:
                 "end": end_date.isoformat() if end_date else None
             }
         }
+    
+    async def log_admin_action(
+        self,
+        user_id: UUID,
+        action: str,
+        resource_type: str,
+        resource_id: Optional[UUID] = None,
+        before_state: Optional[Dict[str, Any]] = None,
+        after_state: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None
+    ) -> AdminAuditLog:
+        """
+        Log an admin action to the audit log.
+        
+        Args:
+            user_id: ID of the admin user performing the action
+            action: Action being performed
+            resource_type: Type of resource being acted upon
+            resource_id: ID of the resource (optional)
+            before_state: State before the action
+            after_state: State after the action
+            metadata: Additional metadata
+            ip_address: IP address of the request
+            user_agent: User agent of the request
+            
+        Returns:
+            Created audit log entry
+        """
+        # Convert action string to AdminAction enum if needed
+        admin_action = action if isinstance(action, AdminAction) else AdminAction.DATA_IMPORT
+        
+        audit_entry = AdminAuditLog(
+            admin_id=user_id,
+            action=admin_action,
+            target_type=resource_type,
+            target_id=resource_id,
+            before_state=before_state,
+            after_state=after_state,
+            metadata=metadata,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            success=True,  # Assume success unless explicitly set
+            timestamp=datetime.now(timezone.utc)
+        )
+        
+        self.db.add(audit_entry)
+        await self.db.commit()
+        await self.db.refresh(audit_entry)
+        
+        return audit_entry

@@ -20,16 +20,7 @@ from jidelnicek.auth.models import AuthUser
 from jidelnicek.core.exceptions import ValidationError, NotFoundError, ConflictError
 
 
-@pytest.fixture
-def admin_user():
-    """Create a mock admin user."""
-    user = AuthUser(
-        id=uuid4(),
-        email="admin@example.com",
-        role="admin",
-        is_active=True
-    )
-    return user
+# admin_user fixture now comes from conftest.py and is properly saved to database
 
 
 @pytest.fixture

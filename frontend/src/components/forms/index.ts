@@ -62,6 +62,28 @@ export {
   withFormErrorBoundary 
 } from './ErrorBoundaryForm';
 
+// Enhanced validation components
+export { 
+  EnhancedFormField,
+  EmailField,
+  PasswordField,
+  PhoneField,
+  UrlField,
+  NumberField,
+  type EnhancedFormFieldProps,
+  type ValidationRule
+} from './EnhancedFormField';
+export {
+  FieldStatusIndicator,
+  LiveValidationFeedback,
+  ErrorSummary,
+  ValidationProgressIndicator,
+  type FieldStatusIndicatorProps,
+  type LiveValidationFeedbackProps,
+  type ErrorSummaryProps,
+  type ValidationProgressIndicatorProps
+} from './ValidationFeedback';
+
 // Examples
 export { FormSubmissionExamples } from './FormSubmissionExamples';
 

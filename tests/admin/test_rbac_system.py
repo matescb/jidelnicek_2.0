@@ -27,9 +27,9 @@ from jidelnicek.admin.services.rbac_service import RBACService
 
 
 @pytest_asyncio.fixture(scope="function")
-async def rbac_service(db_session, redis_client):
+async def rbac_service(db_session, mock_redis):
     """Create RBAC service instance."""
-    return RBACService(db_session, redis_client)
+    return RBACService(db_session, mock_redis)
 
 
 @pytest_asyncio.fixture(scope="function")

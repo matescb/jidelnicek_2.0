@@ -360,7 +360,7 @@ class RBACService:
             action="role_created",
             resource_type="role",
             resource_id=role.id,
-            details={"code": role.code, "name": role.name}
+            metadata={"code": role.code, "name": role.name}
         )
         
         return role
@@ -427,7 +427,7 @@ class RBACService:
             action="role_updated",
             resource_type="role",
             resource_id=role.id,
-            details={"code": role.code, "changes": "role updated"}
+            metadata={"code": role.code, "changes": "role updated"}
         )
         
         return role
@@ -465,7 +465,7 @@ class RBACService:
             action="role_deleted",
             resource_type="role",
             resource_id=role_id,
-            details={"code": role.code, "name": role.name}
+            metadata={"code": role.code, "name": role.name}
         )
         
         return True
@@ -596,7 +596,7 @@ class RBACService:
             action="role_assigned",
             resource_type="user",
             resource_id=user_id,
-            details={
+            metadata={
                 "role_id": str(role_id),
                 "role_code": role.code,
                 "expires_at": expires_at.isoformat() if expires_at else None,
@@ -659,7 +659,7 @@ class RBACService:
             action="role_revoked",
             resource_type="user",
             resource_id=user_id,
-            details={
+            metadata={
                 "role_id": str(role_id),
                 "reason": reason
             }
@@ -724,7 +724,7 @@ class RBACService:
             action="permissions_delegated",
             resource_type="user",
             resource_id=delegate_id,
-            details={
+            metadata={
                 "permissions": permissions,
                 "expires_at": expires_at.isoformat(),
                 "reason": reason
@@ -765,7 +765,7 @@ class RBACService:
             action="delegation_revoked",
             resource_type="delegation",
             resource_id=delegation_id,
-            details={"reason": reason}
+            metadata={"reason": reason}
         )
         
         return True
