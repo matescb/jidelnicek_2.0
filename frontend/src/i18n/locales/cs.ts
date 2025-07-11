@@ -320,6 +320,131 @@ export default {
     notFound: 'Zdroj nebyl nalezen',
     validation: 'Zkontrolujte prosím zadané údaje',
     server: 'Chyba serveru. Zkuste to prosím později.',
+    
+    // Form errors
+    formErrors: 'Chyby formuláře',
+    fieldErrors: 'Chyby polí',
+    validationError: 'Chyba validace',
+    validationErrors: 'Chyby validace',
+    clickToExpand: 'Klikněte pro zobrazení {{count}} chyb',
+    formRenderError: 'Nelze zobrazit formulář',
+    unknownError: 'Neznámá chyba',
+    
+    // Error types for error boundary
+    network_error: {
+      title: 'Chyba sítě',
+      message: 'Nelze se připojit k serveru. Zkontrolujte prosím své internetové připojení.',
+      action: 'Zkuste obnovit stránku'
+    },
+    timeout_error: {
+      title: 'Časový limit požadavku',
+      message: 'Požadavek trval příliš dlouho. Server může být zaneprázdněn.',
+      action: 'Zkuste to prosím znovu'
+    },
+    offline_error: {
+      title: 'Jste offline',
+      message: 'Zdá se, že jste offline. Některé funkce nemusí být dostupné.',
+      action: 'Zkontrolujte připojení'
+    },
+    unauthorized: {
+      title: 'Vyžadováno přihlášení',
+      message: 'Pro přístup k této funkci se musíte přihlásit.',
+      action: 'Přihlásit se'
+    },
+    token_expired: {
+      title: 'Relace vypršela',
+      message: 'Vaše relace vypršela. Přihlaste se prosím znovu.',
+      action: 'Přihlásit se znovu'
+    },
+    invalid_credentials: {
+      title: 'Neplatné přihlašovací údaje',
+      message: 'Zadaný e-mail nebo heslo je nesprávné.',
+      action: 'Zkusit znovu'
+    },
+    validation_error: {
+      title: 'Chyba validace',
+      message: 'Zkontrolujte prosím zadané údaje a zkuste to znovu.',
+      action: 'Zkontrolovat formulář'
+    },
+    missing_field: {
+      title: 'Chybějící informace',
+      message: 'Vyplňte prosím všechna povinná pole.',
+      action: 'Dokončit formulář'
+    },
+    invalid_format: {
+      title: 'Neplatný formát',
+      message: 'Zkontrolujte prosím formát zadaných údajů.',
+      action: 'Opravit formát'
+    },
+    server_error: {
+      title: 'Chyba serveru',
+      message: 'Něco se pokazilo na naší straně. Pracujeme na nápravě.',
+      action: 'Zkuste to později'
+    },
+    not_found: {
+      title: 'Nenalezeno',
+      message: 'Požadovaný zdroj nebyl nalezen.',
+      action: 'Vrátit se zpět'
+    },
+    rate_limit: {
+      title: 'Příliš mnoho požadavků',
+      message: 'Provedli jste příliš mnoho požadavků. Chvíli počkejte.',
+      action: 'Počkat a zkusit znovu'
+    },
+    insufficient_permissions: {
+      title: 'Přístup odepřen',
+      message: 'Nemáte oprávnění k přístupu k tomuto zdroji.',
+      action: 'Požádat o přístup'
+    },
+    resource_locked: {
+      title: 'Zdroj uzamčen',
+      message: 'Tento zdroj je momentálně upravován někým jiným.',
+      action: 'Zkuste to později'
+    },
+    conflict: {
+      title: 'Zjištěn konflikt',
+      message: 'Vaše změny jsou v konfliktu s nedávnými aktualizacemi.',
+      action: 'Obnovit a zkusit znovu'
+    },
+    render_error: {
+      title: 'Chyba zobrazení',
+      message: 'Při zobrazování tohoto obsahu došlo k chybě.',
+      action: 'Obnovit stránku'
+    },
+    component_error: {
+      title: 'Chyba komponenty',
+      message: 'Komponenta se nepodařilo správně vykreslit.',
+      action: 'Obnovit stránku'
+    },
+    unknown: {
+      title: 'Něco se pokazilo',
+      message: 'Došlo k neočekávané chybě. Zkuste to prosím znovu.',
+      action: 'Obnovit stránku'
+    },
+    
+    // Recovery messages
+    recovering: 'Pokus o zotavení...',
+    recoverySuccess: 'Úspěšně zotaveno z chyby',
+    recoveryFailed: 'Zotavení selhalo. Zkuste to prosím znovu.',
+    retryAttempt: 'Pokus č. {{count}}',
+    
+    // Error boundary messages
+    errorDetails: 'Podrobnosti chyby',
+    developerDetails: 'Vývojářské podrobnosti',
+    copyError: 'Zkopírovat podrobnosti chyby',
+    errorCopied: 'Podrobnosti chyby zkopírovány do schránky',
+    showDetails: 'Zobrazit podrobnosti',
+    hideDetails: 'Skrýt podrobnosti',
+    errorId: 'ID chyby: {{id}}',
+    reportError: 'Nahlásit tuto chybu',
+    
+    // Error history
+    errorHistory: 'Historie chyb',
+    clearHistory: 'Vymazat historii',
+    noErrors: 'Žádné zaznamenané chyby',
+    errorOccurred: 'Chyba nastala před {{time}}',
+    dismissError: 'Zavřít chybu',
+    dismissAll: 'Zavřít všechny chyby',
   },
   
   common: {
@@ -553,5 +678,214 @@ export default {
     doctor_feminine: 'doktorka',
     chef_masculine: 'kuchař',
     chef_feminine: 'kuchařka',
+  },
+  
+  // Network status messages
+  network: {
+    online: 'Online',
+    offline: 'Offline',
+    slow: 'Pomalé připojení',
+    unknown: 'Neznámé',
+    
+    // Status change messages
+    back_online: 'Připojení obnoveno',
+    went_offline: 'Připojení ztraceno',
+    slow_connection: 'Detekováno pomalé připojení',
+    
+    // Connection quality
+    excellent: 'Vynikající',
+    good: 'Dobré',
+    fair: 'Průměrné',
+    poor: 'Slabé',
+    
+    // Network info
+    latency: 'Odezva: {{value}}ms',
+    bandwidth: 'Šířka pásma: {{value}}',
+    connection_type: 'Připojení: {{type}}',
+    
+    // Actions
+    check_connection: 'Zkontrolovat připojení',
+    retry_connection: 'Zkusit znovu připojit',
+    
+    // Network error messages
+    no_connection: 'Bez internetového připojení',
+    connection_error: 'Chyba připojení',
+    timeout: 'Časový limit připojení',
+    server_unreachable: 'Server nedostupný',
+  },
+  
+  // Offline mode messages
+  offline: {
+    mode_active: 'Offline režim aktivní',
+    changes_saved_locally: 'Změny uloženy lokálně',
+    will_sync_when_online: 'Synchronizace po obnovení připojení',
+    
+    // Queue messages
+    request_queued: 'Požadavek zařazen do fronty',
+    queue_empty: 'Žádné čekající požadavky',
+    queue_size: '{{count}} čekajících požadavků',
+    processing_queue: 'Zpracování offline fronty...',
+    queue_cleared: 'Offline fronta vymazána',
+    queue_error: 'Nepodařilo se zařadit požadavek do fronty',
+    
+    // Sync messages
+    syncing: 'Synchronizace offline dat...',
+    sync_complete: 'Synchronizace dokončena',
+    sync_failed: 'Synchronizace selhala',
+    synced_items: '{{count}} položek synchronizováno',
+    sync_errors: '{{count}} chyb synchronizace',
+    last_sync: 'Poslední synchronizace: {{time}}',
+    
+    // Conflict messages
+    conflicts_detected: 'Detekováno {{count}} konfliktů',
+    conflict_resolved: 'Konflikt vyřešen',
+    conflict_resolution_failed: 'Nepodařilo se vyřešit konflikt',
+    
+    // Cache messages
+    cached_data_available: 'K dispozici data z mezipaměti',
+    cache_expired: 'Mezipaměť vypršela',
+    cache_cleared: 'Mezipaměť vymazána',
+    
+    // Actions
+    sync_now: 'Synchronizovat nyní',
+    resolve_conflicts: 'Vyřešit konflikty',
+    clear_queue: 'Vymazat frontu',
+    view_queue: 'Zobrazit frontu',
+  },
+  
+  // Error recovery messages
+  errors: {
+    // Recovery messages
+    recovery_suggestions: 'Návrhy řešení',
+    recovery_in_progress: 'Pokus o obnovení...',
+    recovery_successful: 'Úspěšně obnoveno',
+    recovery_failed: 'Obnovení selhalo',
+    operation_failed: 'Operace selhala: {{error}}',
+    
+    // Retry messages
+    retrying: 'Opakování...',
+    retry_attempt: 'Pokus {{current}} z {{total}}',
+    retry_in: 'Opakování za {{seconds}}s',
+    max_retries_exceeded: 'Překročen maximální počet pokusů',
+    
+    // Circuit breaker
+    circuit_open: 'Služba dočasně nedostupná',
+    circuit_half_open: 'Testování dostupnosti služby',
+    
+    // Error types with details
+    network_error: {
+      title: 'Chyba sítě',
+      message: 'Nelze se připojit k serveru. Zkontrolujte prosím internetové připojení.',
+      action: 'Zkuste obnovit stránku'
+    },
+    timeout_error: {
+      title: 'Časový limit požadavku',
+      message: 'Dokončení požadavku trvalo příliš dlouho. Server může být zaneprázdněn.',
+      action: 'Zkuste to prosím znovu'
+    },
+    offline_error: {
+      title: 'Jste offline',
+      message: 'Zdá se, že jste offline. Některé funkce nemusí být dostupné.',
+      action: 'Zkontrolujte připojení'
+    },
+    unauthorized: {
+      title: 'Vyžaduje se ověření',
+      message: 'Pro přístup k této funkci se musíte přihlásit.',
+      action: 'Přihlásit se'
+    },
+    token_expired: {
+      title: 'Relace vypršela',
+      message: 'Vaše relace vypršela. Přihlaste se prosím znovu.',
+      action: 'Přihlásit se znovu'
+    },
+    invalid_credentials: {
+      title: 'Neplatné přihlašovací údaje',
+      message: 'Zadaný email nebo heslo je nesprávné.',
+      action: 'Zkusit znovu'
+    },
+    validation_error: {
+      title: 'Chyba validace',
+      message: 'Zkontrolujte prosím zadané údaje a zkuste to znovu.',
+      action: 'Zkontrolovat formulář'
+    },
+    missing_field: {
+      title: 'Chybějící informace',
+      message: 'Vyplňte prosím všechna povinná pole.',
+      action: 'Dokončit formulář'
+    },
+    invalid_format: {
+      title: 'Neplatný formát',
+      message: 'Zkontrolujte prosím formát zadaných údajů.',
+      action: 'Opravit formát'
+    },
+    server_error: {
+      title: 'Chyba serveru',
+      message: 'Něco se pokazilo na naší straně. Pracujeme na nápravě.',
+      action: 'Zkusit později'
+    },
+    not_found: {
+      title: 'Nenalezeno',
+      message: 'Požadovaný zdroj nebyl nalezen.',
+      action: 'Jít zpět'
+    },
+    rate_limit: {
+      title: 'Příliš mnoho požadavků',
+      message: 'Provedli jste příliš mnoho požadavků. Chvíli počkejte.',
+      action: 'Počkat a zkusit znovu'
+    },
+    insufficient_permissions: {
+      title: 'Přístup odepřen',
+      message: 'Nemáte oprávnění k přístupu k tomuto zdroji.',
+      action: 'Požádat o přístup'
+    },
+    resource_locked: {
+      title: 'Zdroj uzamčen',
+      message: 'Tento zdroj právě upravuje někdo jiný.',
+      action: 'Zkusit později'
+    },
+    conflict: {
+      title: 'Detekován konflikt',
+      message: 'Vaše změny jsou v konfliktu s nedávnými aktualizacemi.',
+      action: 'Obnovit a zkusit znovu'
+    },
+    render_error: {
+      title: 'Chyba zobrazení',
+      message: 'Při zobrazování tohoto obsahu došlo k chybě.',
+      action: 'Obnovit stránku'
+    },
+    component_error: {
+      title: 'Chyba komponenty',
+      message: 'Komponenta se nepodařila správně vykreslit.',
+      action: 'Obnovit stránku'
+    },
+    unknown: {
+      title: 'Něco se pokazilo',
+      message: 'Došlo k neočekávané chybě. Zkuste to prosím znovu.',
+      action: 'Obnovit stránku'
+    },
+    
+    // Recovery messages
+    recovering: 'Pokus o obnovení...',
+    recoverySuccess: 'Úspěšně obnoveno po chybě',
+    recoveryFailed: 'Obnovení selhalo. Zkuste to prosím znovu.',
+    retryAttempt: 'Pokus o opakování {{count}}',
+    
+    // Error boundary messages
+    errorDetails: 'Podrobnosti chyby',
+    developerDetails: 'Podrobnosti pro vývojáře',
+    copyError: 'Zkopírovat podrobnosti chyby',
+    errorCopied: 'Podrobnosti chyby zkopírovány do schránky',
+    showDetails: 'Zobrazit podrobnosti',
+    hideDetails: 'Skrýt podrobnosti',
+    errorId: 'ID chyby: {{id}}',
+    reportError: 'Nahlásit tuto chybu',
+    
+    // Error history
+    errorHistory: 'Historie chyb',
+    clearHistory: 'Vymazat historii',
+    noErrors: 'Žádné zaznamenané chyby',
+    errorOccurred: 'Chyba nastala před {{time}}',
+    dismissError: 'Zavřít chybu',
+    dismissAll: 'Zavřít všechny chyby',
   },
 }

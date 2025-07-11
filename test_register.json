@@ -1,0 +1,9 @@
+{
+  "email": "test@example.com",
+  "password": "VeryStr0ngP@ssw0rd!",
+  "confirm_password": "VeryStr0ngP@ssw0rd!",
+  "language": "en",
+  "unit_system": "metric",
+  "energy_unit": "kcal",
+  "has_pku": false
+}

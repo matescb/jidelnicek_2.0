@@ -26,7 +26,7 @@ from jidelnicek.auth.dependencies.rate_limit import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/auth/monitoring", tags=["auth-monitoring"])
+router = APIRouter(prefix="/api/v1/auth/monitoring", tags=["auth-monitoring"])
 
 
 @router.get(

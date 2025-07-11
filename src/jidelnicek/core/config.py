@@ -256,7 +256,8 @@ class Settings(BaseSettings):
             return v
         values = info.data
         password = values.get("redis_password")
-        if password:
+        # Only include password if it's not empty
+        if password and password.strip():
             return str(RedisDsn.build(
                 scheme="redis",
                 username=None,

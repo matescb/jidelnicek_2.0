@@ -201,9 +201,9 @@ export class WebSocketService {
   }
 
   /**
-   * Emit a custom event to the server
+   * Emit a custom event to the server (raw)
    */
-  emit(event: string, data?: any): void {
+  emitRaw(event: string, data?: any): void {
     if (!this.socket?.connected) {
       console.warn(`Cannot emit ${event}: socket not connected`)
       return

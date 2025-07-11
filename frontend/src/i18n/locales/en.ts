@@ -455,6 +455,122 @@ export default {
     clickToExpand: 'Click to view {{count}} errors',
     formRenderError: 'Unable to display form',
     unknownError: 'Unknown error',
+    
+    // Error types for error boundary
+    network_error: {
+      title: 'Network Error',
+      message: 'Unable to connect to the server. Please check your internet connection.',
+      action: 'Try refreshing the page'
+    },
+    timeout_error: {
+      title: 'Request Timeout',
+      message: 'The request took too long to complete. The server might be busy.',
+      action: 'Please try again'
+    },
+    offline_error: {
+      title: 'You\'re Offline',
+      message: 'You seem to be offline. Some features may not be available.',
+      action: 'Check your connection'
+    },
+    unauthorized: {
+      title: 'Authentication Required',
+      message: 'You need to log in to access this feature.',
+      action: 'Log in'
+    },
+    token_expired: {
+      title: 'Session Expired',
+      message: 'Your session has expired. Please log in again.',
+      action: 'Log in again'
+    },
+    invalid_credentials: {
+      title: 'Invalid Credentials',
+      message: 'The email or password you entered is incorrect.',
+      action: 'Try again'
+    },
+    validation_error: {
+      title: 'Validation Error',
+      message: 'Please check your input and try again.',
+      action: 'Review form'
+    },
+    missing_field: {
+      title: 'Missing Information',
+      message: 'Please fill in all required fields.',
+      action: 'Complete form'
+    },
+    invalid_format: {
+      title: 'Invalid Format',
+      message: 'Please check the format of your input.',
+      action: 'Fix format'
+    },
+    server_error: {
+      title: 'Server Error',
+      message: 'Something went wrong on our end. We\'re working to fix it.',
+      action: 'Try again later'
+    },
+    not_found: {
+      title: 'Not Found',
+      message: 'The requested resource could not be found.',
+      action: 'Go back'
+    },
+    rate_limit: {
+      title: 'Too Many Requests',
+      message: 'You\'ve made too many requests. Please wait a moment.',
+      action: 'Wait and retry'
+    },
+    insufficient_permissions: {
+      title: 'Access Denied',
+      message: 'You don\'t have permission to access this resource.',
+      action: 'Request access'
+    },
+    resource_locked: {
+      title: 'Resource Locked',
+      message: 'This resource is currently being edited by someone else.',
+      action: 'Try again later'
+    },
+    conflict: {
+      title: 'Conflict Detected',
+      message: 'Your changes conflict with recent updates.',
+      action: 'Refresh and retry'
+    },
+    render_error: {
+      title: 'Display Error',
+      message: 'We encountered an error displaying this content.',
+      action: 'Refresh page'
+    },
+    component_error: {
+      title: 'Component Error',
+      message: 'A component failed to render properly.',
+      action: 'Refresh page'
+    },
+    unknown: {
+      title: 'Something Went Wrong',
+      message: 'An unexpected error occurred. Please try again.',
+      action: 'Refresh page'
+    },
+    
+    // Recovery messages
+    recovering: 'Attempting to recover...',
+    recoverySuccess: 'Successfully recovered from error',
+    recoveryFailed: 'Recovery failed. Please try again.',
+    retryAttempt: 'Retry attempt {{count}}',
+    
+    // Error boundary messages
+    errorDetails: 'Error details',
+    developerDetails: 'Developer Details',
+    copyError: 'Copy error details',
+    errorCopied: 'Error details copied to clipboard',
+    showDetails: 'Show details',
+    hideDetails: 'Hide details',
+    errorId: 'Error ID: {{id}}',
+    reportError: 'Report this error',
+    
+    // Error history
+    errorHistory: 'Error History',
+    clearHistory: 'Clear history',
+    noErrors: 'No errors recorded',
+    errorOccurred: 'Error occurred {{time}} ago',
+    dismissError: 'Dismiss error',
+    dismissAll: 'Dismiss all errors',
   },
   
   common: {
@@ -749,5 +865,214 @@ export default {
     greeting: 'Hello {{name}}',
     greeting_formal: 'Dear {{name}}',
     greeting_informal: 'Hey {{name}}',
+  },
+  
+  // Network status messages
+  network: {
+    online: 'Online',
+    offline: 'Offline',
+    slow: 'Slow connection',
+    unknown: 'Unknown',
+    
+    // Status change messages
+    back_online: 'Connection restored',
+    went_offline: 'Connection lost',
+    slow_connection: 'Slow connection detected',
+    
+    // Connection quality
+    excellent: 'Excellent',
+    good: 'Good',
+    fair: 'Fair',
+    poor: 'Poor',
+    
+    // Network info
+    latency: 'Latency: {{value}}ms',
+    bandwidth: 'Bandwidth: {{value}}',
+    connection_type: 'Connection: {{type}}',
+    
+    // Actions
+    check_connection: 'Check connection',
+    retry_connection: 'Retry connection',
+    
+    // Network error messages
+    no_connection: 'No internet connection',
+    connection_error: 'Connection error',
+    timeout: 'Connection timeout',
+    server_unreachable: 'Server unreachable',
+  },
+  
+  // Offline mode messages
+  offline: {
+    mode_active: 'Offline mode active',
+    changes_saved_locally: 'Changes saved locally',
+    will_sync_when_online: 'Will sync when online',
+    
+    // Queue messages
+    request_queued: 'Request queued for sync',
+    queue_empty: 'No pending requests',
+    queue_size: '{{count}} pending requests',
+    processing_queue: 'Processing offline queue...',
+    queue_cleared: 'Offline queue cleared',
+    queue_error: 'Failed to queue request',
+    
+    // Sync messages
+    syncing: 'Syncing offline data...',
+    sync_complete: 'Sync complete',
+    sync_failed: 'Sync failed',
+    synced_items: '{{count}} items synced',
+    sync_errors: '{{count}} sync errors',
+    last_sync: 'Last sync: {{time}}',
+    
+    // Conflict messages
+    conflicts_detected: '{{count}} conflicts detected',
+    conflict_resolved: 'Conflict resolved',
+    conflict_resolution_failed: 'Failed to resolve conflict',
+    
+    // Cache messages
+    cached_data_available: 'Cached data available',
+    cache_expired: 'Cache expired',
+    cache_cleared: 'Cache cleared',
+    
+    // Actions
+    sync_now: 'Sync now',
+    resolve_conflicts: 'Resolve conflicts',
+    clear_queue: 'Clear queue',
+    view_queue: 'View queue',
+  },
+  
+  // Error recovery messages
+  errors: {
+    // Recovery messages
+    recovery_suggestions: 'Recovery Suggestions',
+    recovery_in_progress: 'Attempting to recover...',
+    recovery_successful: 'Successfully recovered',
+    recovery_failed: 'Recovery failed',
+    operation_failed: 'Operation failed: {{error}}',
+    
+    // Retry messages
+    retrying: 'Retrying...',
+    retry_attempt: 'Attempt {{current}} of {{total}}',
+    retry_in: 'Retrying in {{seconds}}s',
+    max_retries_exceeded: 'Maximum retries exceeded',
+    
+    // Circuit breaker
+    circuit_open: 'Service temporarily unavailable',
+    circuit_half_open: 'Testing service availability',
+    
+    // Error types with details
+    network_error: {
+      title: 'Network Error',
+      message: 'Unable to connect to the server. Please check your internet connection.',
+      action: 'Try refreshing the page'
+    },
+    timeout_error: {
+      title: 'Request Timeout',
+      message: 'The request took too long to complete. The server might be busy.',
+      action: 'Please try again'
+    },
+    offline_error: {
+      title: 'You\'re Offline',
+      message: 'You seem to be offline. Some features may not be available.',
+      action: 'Check your connection'
+    },
+    unauthorized: {
+      title: 'Authentication Required',
+      message: 'You need to log in to access this feature.',
+      action: 'Log in'
+    },
+    token_expired: {
+      title: 'Session Expired',
+      message: 'Your session has expired. Please log in again.',
+      action: 'Log in again'
+    },
+    invalid_credentials: {
+      title: 'Invalid Credentials',
+      message: 'The email or password you entered is incorrect.',
+      action: 'Try again'
+    },
+    validation_error: {
+      title: 'Validation Error',
+      message: 'Please check your input and try again.',
+      action: 'Review form'
+    },
+    missing_field: {
+      title: 'Missing Information',
+      message: 'Please fill in all required fields.',
+      action: 'Complete form'
+    },
+    invalid_format: {
+      title: 'Invalid Format',
+      message: 'Please check the format of your input.',
+      action: 'Fix format'
+    },
+    server_error: {
+      title: 'Server Error',
+      message: 'Something went wrong on our end. We\'re working to fix it.',
+      action: 'Try again later'
+    },
+    not_found: {
+      title: 'Not Found',
+      message: 'The requested resource could not be found.',
+      action: 'Go back'
+    },
+    rate_limit: {
+      title: 'Too Many Requests',
+      message: 'You\'ve made too many requests. Please wait a moment.',
+      action: 'Wait and retry'
+    },
+    insufficient_permissions: {
+      title: 'Access Denied',
+      message: 'You don\'t have permission to access this resource.',
+      action: 'Request access'
+    },
+    resource_locked: {
+      title: 'Resource Locked',
+      message: 'This resource is currently being edited by someone else.',
+      action: 'Try again later'
+    },
+    conflict: {
+      title: 'Conflict Detected',
+      message: 'Your changes conflict with recent updates.',
+      action: 'Refresh and retry'
+    },
+    render_error: {
+      title: 'Display Error',
+      message: 'We encountered an error displaying this content.',
+      action: 'Refresh page'
+    },
+    component_error: {
+      title: 'Component Error',
+      message: 'A component failed to render properly.',
+      action: 'Refresh page'
+    },
+    unknown: {
+      title: 'Something Went Wrong',
+      message: 'An unexpected error occurred. Please try again.',
+      action: 'Refresh page'
+    },
+    
+    // Recovery messages
+    recovering: 'Attempting to recover...',
+    recoverySuccess: 'Successfully recovered from error',
+    recoveryFailed: 'Recovery failed. Please try again.',
+    retryAttempt: 'Retry attempt {{count}}',
+    
+    // Error boundary messages
+    errorDetails: 'Error details',
+    developerDetails: 'Developer Details',
+    copyError: 'Copy error details',
+    errorCopied: 'Error details copied to clipboard',
+    showDetails: 'Show details',
+    hideDetails: 'Hide details',
+    errorId: 'Error ID: {{id}}',
+    reportError: 'Report this error',
+    
+    // Error history
+    errorHistory: 'Error History',
+    clearHistory: 'Clear history',
+    noErrors: 'No errors recorded',
+    errorOccurred: 'Error occurred {{time}} ago',
+    dismissError: 'Dismiss error',
+    dismissAll: 'Dismiss all errors',
   },
 }

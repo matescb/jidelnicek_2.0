@@ -1,0 +1,1 @@
+export { ErrorIllustration } from './ErrorIllustration'

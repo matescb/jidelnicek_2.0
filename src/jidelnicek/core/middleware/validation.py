@@ -140,7 +140,7 @@ class ValidationMiddleware(BaseHTTPMiddleware):
             
             return JSONResponse(
                 status_code=e.status_code,
-                content=e.to_dict(),
+                content=jsonable_encoder(e.to_dict()),
                 headers={"X-Request-ID": request_id}
             )
         
@@ -286,12 +286,12 @@ def format_validation_error(error: Union[RequestValidationError, ResponseValidat
                 "field": ".".join(str(loc) for loc in err.get("loc", [])),
                 "message": err.get("msg", "Validation error"),
                 "type": err.get("type", "validation_error"),
-                "input": err.get("input")
+                "input": jsonable_encoder(err.get("input"))
             }
             
             # Add context if available
             if "ctx" in err:
-                error_detail["context"] = err["ctx"]
+                error_detail["context"] = jsonable_encoder(err["ctx"])
             
             error_details.append(error_detail)
     
@@ -325,7 +325,7 @@ def create_validation_error_response(
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=formatted_error,
+        content=jsonable_encoder(formatted_error),
         headers={"X-Request-ID": request_id} if request_id else None
     )
 
@@ -384,7 +384,7 @@ async def custom_validation_exception_handler(request: Request, exc: ValidationE
     
     return JSONResponse(
         status_code=exc.status_code,
-        content=response_data,
+        content=jsonable_encoder(response_data),
         headers={"X-Request-ID": request_id}
     )
 
