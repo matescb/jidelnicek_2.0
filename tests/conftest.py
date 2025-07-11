@@ -102,12 +102,14 @@ async def mock_redis() -> AsyncMock:
     """Create a mock Redis client."""
     mock = AsyncMock(spec=Redis)
     
-    # Mock common Redis operations
-    mock.get.return_value = None
-    mock.setex.return_value = True
-    mock.incr.return_value = 1
-    mock.ttl.return_value = 3600
-    mock.ping.return_value = True
+    # Mock common Redis operations with async return values
+    mock.get = AsyncMock(return_value=None)
+    mock.setex = AsyncMock(return_value=True)
+    mock.incr = AsyncMock(return_value=1)
+    mock.ttl = AsyncMock(return_value=3600)
+    mock.ping = AsyncMock(return_value=True)
+    mock.delete = AsyncMock(return_value=1)
+    mock.exists = AsyncMock(return_value=0)
     
     return mock
 

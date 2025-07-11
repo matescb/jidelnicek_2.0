@@ -1169,7 +1169,7 @@
               18
             ],
             "details": "Build sortable tables, pagination, filtering, and search functionality. Include bulk actions and export capabilities.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -1220,7 +1220,7 @@
               20
             ],
             "details": "Set up Redux/Zustand store, actions, reducers, and middleware. Include async data fetching and caching strategies.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": ""
           },
           {
@@ -1440,7 +1440,7 @@
     ],
     "metadata": {
       "created": "2025-07-08T21:59:12.096Z",
-      "updated": "2025-07-10T23:11:53.061Z",
+      "updated": "2025-07-10T23:53:05.302Z",
       "description": "Tasks for master context"
     }
   }

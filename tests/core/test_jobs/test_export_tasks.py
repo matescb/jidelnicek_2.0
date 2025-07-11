@@ -137,7 +137,8 @@ class TestExportTasks:
                         
                         mock_file_path = Mock()
                         mock_file_path.stat.return_value.st_size = 1024
-                        mock_path.return_value.__truediv__.return_value = mock_file_path
+                        mock_path.return_value = Mock()
+                        mock_path.return_value.__truediv__ = Mock(return_value=mock_file_path)
                         
                         # Act
                         result = await _export_shopping_list_async(

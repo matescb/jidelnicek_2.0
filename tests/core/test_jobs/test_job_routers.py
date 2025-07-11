@@ -6,7 +6,7 @@ This module tests the API endpoints for job management and export operations.
 
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 
 from fastapi import status
@@ -21,9 +21,9 @@ from jidelnicek.core.schemas.job import (
 
 
 @pytest.fixture
-def sample_job():
+def sample_job(existing_user):
     """Create a sample job for testing."""
-    return Job(
+    job = Job(
         id=1,
         task_id=str(uuid.uuid4()),
         job_type=JobType.EXPORT_SHOPPING_LIST,
@@ -34,13 +34,21 @@ def sample_job():
         progress=45.5,
         progress_message="Processing...",
         parameters={"trip_id": 123, "format": "pdf"},
-        user_id=1,
+        user_id=existing_user.id,
         queue_name="default",
-        created_at=datetime.utcnow(),
-        started_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        started_at=datetime.now(timezone.utc),
+        completed_at=None,
+        eta=None,
+        result=None,
+        error_message=None,
         retry_count=0,
         max_retries=3,
+        worker_name=None,
     )
+    # Set the user relationship for model validation
+    job.user = existing_user
+    return job
 
 
 @pytest.fixture
@@ -64,7 +72,7 @@ class TestJobEndpoints:
     """Test job management endpoints."""
     
     @pytest.mark.asyncio
-    async def test_create_job(self, authenticated_client: AsyncClient, mock_job_service, sample_job):
+    async def test_create_job(self, authenticated_client: AsyncClient, mock_job_service, existing_user, sample_job):
         """Test creating a new job."""
         # Arrange
         job_data = {
@@ -94,7 +102,7 @@ class TestJobEndpoints:
             mock_job_service.submit_job.assert_called_once()
     
     @pytest.mark.asyncio
-    async def test_get_job(self, authenticated_client: AsyncClient, mock_job_service, sample_job):
+    async def test_get_job(self, authenticated_client: AsyncClient, mock_job_service, existing_user, sample_job):
         """Test getting job details."""
         # Arrange
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
@@ -109,16 +117,63 @@ class TestJobEndpoints:
             assert data["id"] == 1
             assert data["status"] == "running"
             assert data["progress"] == 45.5
-            mock_job_service.get_job.assert_called_once_with(1, 1)
+            mock_job_service.get_job.assert_called_once_with(1, existing_user.id)
     
     @pytest.mark.asyncio
-    async def test_list_jobs(self, authenticated_client: AsyncClient, mock_job_service):
+    async def test_list_jobs(self, authenticated_client: AsyncClient, mock_job_service, existing_user):
         """Test listing jobs with filters."""
         # Arrange
-        jobs = [
-            Job(id=1, job_type=JobType.EXPORT_SHOPPING_LIST, status=JobStatus.COMPLETED),
-            Job(id=2, job_type=JobType.EXPORT_TRIP_DATA, status=JobStatus.RUNNING),
-        ]
+        job1 = Job(
+            id=1,
+            task_id=str(uuid.uuid4()),
+            job_type=JobType.EXPORT_SHOPPING_LIST,
+            name="Export Shopping List",
+            description="Test export",
+            status=JobStatus.COMPLETED,
+            priority=JobPriority.NORMAL,
+            progress=100.0,
+            progress_message="Completed",
+            parameters={},
+            user_id=existing_user.id,
+            queue_name="default",
+            created_at=datetime.now(timezone.utc),
+            started_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+            completed_at=datetime.now(timezone.utc),
+            eta=None,
+            result={"file_path": "/exports/test.pdf"},
+            error_message=None,
+            retry_count=0,
+            max_retries=3,
+            worker_name="worker-01",
+        )
+        job1.user = existing_user
+        
+        job2 = Job(
+            id=2,
+            task_id=str(uuid.uuid4()),
+            job_type=JobType.EXPORT_TRIP_DATA,
+            name="Export Trip Data",
+            description="Test export",
+            status=JobStatus.RUNNING,
+            priority=JobPriority.NORMAL,
+            progress=50.0,
+            progress_message="Processing...",
+            parameters={},
+            user_id=existing_user.id,
+            queue_name="default",
+            created_at=datetime.now(timezone.utc),
+            started_at=datetime.now(timezone.utc),
+            completed_at=None,
+            eta=datetime.now(timezone.utc) + timedelta(minutes=2),
+                    result=None,
+            error_message=None,
+            retry_count=0,
+            max_retries=3,
+            worker_name="worker-02",
+        )
+        job2.user = existing_user
+        
+        jobs = [job1, job2]
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
             mock_job_service.list_jobs.return_value = jobs
@@ -144,13 +199,13 @@ class TestJobEndpoints:
             assert data["limit"] == 10
     
     @pytest.mark.asyncio
-    async def test_cancel_job(self, authenticated_client: AsyncClient, mock_job_service, sample_job):
+    async def test_cancel_job(self, authenticated_client: AsyncClient, mock_job_service, existing_user, sample_job):
         """Test cancelling a job."""
         # Arrange
         sample_job.status = JobStatus.CANCELLED
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
-            with patch('jidelnicek.core.routers.jobs.cache_delete') as mock_cache_delete:
+            with patch('jidelnicek.core.routers.jobs.cache_delete', new_callable=AsyncMock) as mock_cache_delete:
                 mock_job_service.cancel_job.return_value = sample_job
                 
                 # Act
@@ -160,11 +215,11 @@ class TestJobEndpoints:
                 assert response.status_code == status.HTTP_200_OK
                 data = response.json()
                 assert data["status"] == "cancelled"
-                mock_job_service.cancel_job.assert_called_once_with(1, 1)
+                mock_job_service.cancel_job.assert_called_once_with(1, existing_user.id)
                 mock_cache_delete.assert_called_once_with("job:1")
     
     @pytest.mark.asyncio
-    async def test_retry_job(self, authenticated_client: AsyncClient, mock_job_service):
+    async def test_retry_job(self, authenticated_client: AsyncClient, mock_job_service, existing_user):
         """Test retrying a failed job."""
         # Arrange
         new_job = Job(
@@ -172,9 +227,25 @@ class TestJobEndpoints:
             task_id=str(uuid.uuid4()),
             job_type=JobType.EXPORT_SHOPPING_LIST,
             name="Test Export Job (Retry 1)",
+            description="Test job description",
             status=JobStatus.RUNNING,
+            priority=JobPriority.NORMAL,
+            progress=0.0,
+            progress_message="Starting...",
+            parameters={"trip_id": 123, "format": "pdf"},
+            user_id=existing_user.id,
+            queue_name="default",
+            created_at=datetime.now(timezone.utc),
+            started_at=None,
+            completed_at=None,
+            eta=None,
+                result=None,
+            error_message=None,
             retry_count=1,
+            max_retries=3,
+            worker_name=None,
         )
+        new_job.user = existing_user
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
             mock_job_service.retry_job.return_value = new_job
@@ -190,13 +261,13 @@ class TestJobEndpoints:
             assert data["retry_count"] == 1
     
     @pytest.mark.asyncio
-    async def test_delete_job(self, authenticated_client: AsyncClient, mock_job_service, sample_job):
+    async def test_delete_job(self, authenticated_client: AsyncClient, mock_job_service, existing_user, sample_job):
         """Test deleting a completed job."""
         # Arrange
         sample_job.status = JobStatus.COMPLETED
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
-            with patch('jidelnicek.core.routers.jobs.cache_delete') as mock_cache_delete:
+            with patch('jidelnicek.core.routers.jobs.cache_delete', new_callable=AsyncMock) as mock_cache_delete:
                 mock_job_service.get_job.return_value = sample_job
                 mock_job_service.delete_job.return_value = None
                 
@@ -205,11 +276,11 @@ class TestJobEndpoints:
                 
                 # Assert
                 assert response.status_code == status.HTTP_204_NO_CONTENT
-                mock_job_service.delete_job.assert_called_once_with(1, 1)
+                mock_job_service.delete_job.assert_called_once_with(1, existing_user.id)
                 mock_cache_delete.assert_called_once_with("job:1")
     
     @pytest.mark.asyncio
-    async def test_delete_job_not_terminal(self, authenticated_client: AsyncClient, mock_job_service, sample_job):
+    async def test_delete_job_not_terminal(self, authenticated_client: AsyncClient, mock_job_service, existing_user, sample_job):
         """Test deleting a running job (should fail)."""
         # Arrange
         sample_job.status = JobStatus.RUNNING
@@ -222,10 +293,11 @@ class TestJobEndpoints:
                 
             # Assert
             assert response.status_code == status.HTTP_400_BAD_REQUEST
-            assert "Cannot delete job in running state" in response.json()["detail"]
+            detail = response.json()["detail"]
+            assert "Cannot delete job in" in detail and "RUNNING" in detail
     
     @pytest.mark.asyncio
-    async def test_get_job_statistics(self, authenticated_client: AsyncClient, mock_job_service):
+    async def test_get_job_statistics(self, authenticated_client: AsyncClient, mock_job_service, existing_user):
         """Test getting job statistics."""
         # Arrange
         stats = {
@@ -259,7 +331,7 @@ class TestJobEndpoints:
             assert data["success_rate"] == 80.0
     
     @pytest.mark.asyncio
-    async def test_export_shopping_list(self, authenticated_client: AsyncClient, mock_job_service):
+    async def test_export_shopping_list(self, authenticated_client: AsyncClient, mock_job_service, existing_user):
         """Test creating a shopping list export job."""
         # Arrange
         export_data = {
@@ -274,10 +346,28 @@ class TestJobEndpoints:
         
         created_job = Job(
             id=1,
+            task_id=str(uuid.uuid4()),
             job_type=JobType.EXPORT_SHOPPING_LIST,
             name="Export Shopping List (Trip 123)",
+            description="Export for trip 123",
             status=JobStatus.RUNNING,
+            priority=JobPriority.HIGH,
+            progress=0.0,
+            progress_message="Starting export...",
+            parameters={"trip_id": 123, "format": "pdf"},
+            user_id=existing_user.id,
+            queue_name="default",
+            created_at=datetime.now(timezone.utc),
+            started_at=None,
+            completed_at=None,
+            eta=None,
+                result=None,
+            error_message=None,
+            retry_count=0,
+            max_retries=3,
+            worker_name=None,
         )
+        created_job.user = existing_user
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
             mock_job_service.create_job.return_value = created_job
@@ -300,7 +390,7 @@ class TestJobEndpoints:
             assert create_call.kwargs["priority"] == JobPriority.HIGH
     
     @pytest.mark.asyncio
-    async def test_export_trip_data(self, authenticated_client: AsyncClient, mock_job_service):
+    async def test_export_trip_data(self, authenticated_client: AsyncClient, mock_job_service, existing_user):
         """Test creating a trip data export job."""
         # Arrange
         export_data = {
@@ -315,10 +405,28 @@ class TestJobEndpoints:
         
         created_job = Job(
             id=2,
+            task_id=str(uuid.uuid4()),
             job_type=JobType.EXPORT_TRIP_DATA,
             name="Export Trip Data (Trip 456)",
+            description="Export for trip 456",
             status=JobStatus.RUNNING,
+            priority=JobPriority.NORMAL,
+            progress=0.0,
+            progress_message="Starting export...",
+            parameters={"trip_id": 456, "format": "excel"},
+            user_id=existing_user.id,
+            queue_name="default",
+            created_at=datetime.now(timezone.utc),
+            started_at=None,
+            completed_at=None,
+            eta=None,
+                result=None,
+            error_message=None,
+            retry_count=0,
+            max_retries=3,
+            worker_name=None,
         )
+        created_job.user = existing_user
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
             mock_job_service.create_job.return_value = created_job
@@ -334,7 +442,7 @@ class TestJobEndpoints:
             assert "Trip 456" in data["name"]
     
     @pytest.mark.asyncio
-    async def test_export_recipes(self, authenticated_client: AsyncClient, mock_job_service):
+    async def test_export_recipes(self, authenticated_client: AsyncClient, mock_job_service, existing_user):
         """Test creating a recipe export job."""
         # Arrange
         export_data = {
@@ -348,10 +456,28 @@ class TestJobEndpoints:
         
         created_job = Job(
             id=3,
+            task_id=str(uuid.uuid4()),
             job_type=JobType.EXPORT_RECIPES,
             name="Export Recipes (5)",
+            description="Export 5 recipes",
             status=JobStatus.RUNNING,
+            priority=JobPriority.LOW,
+            progress=0.0,
+            progress_message="Starting export...",
+            parameters={"recipe_ids": [1, 2, 3, 4, 5], "format": "pdf"},
+            user_id=existing_user.id,
+            queue_name="default",
+            created_at=datetime.now(timezone.utc),
+            started_at=None,
+            completed_at=None,
+            eta=None,
+                result=None,
+            error_message=None,
+            retry_count=0,
+            max_retries=3,
+            worker_name=None,
         )
+        created_job.user = existing_user
         
         with patch('jidelnicek.core.routers.jobs.JobService', return_value=mock_job_service):
             mock_job_service.create_job.return_value = created_job
@@ -378,7 +504,7 @@ class TestJobEndpoints:
             "id": export_id,
             "file_path": str(export_file),
             "created_by": existing_user.id,
-            "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
         
         with patch('jidelnicek.core.cache.cache_get', return_value=export_data):
@@ -412,7 +538,7 @@ class TestJobEndpoints:
         export_data = {
             "id": export_id,
             "file_path": "/exports/test.pdf",
-            "created_by": 999,  # Different user
+            "created_by": str(uuid.uuid4()),  # Different user UUID
         }
         
         with patch('jidelnicek.core.cache.cache_get', return_value=export_data):

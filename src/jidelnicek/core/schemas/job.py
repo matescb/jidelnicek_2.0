@@ -7,6 +7,7 @@ including creation, updates, and responses.
 
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
 from jidelnicek.core.models.job import JobStatus, JobPriority, JobType
@@ -72,7 +73,7 @@ class JobResponse(BaseModel):
     completed_at: Optional[datetime]
     eta: Optional[datetime]
     duration: float = Field(ge=0, description="Duration in seconds")
-    user_id: Optional[int]
+    user_id: Optional[UUID]
     parameters: Dict[str, Any]
     result: Optional[Dict[str, Any]]
     error_message: Optional[str]

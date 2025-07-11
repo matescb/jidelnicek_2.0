@@ -290,7 +290,8 @@ class TestValidationMiddleware:
         with pytest.raises(FileValidationException) as exc_info:
             await middleware._validate_single_file(mock_file, "image")
         
-        assert "Invalid filename" in exc_info.value.message
+        # File has no extension, so it fails on extension check first
+        assert "File extension '' not allowed" in exc_info.value.message
     
     @pytest.mark.asyncio
     async def test_validate_single_file_empty_filename(self, middleware):

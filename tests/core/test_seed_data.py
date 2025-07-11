@@ -3,7 +3,7 @@ Tests for seed data functionality.
 """
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jidelnicek.recipe.models.categorization import Category, Tag
@@ -156,6 +156,11 @@ async def test_tag_properties(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_check_and_seed_empty_db(db_session: AsyncSession):
     """Test check_and_seed on empty database."""
+    # Ensure database is empty first
+    await db_session.execute(text("DELETE FROM tags"))
+    await db_session.execute(text("DELETE FROM categories"))
+    await db_session.commit()
+    
     # Use the test database session
     result = await check_and_seed_with_session(db_session)
     assert result is True

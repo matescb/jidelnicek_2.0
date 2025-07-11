@@ -12,7 +12,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID, ENUM
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 
 from jidelnicek.core.database import Base
@@ -153,7 +153,7 @@ class Job(Base):
         if not self.started_at:
             return 0.0
         
-        end_time = self.completed_at or datetime.utcnow()
+        end_time = self.completed_at or datetime.now(timezone.utc)
         return (end_time - self.started_at).total_seconds()
     
     def to_dict(self) -> dict:

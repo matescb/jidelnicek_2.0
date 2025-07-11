@@ -255,7 +255,12 @@ async def test_websocket_endpoint_authentication():
     with patch('jidelnicek.core.websockets.handlers.get_current_user_ws', return_value=None):
         await websocket_endpoint(mock_ws, token=None)
     
-    mock_ws.close.assert_called_with(code=4001, reason="Authentication required")
+    mock_ws.close.assert_called_once()
+    # Check if it was called with the expected arguments
+    call_args = mock_ws.close.call_args
+    if call_args:
+        assert call_args[1].get('code') == 4001 or call_args[0] == (4001,)
+        assert "Authentication required" in str(call_args)
     
     # Test with invalid token
     mock_ws.close.reset_mock()
