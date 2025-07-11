@@ -8,9 +8,9 @@ const progressVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-gray-200 dark:bg-gray-800',
-        light: 'bg-gray-100 dark:bg-gray-900',
-        dark: 'bg-gray-300 dark:bg-gray-700'
+        default: 'bg-secondary-200',
+        light: 'bg-secondary-100',
+        dark: 'bg-secondary-300'
       },
       size: {
         sm: 'h-1',
@@ -31,11 +31,11 @@ const progressIndicatorVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary-600 dark:bg-primary-500',
-        success: 'bg-green-600 dark:bg-green-500',
-        warning: 'bg-yellow-600 dark:bg-yellow-500',
-        danger: 'bg-red-600 dark:bg-red-500',
-        info: 'bg-blue-600 dark:bg-blue-500'
+        default: 'bg-primary-600',
+        success: 'bg-success-600',
+        warning: 'bg-warning-600',
+        danger: 'bg-error-600',
+        info: 'bg-info-600'
       }
     },
     defaultVariants: {
@@ -110,7 +110,7 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(({
         />
       </div>
       {showLabel && (
-        <div className="mt-1 flex justify-between text-xs text-gray-600 dark:text-gray-400">
+        <div className="mt-1 flex justify-between text-xs text-text-muted">
           <span>{value}/{max}</span>
           <span>{Math.round(percentage)}%</span>
         </div>
@@ -165,11 +165,11 @@ const sizeMap = {
 }
 
 const colorMap = {
-  default: 'stroke-primary-600 dark:stroke-primary-500',
-  success: 'stroke-green-600 dark:stroke-green-500',
-  warning: 'stroke-yellow-600 dark:stroke-yellow-500',
-  danger: 'stroke-red-600 dark:stroke-red-500',
-  info: 'stroke-blue-600 dark:stroke-blue-500'
+  default: 'stroke-primary-600',
+  success: 'stroke-success-600',
+  warning: 'stroke-warning-600',
+  danger: 'stroke-error-600',
+  info: 'stroke-info-600'
 }
 
 export const ProgressCircle: React.FC<ProgressCircleProps> = ({
@@ -206,7 +206,7 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
           cy={sizeValue / 2}
           r={radius}
           strokeWidth={strokeWidth}
-          className="fill-none stroke-gray-200 dark:stroke-gray-800"
+          className="fill-none stroke-secondary-200"
         />
         {/* Progress circle */}
         <motion.circle
@@ -226,7 +226,7 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
       </svg>
       {showLabel && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <span className="text-sm font-medium text-text-primary">
             {Math.round(percentage)}%
           </span>
         </div>

@@ -1,5 +1,6 @@
 export * from './useAuth'
 export * from './useTheme'
+export * from './useSystemThemePreference'
 export * from './useMediaQuery'
 export * from './useI18nFormats'
 export * from './useI18n'

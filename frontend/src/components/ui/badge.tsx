@@ -3,18 +3,18 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+  'inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
-        default: 'bg-primary-100 text-primary-900 dark:bg-primary-900 dark:text-primary-100 border-transparent',
-        secondary: 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 border-transparent',
-        destructive: 'bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100 border-transparent',
-        outline: 'text-gray-950 dark:text-gray-50 border-gray-200 dark:border-gray-800',
-        success: 'bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100 border-transparent',
-        warning: 'bg-yellow-100 text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100 border-transparent',
-        error: 'bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100 border-transparent',
-        primary: 'bg-primary-100 text-primary-900 dark:bg-primary-900 dark:text-primary-100 border-transparent',
+        default: 'bg-primary-100 text-primary-900 border-transparent',
+        secondary: 'bg-secondary-100 text-secondary-900 border-transparent',
+        destructive: 'bg-error-100 text-error-900 border-transparent',
+        outline: 'text-text-primary border-border',
+        success: 'bg-success-100 text-success-900 border-transparent',
+        warning: 'bg-warning-100 text-warning-900 border-transparent',
+        error: 'bg-error-100 text-error-900 border-transparent',
+        primary: 'bg-primary-100 text-primary-900 border-transparent',
       },
       size: {
         sm: 'px-2 py-0.5 text-xs',

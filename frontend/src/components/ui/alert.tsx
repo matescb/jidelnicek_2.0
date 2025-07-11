@@ -12,8 +12,8 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(({
   ...props
 }, ref) => {
   const variantClasses = {
-    default: 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-700',
-    destructive: 'bg-red-50 text-red-900 dark:bg-red-900/10 dark:text-red-100 border-red-200 dark:border-red-800',
+    default: 'bg-secondary-100 text-secondary-900 border-border',
+    destructive: 'bg-error-50 text-error-900 border-error-200',
   }
 
   return (

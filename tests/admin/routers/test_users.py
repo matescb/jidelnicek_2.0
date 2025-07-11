@@ -20,12 +20,12 @@ class TestAdminUsersRouter:
     async def test_list_users_requires_admin(
         self,
         client: AsyncClient,
-        regular_user_headers: dict
+        admin_regular_user_headers: dict
     ):
         """Test that listing users requires admin access."""
         response = await client.get(
             "/api/v1/admin/users/",
-            headers=regular_user_headers
+            headers=admin_regular_user_headers
         )
         
         assert response.status_code == 403
@@ -194,20 +194,20 @@ class TestAdminUsersRouter:
         self,
         client: AsyncClient,
         admin_headers: dict,
-        regular_user: AuthUser,
+        admin_regular_user: AuthUser,
         db_session: AsyncSession
     ):
         """Test getting user details."""
         response = await client.get(
-            f"/api/v1/admin/users/{regular_user.id}",
+            f"/api/v1/admin/users/{admin_regular_user.id}",
             headers=admin_headers
         )
         
         assert response.status_code == 200
         data = response.json()
         
-        assert data["id"] == str(regular_user.id)
-        assert data["email"] == regular_user.email
+        assert data["id"] == str(admin_regular_user.id)
+        assert data["email"] == admin_regular_user.email
         assert "session_count" in data
         assert "active_session_count" in data
         
@@ -215,7 +215,7 @@ class TestAdminUsersRouter:
         result = await db_session.execute(
             select(AdminAuditLog).where(
                 AdminAuditLog.action == AdminAction.USER_VIEW,
-                AdminAuditLog.target_id == regular_user.id
+                AdminAuditLog.target_id == admin_regular_user.id
             )
         )
         audit_log = result.scalar_one_or_none()
@@ -242,8 +242,9 @@ class TestAdminUsersRouter:
         db_session: AsyncSession
     ):
         """Test creating a new user."""
+        test_email = f"newuser-{str(uuid4())[:8]}@test.com"
         user_data = {
-            "email": "newuser@test.com",
+            "email": test_email,
             "password": "NewUser123!",
             "role": "user",
             "email_verified": False,
@@ -277,11 +278,11 @@ class TestAdminUsersRouter:
         self,
         client: AsyncClient,
         admin_headers: dict,
-        regular_user: AuthUser
+        admin_regular_user: AuthUser
     ):
         """Test creating user with duplicate email."""
         user_data = {
-            "email": regular_user.email,
+            "email": admin_regular_user.email,
             "password": "Test123!",
             "role": "user"
         }
@@ -299,7 +300,7 @@ class TestAdminUsersRouter:
         self,
         client: AsyncClient,
         admin_headers: dict,
-        regular_user: AuthUser,
+        admin_regular_user: AuthUser,
         db_session: AsyncSession
     ):
         """Test updating user information."""
@@ -310,7 +311,7 @@ class TestAdminUsersRouter:
         }
         
         response = await client.patch(
-            f"/api/v1/admin/users/{regular_user.id}",
+            f"/api/v1/admin/users/{admin_regular_user.id}",
             headers=admin_headers,
             json=update_data
         )
@@ -322,20 +323,20 @@ class TestAdminUsersRouter:
         assert data["language"] == "en"
         
         # Verify user was updated
-        await db_session.refresh(regular_user)
-        assert regular_user.role == "admin"
-        assert regular_user.language == "en"
+        await db_session.refresh(admin_regular_user)
+        assert admin_regular_user.role == "admin"
+        assert admin_regular_user.language == "en"
     
     async def test_suspend_user(
         self,
         client: AsyncClient,
         admin_headers: dict,
-        regular_user: AuthUser,
+        admin_regular_user: AuthUser,
         db_session: AsyncSession
     ):
         """Test suspending a user."""
         response = await client.post(
-            f"/api/v1/admin/users/{regular_user.id}/suspend",
+            f"/api/v1/admin/users/{admin_regular_user.id}/suspend",
             headers=admin_headers,
             params={
                 "reason": "Test suspension",
@@ -346,8 +347,8 @@ class TestAdminUsersRouter:
         assert response.status_code == 200
         
         # Verify user is suspended
-        await db_session.refresh(regular_user)
-        assert regular_user.is_active is False
+        await db_session.refresh(admin_regular_user)
+        assert admin_regular_user.is_active is False
     
     async def test_activate_user(
         self,
@@ -376,19 +377,19 @@ class TestAdminUsersRouter:
         self,
         client: AsyncClient,
         admin_headers: dict,
-        regular_user: AuthUser,
+        admin_regular_user: AuthUser,
         db_session: AsyncSession
     ):
         """Test resetting user password."""
         reset_data = {
-            "user_id": str(regular_user.id),
+            "user_id": str(admin_regular_user.id),
             "generate_random": True,
             "send_email": False,
             "reason": "User request"
         }
         
         response = await client.post(
-            f"/api/v1/admin/users/{regular_user.id}/reset-password",
+            f"/api/v1/admin/users/{admin_regular_user.id}/reset-password",
             headers=admin_headers,
             json=reset_data
         )
@@ -404,18 +405,18 @@ class TestAdminUsersRouter:
         self,
         client: AsyncClient,
         admin_headers: dict,
-        regular_user: AuthUser,
+        admin_regular_user: AuthUser,
         db_session: AsyncSession
     ):
         """Test force logout user."""
         logout_data = {
-            "user_id": str(regular_user.id),
+            "user_id": str(admin_regular_user.id),
             "reason": "Security test",
             "logout_all_sessions": True
         }
         
         response = await client.post(
-            f"/api/v1/admin/users/{regular_user.id}/force-logout",
+            f"/api/v1/admin/users/{admin_regular_user.id}/force-logout",
             headers=admin_headers,
             json=logout_data
         )
@@ -514,12 +515,12 @@ class TestAdminUsersRouter:
         self,
         client: AsyncClient,
         admin_headers: dict,
-        regular_user: AuthUser,
+        admin_regular_user: AuthUser,
         audit_logs: list[AdminAuditLog]
     ):
         """Test getting user audit trail."""
         response = await client.get(
-            f"/api/v1/admin/users/{regular_user.id}/audit-trail",
+            f"/api/v1/admin/users/{admin_regular_user.id}/audit-trail",
             headers=admin_headers
         )
         
@@ -529,4 +530,4 @@ class TestAdminUsersRouter:
         assert isinstance(data, list)
         # All entries should be for this user
         for entry in data:
-            assert entry["target_id"] == str(regular_user.id)
+            assert entry["target_id"] == str(admin_regular_user.id)

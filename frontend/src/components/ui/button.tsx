@@ -7,19 +7,19 @@ import { LoadingSpinner } from "./LoadingSpinner"
 import { hover, tap, focus } from "@/utils/animations"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed",
   {
     variants: {
       variant: {
-        default: "bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md active:bg-primary-800 dark:bg-primary-500 dark:text-white dark:hover:bg-primary-600 dark:active:bg-primary-700",
+        default: "bg-primary-600 text-white shadow hover:bg-primary-700 hover:shadow-md active:bg-primary-800",
         destructive:
-          "bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-md active:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 dark:active:bg-red-800",
+          "bg-error-600 text-white shadow hover:bg-error-700 hover:shadow-md active:bg-error-800",
         outline:
-          "border border-gray-300 bg-white shadow-sm hover:bg-gray-50 hover:shadow-md active:bg-gray-100 dark:border-gray-600 dark:bg-gray-900 dark:hover:bg-gray-800 dark:active:bg-gray-700",
+          "border border-border bg-surface shadow hover:bg-surface-elevated hover:shadow-md active:bg-surface-elevated",
         secondary:
-          "bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200 hover:shadow-md active:bg-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 dark:active:bg-gray-600",
-        ghost: "hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:active:bg-gray-700",
-        link: "text-primary-600 underline-offset-4 hover:underline hover:text-primary-700 active:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 dark:active:text-primary-500",
+          "bg-secondary-100 text-secondary-900 shadow hover:bg-secondary-200 hover:shadow-md active:bg-secondary-300",
+        ghost: "hover:bg-secondary-100 hover:text-text-primary active:bg-secondary-200",
+        link: "text-primary-600 underline-offset-4 hover:underline hover:text-primary-700 active:text-primary-800",
       },
       size: {
         default: "h-10 px-4 py-2 gap-2",

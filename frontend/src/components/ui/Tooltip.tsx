@@ -103,8 +103,8 @@ const sizeClasses = {
 };
 
 const variantClasses = {
-  dark: 'bg-gray-900 dark:bg-gray-800 text-white',
-  light: 'bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 shadow-lg border border-gray-200 dark:border-gray-300',
+  dark: 'bg-secondary-900 text-white',
+  light: 'bg-surface text-text-primary shadow-lg border border-border',
 };
 
 const motionVariants = {
@@ -386,7 +386,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   const arrowClasses = cn(
     'absolute w-2 h-2 transform rotate-45',
-    variant === 'dark' ? 'bg-gray-900 dark:bg-gray-800' : 'bg-white dark:bg-gray-100 border border-gray-200 dark:border-gray-300',
+    variant === 'dark' ? 'bg-secondary-900' : 'bg-surface border border-border',
     {
       'bottom-[-4px] left-1/2 -translate-x-1/2': actualPlacement.startsWith('top'),
       'top-[-4px] left-1/2 -translate-x-1/2': actualPlacement.startsWith('bottom'),

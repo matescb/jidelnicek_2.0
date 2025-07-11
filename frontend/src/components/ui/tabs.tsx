@@ -34,7 +34,7 @@ export const TabsList: React.FC<TabsListProps> = ({ className, children }) => {
   return (
     <div
       className={clsx(
-        'inline-flex h-10 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-1 text-gray-500 dark:text-gray-400',
+        'inline-flex h-10 items-center justify-center rounded-md bg-secondary-100 p-1 text-text-muted',
         className
       )}
       role="tablist"
@@ -67,10 +67,10 @@ export const TabsTrigger: React.FC<TabsTriggerProps> = ({ value, className, chil
       onClick={() => !disabled && onValueChange(value)}
       disabled={disabled}
       className={clsx(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
         isSelected
-          ? 'bg-white dark:bg-gray-900 text-gray-950 dark:text-gray-50 shadow-sm'
-          : 'text-gray-700 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-50',
+          ? 'bg-surface text-text-primary shadow-sm'
+          : 'text-text-secondary hover:text-text-primary',
         className
       )}
     >
@@ -101,7 +101,7 @@ export const TabsContent: React.FC<TabsContentProps> = ({ value, className, chil
     <div
       role="tabpanel"
       className={clsx(
-        'mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2',
+        'mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2',
         className
       )}
     >

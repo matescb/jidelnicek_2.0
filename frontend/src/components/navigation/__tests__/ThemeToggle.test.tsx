@@ -216,4 +216,307 @@ describe('ThemeToggle', () => {
       })
     })
   })
+
+  describe('Accessibility', () => {
+    describe('Keyboard Navigation', () => {
+      it('should be keyboard navigable', async () => {
+        renderWithTheme(<ThemeToggle />)
+        const button = screen.getByRole('button')
+
+        // Tab to button
+        await userEvent.tab()
+        expect(button).toHaveFocus()
+
+        // Activate with Enter
+        await userEvent.keyboard('{Enter}')
+        await waitFor(() => {
+          expect(button).toHaveAttribute('aria-label', 'Switch to light theme')
+        })
+
+        // Activate with Space
+        await userEvent.keyboard(' ')
+        await waitFor(() => {
+          expect(button).toHaveAttribute('aria-label', 'Switch to dark theme')
+        })
+      })
+
+      it('should navigate dropdown with keyboard', async () => {
+        renderWithTheme(<ThemeToggleAdvanced />)
+        const button = screen.getByRole('button', { name: /theme settings/i })
+
+        // Open dropdown with Enter
+        await userEvent.tab()
+        await userEvent.keyboard('{Enter}')
+
+        const menu = await screen.findByRole('menu')
+        expect(menu).toBeInTheDocument()
+
+        // Navigate with arrow keys
+        await userEvent.keyboard('{ArrowDown}')
+        const firstOption = screen.getByRole('menuitem', { name: /light/i })
+        expect(firstOption).toHaveFocus()
+
+        await userEvent.keyboard('{ArrowDown}')
+        const secondOption = screen.getByRole('menuitem', { name: /dark/i })
+        expect(secondOption).toHaveFocus()
+
+        // Select with Enter
+        await userEvent.keyboard('{Enter}')
+        await waitFor(() => {
+          expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+        })
+      })
+
+      it('should close dropdown with Escape', async () => {
+        renderWithTheme(<ThemeToggleAdvanced />)
+        const button = screen.getByRole('button', { name: /theme settings/i })
+
+        fireEvent.click(button)
+        const menu = await screen.findByRole('menu')
+        expect(menu).toBeInTheDocument()
+
+        await userEvent.keyboard('{Escape}')
+        await waitFor(() => {
+          expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+        })
+      })
+    })
+
+    describe('ARIA Attributes', () => {
+      it('should have proper ARIA labels', () => {
+        renderWithTheme(<ThemeToggle />)
+        const button = screen.getByRole('button')
+
+        expect(button).toHaveAttribute('aria-label')
+        expect(button).toHaveAttribute('aria-pressed')
+      })
+
+      it('should update aria-pressed based on theme', async () => {
+        renderWithTheme(<ThemeToggle />)
+        const button = screen.getByRole('button')
+
+        // Light mode
+        expect(button).toHaveAttribute('aria-pressed', 'false')
+
+        // Switch to dark mode
+        fireEvent.click(button)
+        await waitFor(() => {
+          expect(button).toHaveAttribute('aria-pressed', 'true')
+        })
+      })
+
+      it('should have proper ARIA attributes for dropdown', async () => {
+        renderWithTheme(<ThemeToggleAdvanced />)
+        const button = screen.getByRole('button', { name: /theme settings/i })
+
+        expect(button).toHaveAttribute('aria-expanded', 'false')
+
+        fireEvent.click(button)
+        await waitFor(() => {
+          expect(button).toHaveAttribute('aria-expanded', 'true')
+        })
+
+        const menu = screen.getByRole('menu')
+        expect(menu).toHaveAttribute('aria-labelledby')
+      })
+    })
+
+    describe('Screen Reader Support', () => {
+      it('should announce theme changes', async () => {
+        renderWithTheme(<ThemeToggle />)
+        const button = screen.getByRole('button')
+
+        // Initial state
+        expect(button).toHaveAccessibleName('Switch to dark theme')
+
+        fireEvent.click(button)
+        await waitFor(() => {
+          expect(button).toHaveAccessibleName('Switch to light theme')
+        })
+      })
+
+      it('should have descriptive menu items', async () => {
+        renderWithTheme(<ThemeToggleAdvanced />)
+        const button = screen.getByRole('button', { name: /theme settings/i })
+
+        fireEvent.click(button)
+        
+        const lightOption = await screen.findByRole('menuitem', { name: /light/i })
+        const darkOption = await screen.findByRole('menuitem', { name: /dark/i })
+        const systemOption = await screen.findByRole('menuitem', { name: /system/i })
+
+        expect(lightOption).toHaveAccessibleDescription(/Light theme/)
+        expect(darkOption).toHaveAccessibleDescription(/Dark theme/)
+        expect(systemOption).toHaveAccessibleDescription(/Follow system preference/)
+      })
+    })
+  })
+
+  describe('Theme Persistence', () => {
+    it('should persist theme selection across page reloads', () => {
+      const { rerender } = renderWithTheme(<ThemeToggle />)
+      const button = screen.getByRole('button')
+
+      // Switch to dark theme
+      fireEvent.click(button)
+
+      // Simulate page reload
+      rerender(
+        <ThemeProvider>
+          <ThemeToggle />
+        </ThemeProvider>
+      )
+
+      // Theme should be persisted
+      expect(localStorage.getItem('themeMode')).toBe('dark')
+    })
+
+    it('should clear theme preference when switching to system', async () => {
+      localStorage.setItem('themeMode', 'dark')
+      localStorage.setItem('theme', 'dark')
+
+      renderWithTheme(<ThemeToggleAdvanced />)
+      const button = screen.getByRole('button', { name: /theme settings/i })
+
+      fireEvent.click(button)
+      const systemOption = await screen.findByRole('menuitem', { name: /system/i })
+      fireEvent.click(systemOption)
+
+      await waitFor(() => {
+        expect(localStorage.getItem('themeMode')).toBe('system')
+      })
+    })
+  })
+
+  describe('Animation and Transitions', () => {
+    it('should have smooth icon transitions', () => {
+      renderWithTheme(<ThemeToggle />)
+      
+      const sunIcon = screen.getByRole('button').querySelector('.text-amber-500')?.parentElement
+      const moonIcon = screen.getByRole('button').querySelector('.text-blue-400')?.parentElement
+
+      expect(sunIcon).toHaveClass('transition-all', 'duration-300')
+      expect(moonIcon).toHaveClass('transition-all', 'duration-300')
+    })
+
+    it('should respect reduced motion preference', () => {
+      // Mock prefers-reduced-motion
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: jest.fn().mockImplementation(query => {
+          if (query === '(prefers-reduced-motion: reduce)') {
+            return {
+              matches: true,
+              media: query,
+              onchange: null,
+              addListener: jest.fn(),
+              removeListener: jest.fn(),
+              addEventListener: jest.fn(),
+              removeEventListener: jest.fn(),
+              dispatchEvent: jest.fn(),
+            }
+          }
+          return createMockMediaQueryList(false)
+        }),
+      })
+
+      renderWithTheme(<ThemeToggle />)
+      
+      // Component should still render and function
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should handle localStorage errors gracefully', () => {
+      const originalSetItem = Storage.prototype.setItem
+      Storage.prototype.setItem = jest.fn(() => {
+        throw new Error('QuotaExceededError')
+      })
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+
+      renderWithTheme(<ThemeToggle />)
+      const button = screen.getByRole('button')
+
+      // Should not crash when localStorage fails
+      fireEvent.click(button)
+
+      Storage.prototype.setItem = originalSetItem
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('Custom Themes', () => {
+    it('should display custom theme options when available', async () => {
+      const customThemes = {
+        ocean: {
+          name: 'Ocean',
+          colors: {
+            primary: { 50: '#e0f2fe', 100: '#bae6fd', 200: '#7dd3fc', 300: '#38bdf8', 400: '#0ea5e9', 500: '#0284c7', 600: '#0369a1', 700: '#075985', 800: '#0c4a6e', 900: '#164e63' },
+            secondary: { 50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a' },
+            success: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d' },
+            warning: { 50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309', 800: '#92400e', 900: '#78350f' },
+            error: { 50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5', 400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c', 800: '#991b1b', 900: '#7f1d1d' },
+            info: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+            background: '#f0f9ff',
+            surface: '#e0f2fe',
+            surfaceElevated: '#bae6fd',
+            card: '#dbeafe',
+            popover: '#e0f2fe',
+            modal: '#f0f9ff',
+            text: {
+              primary: '#0c4a6e',
+              secondary: '#075985',
+              muted: '#0369a1',
+              disabled: '#7dd3fc',
+              inverse: '#f0f9ff'
+            },
+            border: {
+              default: '#38bdf8',
+              subtle: '#7dd3fc',
+              strong: '#0284c7'
+            }
+          },
+          typography: {
+            fontFamily: {
+              sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              mono: 'Consolas, Monaco, "Andale Mono", monospace'
+            }
+          },
+          spacing: {
+            unit: 4,
+            containerPadding: '1rem'
+          },
+          borderRadius: {
+            sm: '0.25rem',
+            md: '0.375rem',
+            lg: '0.5rem',
+            xl: '0.75rem',
+            full: '9999px'
+          },
+          shadows: {
+            sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+            md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }
+        }
+      }
+
+      render(
+        <ThemeProvider customThemes={customThemes}>
+          <ThemeToggleAdvanced showAllThemes />
+        </ThemeProvider>
+      )
+
+      const button = screen.getByRole('button', { name: /theme settings/i })
+      fireEvent.click(button)
+
+      await waitFor(() => {
+        expect(screen.getByText('Ocean')).toBeInTheDocument()
+      })
+    })
+  })
 })

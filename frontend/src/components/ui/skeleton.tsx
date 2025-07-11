@@ -9,9 +9,9 @@ const skeletonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-gray-200 dark:bg-gray-800',
-        light: 'bg-gray-100 dark:bg-gray-900',
-        dark: 'bg-gray-300 dark:bg-gray-700'
+        default: 'bg-secondary-200',
+        light: 'bg-secondary-100',
+        dark: 'bg-secondary-300'
       },
       animation: {
         pulse: 'animate-pulse',

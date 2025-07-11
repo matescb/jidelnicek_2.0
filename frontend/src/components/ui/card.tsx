@@ -7,17 +7,17 @@ import { Badge } from "./badge"
 import { hover, tap, focus } from "@/utils/animations"
 
 const cardVariants = cva(
-  "rounded-lg bg-card text-card-foreground transition-all duration-300",
+  "rounded-lg bg-card text-text-primary transition-all duration-300",
   {
     variants: {
       variant: {
-        default: "bg-white dark:bg-gray-900",
-        primary: "bg-primary-50 dark:bg-primary-950 border-primary-200 dark:border-primary-800",
-        secondary: "bg-secondary-50 dark:bg-secondary-950 border-secondary-200 dark:border-secondary-800",
-        success: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800",
-        warning: "bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800",
-        error: "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800",
-        gradient: "bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-950 dark:to-secondary-950",
+        default: "bg-card",
+        primary: "bg-primary-50 border-primary-200",
+        secondary: "bg-secondary-50 border-secondary-200",
+        success: "bg-success-50 border-success-200",
+        warning: "bg-warning-50 border-warning-200",
+        error: "bg-error-50 border-error-200",
+        gradient: "bg-gradient-to-br from-primary-50 to-secondary-50",
       },
       elevation: {
         flat: "shadow-none",
@@ -26,8 +26,8 @@ const cardVariants = cva(
       },
       border: {
         none: "border-0",
-        subtle: "border border-gray-200 dark:border-gray-800",
-        prominent: "border-2 border-gray-300 dark:border-gray-700",
+        subtle: "border border-border",
+        prominent: "border-2 border-border-strong",
       },
       interactive: {
         static: "",
@@ -135,7 +135,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           cardVariants({ variant: gradient ? 'gradient' : variant, elevation, border, interactive }),
           disabled && "opacity-50 cursor-not-allowed pointer-events-none",
-          selected && "ring-2 ring-primary-500 ring-offset-2",
+          selected && "ring-2 ring-focus-ring ring-offset-2",
           "relative overflow-hidden",
           className
         )}
@@ -182,7 +182,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-text-muted", className)}
     {...props}
   />
 ))
@@ -229,7 +229,7 @@ const CardImage = React.forwardRef<HTMLDivElement, CardImageProps>(
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       )}
       {overlayContent && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-text-inverse">
           {overlayContent}
         </div>
       )}

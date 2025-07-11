@@ -13,7 +13,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   compact = false,
   showTooltip = true 
 }) => {
-  const { theme, toggleTheme, transitions } = useTheme()
+  const { theme, toggleTheme } = useTheme()
   
   const iconSize = compact ? 'h-4 w-4' : 'h-5 w-5'
   const buttonPadding = compact ? 'p-1.5' : 'p-2'

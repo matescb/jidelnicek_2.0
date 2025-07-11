@@ -16,10 +16,10 @@ from jidelnicek.admin.models import AdminAuditLog, AdminAction
 
 
 @pytest_asyncio.fixture(scope="function")
-async def admin_user(db_session: AsyncSession) -> AuthUser:
+async def admin_test_user(db_session: AsyncSession) -> AuthUser:
     """Create an admin user for testing."""
     user = AuthUser(
-        email="admin@test.com",
+        email=f"admin-{str(uuid4())[:8]}@test.com",
         password_hash=PasswordHasher.hash_password("Admin123!"),
         role="admin",
         email_verified=True,
@@ -32,10 +32,10 @@ async def admin_user(db_session: AsyncSession) -> AuthUser:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def regular_user(db_session: AsyncSession) -> AuthUser:
+async def admin_regular_user(db_session: AsyncSession) -> AuthUser:
     """Create a regular user for testing."""
     user = AuthUser(
-        email="user@test.com",
+        email=f"user-{str(uuid4())[:8]}@test.com",
         password_hash=PasswordHasher.hash_password("User123!"),
         role="user",
         email_verified=True,
@@ -51,7 +51,7 @@ async def regular_user(db_session: AsyncSession) -> AuthUser:
 async def inactive_user(db_session: AsyncSession) -> AuthUser:
     """Create an inactive user for testing."""
     user = AuthUser(
-        email="inactive@test.com",
+        email=f"inactive-{str(uuid4())[:8]}@test.com",
         password_hash=PasswordHasher.hash_password("Inactive123!"),
         role="user",
         is_active=False,
@@ -65,10 +65,10 @@ async def inactive_user(db_session: AsyncSession) -> AuthUser:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def unverified_user(db_session: AsyncSession) -> AuthUser:
+async def admin_unverified_user(db_session: AsyncSession) -> AuthUser:
     """Create an unverified user for testing."""
     user = AuthUser(
-        email="unverified@test.com",
+        email=f"unverified-{str(uuid4())[:8]}@test.com",
         password_hash=PasswordHasher.hash_password("Unverified123!"),
         role="user",
         email_verified=False
@@ -83,9 +83,10 @@ async def unverified_user(db_session: AsyncSession) -> AuthUser:
 async def multiple_users(db_session: AsyncSession) -> list[AuthUser]:
     """Create multiple users for testing bulk operations."""
     users = []
+    test_uuid = str(uuid4())[:8]  # Use same UUID prefix for all users in this test
     for i in range(10):
         user = AuthUser(
-            email=f"user{i}@test.com",
+            email=f"user{i}-{test_uuid}@test.com",
             password_hash=PasswordHasher.hash_password(f"User{i}123!"),
             role="user",
             email_verified=i % 2 == 0,  # Half verified
@@ -106,28 +107,28 @@ async def multiple_users(db_session: AsyncSession) -> list[AuthUser]:
 @pytest_asyncio.fixture(scope="function")
 async def audit_logs(
     db_session: AsyncSession,
-    admin_user: AuthUser,
-    regular_user: AuthUser
+    admin_test_user: AuthUser,
+    admin_regular_user: AuthUser
 ) -> list[AdminAuditLog]:
     """Create sample audit logs."""
     logs = []
     
     # User view log
     log1 = AdminAuditLog(
-        admin_id=admin_user.id,
+        admin_id=admin_test_user.id,
         action=AdminAction.USER_VIEW,
         target_type="user",
-        target_id=regular_user.id,
+        target_id=admin_regular_user.id,
         success=True
     )
     logs.append(log1)
     
     # User update log
     log2 = AdminAuditLog(
-        admin_id=admin_user.id,
+        admin_id=admin_test_user.id,
         action=AdminAction.USER_UPDATE,
         target_type="user",
-        target_id=regular_user.id,
+        target_id=admin_regular_user.id,
         before_state={"is_active": True},
         after_state={"is_active": False},
         changes={"is_active": {"from": True, "to": False}},
@@ -138,7 +139,7 @@ async def audit_logs(
     
     # Failed operation log
     log3 = AdminAuditLog(
-        admin_id=admin_user.id,
+        admin_id=admin_test_user.id,
         action=AdminAction.USER_DELETE,
         target_type="user",
         target_id=uuid4(),

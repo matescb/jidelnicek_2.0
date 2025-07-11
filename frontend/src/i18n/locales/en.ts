@@ -505,7 +505,6 @@ export default {
     selected: '{{count}} selected',
     export: 'Export',
     duplicate: 'Duplicate',
-    active: 'active',
     dateCreated: 'Date Created',
     dismiss: 'Dismiss',
     expand: 'Expand',

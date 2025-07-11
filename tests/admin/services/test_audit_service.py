@@ -38,14 +38,14 @@ class TestAdminAuditService:
     async def test_list_audit_logs_with_filters(
         self,
         db_session: AsyncSession,
-        admin_user: AuthUser,
+        admin_test_user: AuthUser,
         audit_logs: list[AdminAuditLog]
     ):
         """Test listing audit logs with filters."""
         service = AdminAuditService(db_session)
         
         # Filter by admin
-        filters = AuditLogFilter(admin_id=admin_user.id)
+        filters = AuditLogFilter(admin_id=admin_test_user.id)
         logs, total = await service.list_audit_logs(
             page=1,
             per_page=10,
@@ -53,7 +53,7 @@ class TestAdminAuditService:
         )
         
         assert total == len(audit_logs)
-        assert all(log.admin_id == admin_user.id for log in logs)
+        assert all(log.admin_id == admin_test_user.id for log in logs)
         
         # Filter by action
         filters = AuditLogFilter(action=AdminAction.USER_UPDATE.value)
@@ -80,14 +80,14 @@ class TestAdminAuditService:
     async def test_list_audit_logs_with_date_filters(
         self,
         db_session: AsyncSession,
-        admin_user: AuthUser
+        admin_test_user: AuthUser
     ):
         """Test listing audit logs with date filters."""
         # Create logs with different timestamps
         now = datetime.now(timezone.utc)
         
         old_log = AdminAuditLog(
-            admin_id=admin_user.id,
+            admin_id=admin_test_user.id,
             action=AdminAction.USER_VIEW,
             target_type="user",
             target_id=uuid4(),
@@ -95,7 +95,7 @@ class TestAdminAuditService:
         )
         
         recent_log = AdminAuditLog(
-            admin_id=admin_user.id,
+            admin_id=admin_test_user.id,
             action=AdminAction.USER_UPDATE,
             target_type="user",
             target_id=uuid4(),
@@ -143,20 +143,20 @@ class TestAdminAuditService:
     async def test_get_user_audit_trail(
         self,
         db_session: AsyncSession,
-        regular_user: AuthUser,
+        admin_regular_user: AuthUser,
         audit_logs: list[AdminAuditLog]
     ):
         """Test getting user audit trail."""
         service = AdminAuditService(db_session)
         
         logs = await service.get_user_audit_trail(
-            user_id=regular_user.id,
+            user_id=admin_regular_user.id,
             limit=10
         )
         
-        # Should have 2 logs for regular_user (view and update)
+        # Should have 2 logs for admin_regular_user (view and update)
         assert len(logs) == 2
-        assert all(log.target_id == regular_user.id for log in logs)
+        assert all(log.target_id == admin_regular_user.id for log in logs)
         assert all(log.target_type == "user" for log in logs)
         
         # Verify order (newest first)
@@ -166,19 +166,19 @@ class TestAdminAuditService:
     async def test_get_admin_activity(
         self,
         db_session: AsyncSession,
-        admin_user: AuthUser,
+        admin_test_user: AuthUser,
         audit_logs: list[AdminAuditLog]
     ):
         """Test getting admin activity."""
         service = AdminAuditService(db_session)
         
         logs = await service.get_admin_activity(
-            admin_id=admin_user.id,
+            admin_id=admin_test_user.id,
             limit=10
         )
         
         assert len(logs) == len(audit_logs)
-        assert all(log.admin_id == admin_user.id for log in logs)
+        assert all(log.admin_id == admin_test_user.id for log in logs)
     
     async def test_get_failed_actions(
         self,
@@ -197,7 +197,7 @@ class TestAdminAuditService:
     async def test_export_audit_logs(
         self,
         db_session: AsyncSession,
-        admin_user: AuthUser,
+        admin_test_user: AuthUser,
         audit_logs: list[AdminAuditLog]
     ):
         """Test exporting audit logs."""
@@ -229,7 +229,7 @@ class TestAdminAuditService:
     async def test_get_statistics(
         self,
         db_session: AsyncSession,
-        admin_user: AuthUser,
+        admin_test_user: AuthUser,
         audit_logs: list[AdminAuditLog]
     ):
         """Test getting audit statistics."""
@@ -248,13 +248,13 @@ class TestAdminAuditService:
         
         # Check most active admins
         assert len(stats["most_active_admins"]) == 1
-        assert stats["most_active_admins"][0]["admin_id"] == str(admin_user.id)
+        assert stats["most_active_admins"][0]["admin_id"] == str(admin_test_user.id)
         assert stats["most_active_admins"][0]["action_count"] == len(audit_logs)
     
     async def test_get_statistics_with_date_range(
         self,
         db_session: AsyncSession,
-        admin_user: AuthUser
+        admin_test_user: AuthUser
     ):
         """Test getting statistics with date range."""
         # Create logs with different timestamps
@@ -262,7 +262,7 @@ class TestAdminAuditService:
         
         # Old log (outside range)
         old_log = AdminAuditLog(
-            admin_id=admin_user.id,
+            admin_id=admin_test_user.id,
             action=AdminAction.USER_VIEW,
             target_type="user",
             target_id=uuid4(),
@@ -273,7 +273,7 @@ class TestAdminAuditService:
         recent_logs = []
         for i in range(3):
             log = AdminAuditLog(
-                admin_id=admin_user.id,
+                admin_id=admin_test_user.id,
                 action=AdminAction.USER_UPDATE,
                 target_type="user",
                 target_id=uuid4(),

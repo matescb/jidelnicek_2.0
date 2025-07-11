@@ -1,0 +1,57 @@
+/**
+ * Storybook-specific styles for theme switching
+ */
+
+/* Ensure Storybook iframe has proper theme classes */
+#storybook-root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Override Storybook's default styles for better theme integration */
+.sb-show-main {
+  background-color: transparent !important;
+}
+
+/* Theme comparison specific styles */
+.theme-comparison-container {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+/* Smooth transitions for theme changes in Storybook */
+.sb-preview-wrapper {
+  transition: background-color var(--transition-base, 200ms) ease-in-out;
+}
+
+/* Ensure proper isolation for side-by-side themes */
+.theme-comparison-light,
+.theme-comparison-dark {
+  container-type: inline-size;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Reset theme variables for isolated containers */
+.theme-comparison-light {
+  color-scheme: light;
+}
+
+.theme-comparison-dark {
+  color-scheme: dark;
+}
+
+/* Storybook controls panel theme integration */
+.docblock-argstable {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+.docblock-argstable td {
+  border-color: var(--border) !important;
+}
+
+/* Story canvas background */
+.docs-story {
+  background: var(--background) !important;
+}

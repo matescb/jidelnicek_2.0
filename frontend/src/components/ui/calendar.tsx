@@ -31,22 +31,22 @@ function Calendar({
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
-          "text-gray-500 rounded-md w-9 font-normal text-[0.8rem] dark:text-gray-400",
+          "text-text-muted rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-gray-100/50 [&:has([aria-selected])]:bg-gray-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 dark:[&:has([aria-selected].day-outside)]:bg-gray-800/50 dark:[&:has([aria-selected])]:bg-gray-800",
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-secondary-100/50 [&:has([aria-selected])]:bg-secondary-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
         ),
         day_range_end: "day-range-end",
         day_selected:
-          "bg-primary-600 text-white hover:bg-primary-700 hover:text-white focus:bg-primary-700 focus:text-white dark:bg-primary-400 dark:text-gray-900 dark:hover:bg-primary-500 dark:hover:text-gray-900 dark:focus:bg-primary-500 dark:focus:text-gray-900",
-        day_today: "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100",
+          "bg-primary-600 text-white hover:bg-primary-700 hover:text-white focus:bg-primary-700 focus:text-white",
+        day_today: "bg-secondary-100 text-text-primary",
         day_outside:
-          "day-outside text-gray-500 opacity-50 aria-selected:bg-gray-100/50 aria-selected:text-gray-500 aria-selected:opacity-30 dark:text-gray-400 dark:aria-selected:bg-gray-800/50 dark:aria-selected:text-gray-400",
-        day_disabled: "text-gray-500 opacity-50 dark:text-gray-400",
+          "day-outside text-text-muted opacity-50 aria-selected:bg-secondary-100/50 aria-selected:text-text-muted aria-selected:opacity-30",
+        day_disabled: "text-text-disabled opacity-50",
         day_range_middle:
-          "aria-selected:bg-gray-100 aria-selected:text-gray-900 dark:aria-selected:bg-gray-800 dark:aria-selected:text-gray-100",
+          "aria-selected:bg-secondary-100 aria-selected:text-text-primary",
         day_hidden: "invisible",
         ...classNames,
       }}

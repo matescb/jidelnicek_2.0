@@ -10,10 +10,10 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: 'bg-background text-foreground border-border',
-        success: 'bg-green-50 text-green-900 border-green-200 dark:bg-green-900/10 dark:text-green-100 dark:border-green-800',
-        error: 'bg-red-50 text-red-900 border-red-200 dark:bg-red-900/10 dark:text-red-100 dark:border-red-800',
-        warning: 'bg-yellow-50 text-yellow-900 border-yellow-200 dark:bg-yellow-900/10 dark:text-yellow-100 dark:border-yellow-800',
-        info: 'bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-900/10 dark:text-blue-100 dark:border-blue-800',
+        success: 'bg-success-50 text-success-900 border-success-200',
+        error: 'bg-error-50 text-error-900 border-error-200',
+        warning: 'bg-warning-50 text-warning-900 border-warning-200',
+        info: 'bg-info-50 text-info-900 border-info-200',
       },
     },
     defaultVariants: {

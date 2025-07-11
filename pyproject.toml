@@ -33,11 +33,7 @@ aiofiles = "^24.1.0"
 backoff = "^2.2.1"
 aiosmtplib = "^4.0.1"
 openpyxl = "^3.1.2"
-
-[tool.poetry.dependencies.qrcode]
-version = "^8.0"
-extras = ["pil"]
-optional = true
+qrcode = {extras = ["pil"], version = "^8.2"}
 
 [tool.poetry.extras]
 qr = ["qrcode"]

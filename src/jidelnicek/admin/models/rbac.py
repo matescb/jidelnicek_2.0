@@ -244,7 +244,8 @@ class Role(Base):
     users: Mapped[List["AuthUser"]] = relationship(
         "AuthUser",
         secondary=user_roles,
-        backref="admin_roles",
+        foreign_keys=[user_roles.c.user_id, user_roles.c.role_id],
+        back_populates="admin_roles",
         lazy="select",
         viewonly=True
     )

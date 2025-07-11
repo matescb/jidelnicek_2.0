@@ -21,7 +21,7 @@ from jidelnicek.core.exceptions import ValidationError, NotFoundError
 
 
 @pytest.fixture
-def admin_user():
+def admin_test_user():
     """Create a mock admin user."""
     return AuthUser(
         id=uuid4(),
@@ -43,9 +43,9 @@ def regular_user():
 
 
 @pytest.fixture
-def moderation_service(db_session: AsyncSession, admin_user: AuthUser):
+def moderation_service(db_session: AsyncSession, admin_test_user: AuthUser):
     """Create ingredient moderation service instance."""
-    return IngredientModerationService(db_session, admin_user)
+    return IngredientModerationService(db_session, admin_test_user)
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -169,7 +169,7 @@ class TestIngredientReview:
         moderation_service: IngredientModerationService,
         test_ingredient: Ingredient,
         regular_user: AuthUser,
-        admin_user: AuthUser
+        admin_test_user: AuthUser
     ):
         """Test approving an ingredient."""
         # Submit for moderation
@@ -187,7 +187,7 @@ class TestIngredientReview:
         )
         
         assert reviewed.status == IngredientModerationStatus.APPROVED
-        assert reviewed.reviewed_by == admin_user.id
+        assert reviewed.reviewed_by == admin_test_user.id
         assert reviewed.reviewed_at is not None
         assert reviewed.review_notes == "Looks good"
     

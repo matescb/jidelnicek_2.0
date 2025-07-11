@@ -20,9 +20,8 @@ export const ThemeToggleAdvanced: React.FC<ThemeToggleAdvancedProps> = ({
   compact = false,
   showCurrentMode = true
 }) => {
-  const { theme, setTheme, availableThemes } = useTheme()
+  const { theme, themeMode, setThemeMode } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
-  const [themeMode, setThemeMode] = useState<ThemeMode>('system')
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light')
   const dropdownRef = useRef<HTMLDivElement>(null)
   
@@ -39,26 +38,12 @@ export const ThemeToggleAdvanced: React.FC<ThemeToggleAdvancedProps> = ({
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
   
-  // Initialize theme mode from localStorage
+  // Handle system theme changes
   useEffect(() => {
-    const savedMode = localStorage.getItem('themeMode') as ThemeMode
-    if (savedMode) {
-      setThemeMode(savedMode)
-    } else if (theme === 'light' || theme === 'dark') {
-      setThemeMode(theme)
-    }
-  }, [theme])
-  
-  // Apply theme based on mode
-  useEffect(() => {
-    localStorage.setItem('themeMode', themeMode)
-    
     if (themeMode === 'system') {
-      setTheme(systemTheme)
-    } else {
-      setTheme(themeMode)
+      // System theme is already handled by the useTheme hook
     }
-  }, [themeMode, systemTheme, setTheme])
+  }, [themeMode])
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -193,43 +178,6 @@ export const ThemeToggleAdvanced: React.FC<ThemeToggleAdvancedProps> = ({
             ))}
           </div>
           
-          {/* Show custom themes if available */}
-          {availableThemes.length > 2 && (
-            <>
-              <div className="border-t border-gray-200 dark:border-gray-700" />
-              <div className="py-1" role="none">
-                <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Custom Themes
-                </div>
-                {availableThemes
-                  .filter(t => t !== 'light' && t !== 'dark')
-                  .map((customTheme) => (
-                    <button
-                      key={customTheme}
-                      onClick={() => {
-                        setTheme(customTheme)
-                        setThemeMode(customTheme as ThemeMode)
-                        setIsOpen(false)
-                      }}
-                      className={`
-                        w-full px-4 py-2
-                        flex items-center justify-between
-                        text-sm text-gray-700 dark:text-gray-200
-                        hover:bg-gray-100 dark:hover:bg-gray-700
-                        transition-colors duration-150
-                        ${theme === customTheme ? 'bg-gray-50 dark:bg-gray-700/50' : ''}
-                      `}
-                      role="menuitem"
-                    >
-                      <span className="font-medium capitalize">{customTheme}</span>
-                      {theme === customTheme && (
-                        <CheckIcon className="h-4 w-4 text-primary-500" />
-                      )}
-                    </button>
-                  ))}
-              </div>
-            </>
-          )}
         </div>
       )}
     </div>

@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from jidelnicek.core.models.job import Job
     from jidelnicek.core.storage.service import StoredFile
     from jidelnicek.core.models.monitoring import PerformanceLog
+    from jidelnicek.admin.models.rbac import Role, user_roles
 
 
 class AuthUser(Base):
@@ -231,6 +232,16 @@ class AuthUser(Base):
         back_populates="user",
         lazy="select",
         passive_deletes=True
+    )
+    
+    # Admin RBAC relationships  
+    admin_roles: Mapped[List["Role"]] = relationship(
+        "Role",
+        secondary="admin_user_roles",
+        foreign_keys="[admin_user_roles.c.user_id, admin_user_roles.c.role_id]",
+        back_populates="users",
+        lazy="select",
+        viewonly=True
     )
     
     # Table constraints

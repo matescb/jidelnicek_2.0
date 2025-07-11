@@ -5,12 +5,36 @@ This directory contains the Storybook configuration for the Jidelnicek frontend.
 ## Features
 
 - **React + TypeScript** support with Vite builder for fast HMR
-- **Dark mode toggle** - Use the moon/sun icon in the toolbar to switch themes
+- **Enhanced Theme Switching** - Use the paintbrush icon in the toolbar to switch between Light, Dark, or System themes
+- **Theme Comparison Mode** - Toggle side-by-side view to see components in both themes simultaneously
+- **Persistent Theme Selection** - Your theme preference is saved across sessions
 - **Component documentation** - All components are documented with examples
 - **Interactive controls** - Modify props in real-time
 - **Responsive viewport testing** - Test components at different screen sizes
 
+## Theme Switching Guide
+
+### Using the Theme Switcher
+1. Click the **paintbrush icon** in the Storybook toolbar
+2. Choose your preferred theme:
+   - **Light Theme** (sun icon) - Light mode with bright colors
+   - **Dark Theme** (moon icon) - Dark mode for low-light environments
+   - **System Theme** (browser icon) - Follows your OS theme preference
+
+### Theme Comparison Mode
+1. Click the **side-by-side icon** in the toolbar
+2. Toggle "Theme Comparison" to see components in both themes
+3. Perfect for ensuring design consistency across themes
+
+### Theme Persistence
+- Your theme selection is automatically saved
+- Refreshing the page maintains your chosen theme
+- Each Storybook instance remembers its own theme preference
+
 ## Available Stories
+
+### Theme Examples
+- **Theme/Demo** - Comprehensive showcase of themed components
 
 ### Core Components
 - **Button** - All variants, sizes, states, loading, and icon support
@@ -83,3 +107,27 @@ export const Default: Story = {
 5. **Show all states** - Include loading, error, disabled states
 6. **Test responsiveness** - Use the viewport addon to test mobile/tablet
 7. **Consider accessibility** - Test with keyboard navigation
+8. **Test in both themes** - Always verify components look good in light and dark modes
+9. **Use theme comparison** - Check side-by-side view for visual consistency
+10. **Follow theme conventions** - Use CSS variables like `bg-background`, `text-foreground`
+
+## Theme Development Tips
+
+### Writing Theme-Aware Components
+```tsx
+// DO: Use theme-aware utility classes
+<div className="bg-background text-foreground border-border">
+
+// DON'T: Use fixed colors
+<div className="bg-white text-black border-gray-200">
+```
+
+### Testing Theme Changes
+1. Use the theme switcher to test all three modes
+2. Enable theme comparison for quick visual checks
+3. Pay attention to:
+   - Text contrast and readability
+   - Border visibility
+   - Shadow effects
+   - Hover/focus states
+   - Component boundaries

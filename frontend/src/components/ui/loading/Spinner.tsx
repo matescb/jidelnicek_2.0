@@ -21,11 +21,11 @@ const spinnerVariants = cva(
         xl: 'scale-150'
       },
       color: {
-        primary: 'text-primary-600 dark:text-primary-500',
-        secondary: 'text-gray-600 dark:text-gray-400',
-        destructive: 'text-red-600 dark:text-red-500',
-        success: 'text-green-600 dark:text-green-500',
-        warning: 'text-yellow-600 dark:text-yellow-500',
+        primary: 'text-primary-600',
+        secondary: 'text-secondary-600',
+        destructive: 'text-error-600',
+        success: 'text-success-600',
+        warning: 'text-warning-600',
         current: 'text-current'
       },
       speed: {
@@ -178,7 +178,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
         {renderSpinner()}
       </div>
       {showLabel && (
-        <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
+        <span className="text-sm text-text-muted">{label}</span>
       )}
     </div>
   )
