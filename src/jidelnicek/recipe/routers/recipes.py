@@ -136,11 +136,9 @@ async def validate_recipe_permissions(recipe: Recipe, user: AuthUser, action: st
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
-                'error': {
-                    'code': 'PERMISSION_DENIED',
-                    'message': f'Only the recipe owner can {action} this recipe',
-                    'details': [{'required_permission': f'recipes:{action}', 'owner_only': True}]
-                }
+                "error": "PERMISSION_DENIED",
+                "message": f"Only the recipe owner can {action} this recipe",
+                "details": [{"required_permission": f"recipes:{action}", "owner_only": True}]
             }
         )
 
@@ -235,21 +233,30 @@ async def get_recipe_or_404(
     if not recipe:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Recipe with ID {recipe_id} not found"
+            detail={
+                "error": "NOT_FOUND",
+                "message": f"Recipe with ID {recipe_id} not found"
+            }
         )
     
     # Check if recipe is archived
     if recipe.is_archived:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Recipe with ID {recipe_id} not found"
+            detail={
+                "error": "NOT_FOUND",
+                "message": f"Recipe with ID {recipe_id} not found"
+            }
         )
     
     # Check if recipe is public or user is author
     if not recipe.is_public and (not user or recipe.user_id != user.id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Recipe with ID {recipe_id} not found"
+            detail={
+                "error": "NOT_FOUND",
+                "message": f"Recipe with ID {recipe_id} not found"
+            }
         )
     
     return recipe
@@ -398,11 +405,9 @@ async def create_recipe(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={
-                    'error': {
-                        'code': 'RECIPE_VALIDATION_ERROR',
-                        'message': 'Recipe data validation failed',
-                        'details': validation_result['errors']
-                    }
+                    "error": "RECIPE_VALIDATION_ERROR",
+                    "message": "Recipe data validation failed",
+                    "details": validation_result['errors']
                 }
             )
         
@@ -435,18 +440,15 @@ async def create_recipe(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail={
-                        'error': {
-                            'code': 'INGREDIENT_NOT_FOUND',
-                            'message': f'Ingredient with ID {ingredient_data.ingredient_id} not found'
-                        }
+                        "error": "INGREDIENT_NOT_FOUND",
+                        "message": f"Ingredient with ID {ingredient_data.ingredient_id} not found"
                     }
                 )
             
             recipe_ingredient = RecipeIngredient(
                 recipe_id=recipe.id,
                 ingredient_id=ingredient_data.ingredient_id,
-                quantity=ingredient_data.quantity,
-                unit=ingredient_data.unit,
+                quantity_g=ingredient_data.quantity_g,
                 preparation_notes=ingredient_data.preparation_notes,
                 is_optional=ingredient_data.is_optional,
                 display_order=ingredient_data.display_order
@@ -486,11 +488,9 @@ async def create_recipe(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
-                'error': {
-                    'code': 'RECIPE_CREATION_ERROR',
-                    'message': 'Failed to create recipe',
-                    'details': [{'error': str(e)}]
-                }
+                "error": "RECIPE_CREATION_ERROR",
+                "message": "Failed to create recipe",
+                "details": [{"error": str(e)}]
             }
         )
 
@@ -670,7 +670,10 @@ async def list_recipes(
         logger.error(f"Error listing recipes: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list recipes"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to list recipes"
+            }
         )
 
 
@@ -746,43 +749,25 @@ async def update_recipe(
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail={
-                                'error': {
-                                    'code': 'INGREDIENT_NOT_FOUND',
-                                    'message': f'Ingredient with ID {ingredient_data.ingredient_id} not found'
-                                }
+                                "error": "INGREDIENT_NOT_FOUND",
+                                "message": f"Ingredient with ID {ingredient_data.ingredient_id} not found"
                             }
                         )
                     
-                    # Validate quantity and unit
-                    if ingredient_data.quantity is not None and ingredient_data.quantity <= 0:
+                    # Validate quantity
+                    if ingredient_data.quantity_g is not None and ingredient_data.quantity_g <= 0:
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail={
-                                'error': {
-                                    'code': 'INVALID_QUANTITY',
-                                    'message': 'Ingredient quantity must be greater than 0'
-                                }
+                                "error": "INVALID_QUANTITY",
+                                "message": "Ingredient quantity must be greater than 0"
                             }
                         )
-                    
-                    if ingredient_data.unit is not None:
-                        allowed_units = ['g', 'kg', 'ml', 'l', 'cup', 'tbsp', 'tsp', 'piece']
-                        if ingredient_data.unit not in allowed_units:
-                            raise HTTPException(
-                                status_code=status.HTTP_400_BAD_REQUEST,
-                                detail={
-                                    'error': {
-                                        'code': 'INVALID_UNIT',
-                                        'message': f'Unit must be one of: {", ".join(allowed_units)}'
-                                    }
-                                }
-                            )
                     
                     recipe_ingredient = RecipeIngredient(
                         recipe_id=recipe.id,
                         ingredient_id=ingredient_data.ingredient_id,
-                        quantity=ingredient_data.quantity or 1,
-                        unit=ingredient_data.unit or "g",
+                        quantity_g=ingredient_data.quantity_g or 1,
                         preparation_notes=ingredient_data.preparation_notes,
                         is_optional=ingredient_data.is_optional or False,
                         display_order=ingredient_data.display_order or 0
@@ -803,10 +788,8 @@ async def update_recipe(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail={
-                        'error': {
-                            'code': 'TOO_MANY_IMAGES',
-                            'message': 'Maximum 10 images allowed per recipe'
-                        }
+                        "error": "TOO_MANY_IMAGES",
+                        "message": "Maximum 10 images allowed per recipe"
                     }
                 )
             
@@ -815,10 +798,8 @@ async def update_recipe(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail={
-                        'error': {
-                            'code': 'MULTIPLE_PRIMARY_IMAGES',
-                            'message': 'Only one primary image is allowed'
-                        }
+                        "error": "MULTIPLE_PRIMARY_IMAGES",
+                        "message": "Only one primary image is allowed"
                     }
                 )
             
@@ -854,11 +835,9 @@ async def update_recipe(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
-                'error': {
-                    'code': 'RECIPE_UPDATE_ERROR',
-                    'message': 'Failed to update recipe',
-                    'details': [{'error': str(e)}]
-                }
+                "error": "RECIPE_UPDATE_ERROR",
+                "message": "Failed to update recipe",
+                "details": [{"error": str(e)}]
             }
         )
 
@@ -896,11 +875,9 @@ async def delete_recipe(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
-                'error': {
-                    'code': 'RECIPE_DELETE_ERROR',
-                    'message': 'Failed to delete recipe',
-                    'details': [{'error': str(e)}]
-                }
+                "error": "RECIPE_DELETE_ERROR",
+                "message": "Failed to delete recipe",
+                "details": [{"error": str(e)}]
             }
         )
 
@@ -908,7 +885,7 @@ async def delete_recipe(
 @router.post("/{recipe_id}/duplicate", response_model=RecipeResponse)
 async def duplicate_recipe(
     recipe_id: UUID,
-    duplicate_request: RecipeDuplicateRequest,
+    duplicate_request: RecipeDuplicateRequest = RecipeDuplicateRequest(),
     db: AsyncSession = Depends(get_db),
     current_user: AuthUser = Depends(get_current_user)
 ):
@@ -946,8 +923,7 @@ async def duplicate_recipe(
             new_ingredient = RecipeIngredient(
                 recipe_id=new_recipe.id,
                 ingredient_id=ingredient.ingredient_id,
-                quantity=ingredient.quantity,
-                unit=ingredient.unit,
+                quantity_g=ingredient.quantity_g,
                 preparation_notes=ingredient.preparation_notes,
                 is_optional=ingredient.is_optional,
                 display_order=ingredient.display_order
@@ -976,14 +952,17 @@ async def duplicate_recipe(
         logger.error(f"Error duplicating recipe: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to duplicate recipe"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to duplicate recipe"
+            }
         )
 
 
 @router.post("/{recipe_id}/publish", response_model=RecipeResponse)
 async def publish_recipe(
     recipe_id: UUID,
-    publish_request: RecipePublishRequest,
+    publish_request: RecipePublishRequest = RecipePublishRequest(),
     db: AsyncSession = Depends(get_db),
     current_user: AuthUser = Depends(get_current_user)
 ):
@@ -999,13 +978,19 @@ async def publish_recipe(
     if not await is_recipe_owner(recipe, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the recipe owner can publish this recipe"
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can publish this recipe"
+            }
         )
     
     if recipe.is_published:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Recipe is already published"
+            detail={
+                "error": "BAD_REQUEST",
+                "message": "Recipe is already published"
+            }
         )
     
     try:
@@ -1024,7 +1009,10 @@ async def publish_recipe(
         logger.error(f"Error publishing recipe: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to publish recipe"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to publish recipe"
+            }
         )
 
 
@@ -1046,19 +1034,28 @@ async def unpublish_recipe(
     if not await is_recipe_owner(recipe, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the recipe owner can unpublish this recipe"
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can unpublish this recipe"
+            }
         )
     
     if not recipe.is_published:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Recipe is not published"
+            detail={
+                "error": "BAD_REQUEST",
+                "message": "Recipe is not published"
+            }
         )
     
     if not recipe.can_be_unpublished:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot unpublish recipe with more than 5 forks"
+            detail={
+                "error": "BAD_REQUEST",
+                "message": "Cannot unpublish recipe with more than 5 forks"
+            }
         )
     
     try:
@@ -1074,7 +1071,10 @@ async def unpublish_recipe(
         logger.error(f"Error unpublishing recipe: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to unpublish recipe"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to unpublish recipe"
+            }
         )
 
 
@@ -1098,13 +1098,19 @@ async def fork_recipe(
     if not original_recipe.is_published:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Can only fork published recipes"
+            detail={
+                "error": "BAD_REQUEST",
+                "message": "Can only fork published recipes"
+            }
         )
     
     if original_recipe.user_id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot fork your own recipe"
+            detail={
+                "error": "BAD_REQUEST",
+                "message": "Cannot fork your own recipe"
+            }
         )
     
     try:
@@ -1132,8 +1138,7 @@ async def fork_recipe(
             new_ingredient = RecipeIngredient(
                 recipe_id=forked_recipe.id,
                 ingredient_id=ingredient.ingredient_id,
-                quantity=ingredient.quantity,
-                unit=ingredient.unit,
+                quantity_g=ingredient.quantity_g,
                 preparation_notes=ingredient.preparation_notes,
                 is_optional=ingredient.is_optional,
                 display_order=ingredient.display_order
@@ -1165,7 +1170,10 @@ async def fork_recipe(
         logger.error(f"Error forking recipe: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fork recipe"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to fork recipe"
+            }
         )
 
 
@@ -1218,14 +1226,20 @@ async def assign_categories(
     if not await is_recipe_owner(recipe, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the recipe owner can assign categories"
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can assign categories"
+            }
         )
     
     # Validate category limit
     if len(assignments) > 3:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum 3 categories allowed per recipe"
+            detail={
+                "error": "BAD_REQUEST",
+                "message": "Maximum 3 categories allowed per recipe"
+            }
         )
     
     # Verify all categories exist
@@ -1237,7 +1251,10 @@ async def assign_categories(
     if len(categories) != len(category_ids):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="One or more category IDs are invalid"
+            detail={
+                "error": "BAD_REQUEST",
+                "message": "One or more category IDs are invalid"
+            }
         )
     
     # Remove existing category assignments
@@ -1265,7 +1282,10 @@ async def assign_categories(
         logger.error(f"Error assigning categories: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to assign categories"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to assign categories"
+            }
         )
     
     return [
@@ -1294,7 +1314,10 @@ async def assign_tags(
     if not await is_recipe_owner(recipe, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the recipe owner can assign tags"
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can assign tags"
+            }
         )
     
     # Process tag names - create or get existing
@@ -1346,7 +1369,10 @@ async def assign_tags(
         logger.error(f"Error assigning tags: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to assign tags"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to assign tags"
+            }
         )
     
     return [
@@ -1372,7 +1398,10 @@ async def remove_category(
     if not await is_recipe_owner(recipe, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the recipe owner can remove categories"
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can remove categories"
+            }
         )
     
     # Delete the assignment
@@ -1387,7 +1416,10 @@ async def remove_category(
     if result.rowcount == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category assignment not found"
+            detail={
+                "error": "NOT_FOUND",
+                "message": "Category assignment not found"
+            }
         )
     
     # If this was the primary category, make another one primary
@@ -1410,7 +1442,10 @@ async def remove_category(
         logger.error(f"Error removing category: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to remove category"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to remove category"
+            }
         )
 
 
@@ -1432,7 +1467,10 @@ async def remove_tag(
     if not await is_recipe_owner(recipe, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the recipe owner can remove tags"
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can remove tags"
+            }
         )
     
     # Delete the assignment
@@ -1447,7 +1485,10 @@ async def remove_tag(
     if result.rowcount == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tag assignment not found"
+            detail={
+                "error": "NOT_FOUND",
+                "message": "Tag assignment not found"
+            }
         )
     
     try:
@@ -1461,7 +1502,10 @@ async def remove_tag(
         logger.error(f"Error removing tag: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to remove tag"
+            detail={
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Failed to remove tag"
+            }
         )
 
 
@@ -1624,11 +1668,9 @@ async def upload_recipe_image(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
-                'error': {
-                    'code': 'IMAGE_UPLOAD_ERROR',
-                    'message': 'Failed to upload image',
-                    'details': [{'error': str(e)}]
-                }
+                "error": "IMAGE_UPLOAD_ERROR",
+                "message": "Failed to upload image",
+                "details": [{"error": str(e)}]
             }
         )
 

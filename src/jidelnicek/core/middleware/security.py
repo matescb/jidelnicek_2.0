@@ -10,6 +10,7 @@ import re
 import secrets
 import uuid
 import time
+import logging
 from typing import Dict, Optional, Set, Callable, List, Tuple
 from datetime import datetime, timedelta
 
@@ -19,6 +20,8 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.types import ASGIApp
 
 from jidelnicek.core.config import settings
+
+logger = logging.getLogger(__name__)
 from jidelnicek.core.dependencies import RedisClient
 
 
@@ -195,10 +198,20 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 detail=f"Request size exceeds maximum allowed size of {self.max_request_size} bytes"
             )
         
-        # Validate content type for POST/PUT/PATCH requests
+        # Validate content type for POST/PUT/PATCH requests with body
         if request.method in ["POST", "PUT", "PATCH"]:
+            content_length = request.headers.get("content-length")
             content_type = request.headers.get("content-type", "")
-            if not content_type:
+            
+            # Only require Content-Type if there's actually a body (content-length > 0)
+            try:
+                content_length_int = int(content_length) if content_length else 0
+                has_body = content_length_int > 0
+            except (ValueError, TypeError):
+                has_body = False
+            
+            
+            if has_body and not content_type:
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail="Content-Type header is required for this request"
