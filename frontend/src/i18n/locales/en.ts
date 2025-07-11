@@ -48,6 +48,17 @@ export default {
     profile: 'Profile',
     settings: 'Settings',
     admin: 'Admin',
+    adminPanel: 'Admin Panel',
+    search: 'Search',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    openUserMenu: 'Open user menu',
+    collapseSidebar: 'Collapse sidebar',
+    expandSidebar: 'Expand sidebar',
+    theme: 'Theme',
+    lightMode: 'Light Mode',
+    darkMode: 'Dark Mode',
+    examples: 'Examples',
     
     // Sub-navigation
     myRecipes: 'My Recipes',
@@ -57,6 +68,13 @@ export default {
     createTrip: 'Create Trip',
     shoppingList: 'Shopping List',
     packingList: 'Packing List',
+    
+    // Navigation groups
+    groups: {
+      main: 'Main',
+      tools: 'Tools',
+      admin: 'Administration',
+    },
   },
   
   breadcrumbs: {
@@ -622,5 +640,40 @@ export default {
       noTripSelected: 'No Trip Selected',
       selectTripPrompt: 'Select or create a trip to view real-time calculations',
     },
+  },
+  
+  // Notifications
+  notifications: {
+    title: 'Notifications',
+    viewNotifications: 'View notifications',
+    noNotifications: 'No notifications',
+    markAsRead: 'Mark as read',
+    markAllAsRead: 'Mark all as read',
+    clear: 'Clear',
+    viewAll: 'View all notifications',
+    viewDetails: 'View details',
+    newTripInvitation: 'New Trip Invitation',
+    invitedToTrip: 'You have been invited to {{tripName}}',
+    recipeAdded: 'Recipe Added',
+    recipeAddedToTrip: 'A new recipe has been added to your trip',
+    shoppingListReady: 'Shopping List Ready',
+    shoppingListGenerated: 'Your shopping list has been generated',
+  },
+  
+  // Quick Actions
+  quickActions: {
+    title: 'Quick Actions',
+    createTrip: 'Create New Trip',
+    addRecipe: 'Add Recipe',
+    generateShoppingList: 'Shopping List',
+  },
+  
+  // User Roles
+  roles: {
+    admin: 'Administrator',
+    owner: 'Owner',
+    participant: 'Participant',
+    guest: 'Guest',
+    member: 'Member',
   },
 }

@@ -60,6 +60,13 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY --chown=jidelnicek:jidelnicek . .
 
+# Copy and setup entrypoint script (as root)
+COPY docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && chown jidelnicek:jidelnicek /app/entrypoint.sh
+
+# Install netcat for database readiness check
+RUN apk add --no-cache netcat-openbsd
+
 # Create necessary directories
 RUN mkdir -p /app/logs /app/static /app/media \
     && chown -R jidelnicek:jidelnicek /app/logs /app/static /app/media
@@ -79,5 +86,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Expose port
 EXPOSE ${PORT}
 
-# Run the application
-CMD ["uvicorn", "jidelnicek.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Run the application via entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]

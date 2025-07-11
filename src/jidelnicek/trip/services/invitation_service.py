@@ -16,7 +16,7 @@ from sqlalchemy import and_, or_, select
 from fastapi import HTTPException, status
 
 from jidelnicek.core.utils import get_utc_now
-from jidelnicek.core.email import EmailService
+from jidelnicek.core.email_service import EmailService
 from jidelnicek.trip.models.invitation import TripInvitation, TripInvitationLink
 from jidelnicek.trip.models.trip import Trip
 from jidelnicek.trip.models.participant import TripParticipant

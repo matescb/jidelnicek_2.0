@@ -38,6 +38,12 @@ target_metadata = Base.metadata
 
 def get_url():
     """Get database URL from environment variables."""
+    # Use DATABASE_URL if provided (for Docker), otherwise build from components
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        # Replace async driver with sync for Alembic
+        return database_url.replace('postgresql+asyncpg://', 'postgresql://')
+    
     return (
         f"postgresql://{os.getenv('DB_USER', 'jidelnicek')}:"
         f"{os.getenv('DB_PASSWORD', 'password')}@"
