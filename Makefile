@@ -1,131 +1,113 @@
-# Jídelníček 2.0 - Docker Management Makefile
+.PHONY: help start stop restart logs shell build clean test
 
-.PHONY: help build up down logs shell test clean migrate backup restore
+# Default target
+help:
+	@echo "Jídelníček 2.0 - Development Commands"
+	@echo "====================================="
+	@echo "make start       - Start all services (development)"
+	@echo "make start-prod  - Start all services (production)"
+	@echo "make stop        - Stop all services"
+	@echo "make restart     - Restart all services"
+	@echo "make logs        - View logs for all services"
+	@echo "make shell-app   - Access backend shell"
+	@echo "make shell-front - Access frontend shell"
+	@echo "make shell-db    - Access database shell"
+	@echo "make build       - Build all images"
+	@echo "make clean       - Clean up containers and volumes"
+	@echo "make test        - Run tests"
+	@echo "make reset-db    - Reset database"
 
-# Default environment
-ENV ?= development
-COMPOSE_FILE = docker-compose.yml
-ifeq ($(ENV),development)
-	COMPOSE_FILE += -f docker-compose.dev.yml
-endif
+# Start services
+start:
+	@./scripts/start-dev.sh
 
-# Colors for output
-GREEN = \033[0;32m
-YELLOW = \033[0;33m
-RED = \033[0;31m
-NC = \033[0m # No Color
+start-prod:
+	@./scripts/start-prod.sh
 
-help: ## Show this help message
-	@echo "Jídelníček 2.0 - Docker Management Commands"
-	@echo ""
-	@echo "Usage: make [command] [ENV=development|production]"
-	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+# Stop services
+stop:
+	@echo "Stopping all services..."
+	@docker-compose down
 
-build: ## Build Docker images
-	@echo "$(GREEN)Building Docker images for $(ENV) environment...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) build
+# Restart services
+restart:
+	@echo "Restarting all services..."
+	@docker-compose restart
 
-up: ## Start all services
-	@echo "$(GREEN)Starting services for $(ENV) environment...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) up -d
-	@echo "$(GREEN)Services started successfully!$(NC)"
-	@echo "$(YELLOW)Application: http://localhost:8000$(NC)"
-ifeq ($(ENV),development)
-	@echo "$(YELLOW)Adminer: http://localhost:8081$(NC)"
-	@echo "$(YELLOW)RedisInsight: http://localhost:8082$(NC)"
-	@echo "$(YELLOW)Mailhog: http://localhost:8025$(NC)"
-endif
+# View logs
+logs:
+	@docker-compose logs -f
 
-down: ## Stop all services
-	@echo "$(YELLOW)Stopping services...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) down
+logs-app:
+	@docker-compose logs -f app
 
-logs: ## Show logs for all services
-	docker-compose -f $(COMPOSE_FILE) logs -f
+logs-frontend:
+	@docker-compose logs -f frontend
 
-logs-app: ## Show logs for app service only
-	docker-compose -f $(COMPOSE_FILE) logs -f app
+# Shell access
+shell-app:
+	@docker-compose exec app sh
 
-shell: ## Open shell in app container
-	docker-compose -f $(COMPOSE_FILE) exec app sh
+shell-front:
+	@docker-compose exec frontend sh
 
-shell-db: ## Open PostgreSQL shell
-	docker-compose -f $(COMPOSE_FILE) exec db psql -U jidelnicek -d jidelnicek
+shell-db:
+	@docker-compose exec db psql -U jidelnicek -d jidelnicek
 
-test: ## Run tests in container
-	@echo "$(GREEN)Running tests...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec app pytest -v
+# Build images
+build:
+	@echo "Building all images..."
+	@docker-compose build
 
-migrate: ## Run database migrations
-	@echo "$(GREEN)Running database migrations...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec app alembic upgrade head
+build-app:
+	@docker-compose build app
 
-migrate-create: ## Create new migration (usage: make migrate-create name="migration_name")
-	@echo "$(GREEN)Creating new migration: $(name)$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec app alembic revision --autogenerate -m "$(name)"
+build-frontend:
+	@docker-compose build frontend
 
-migrate-status: ## Show current migration status
-	@echo "$(GREEN)Current migration status:$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec app alembic current
+# Clean up
+clean:
+	@echo "Cleaning up containers..."
+	@docker-compose down -v
+	@docker system prune -f
 
-migrate-history: ## Show migration history
-	@echo "$(GREEN)Migration history:$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec app alembic history
+# Database operations
+reset-db:
+	@./scripts/reset-db-force.sh
 
-migrate-test: ## Test migration 004 (performance indexes)
-	@echo "$(GREEN)Testing migration 004...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec app python scripts/test_migration_004.py
+migrate:
+	@docker-compose exec app alembic upgrade head
 
-migrate-check-indexes: ## Check index usage after migration
-	@echo "$(GREEN)Checking index usage...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec db psql -U jidelnicek -d jidelnicek -f scripts/check_index_usage.sql
+# Testing
+test:
+	@echo "Running backend tests..."
+	@docker-compose exec app pytest
+	@echo "Running frontend tests..."
+	@docker-compose exec frontend npm test
 
-migrate-downgrade: ## Downgrade one migration
-	@echo "$(YELLOW)Downgrading one migration...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) exec app alembic downgrade -1
+test-backend:
+	@docker-compose exec app pytest
 
-clean: ## Clean up Docker resources
-	@echo "$(RED)Cleaning up Docker resources...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) down -v
-	docker system prune -f
+test-frontend:
+	@docker-compose exec frontend npm test
 
-backup: ## Backup database
-	@echo "$(GREEN)Backing up database...$(NC)"
-	@mkdir -p backups
-	docker-compose -f $(COMPOSE_FILE) exec -T db pg_dump -U jidelnicek jidelnicek | gzip > backups/jidelnicek_$(shell date +%Y%m%d_%H%M%S).sql.gz
-	@echo "$(GREEN)Backup completed: backups/jidelnicek_$(shell date +%Y%m%d_%H%M%S).sql.gz$(NC)"
+# Development helpers
+install-backend:
+	@docker-compose exec app pip install -r requirements.txt
 
-restore: ## Restore database from backup (usage: make restore file=backup_file.sql.gz)
-	@echo "$(YELLOW)Restoring database from $(file)...$(NC)"
-	@gunzip -c $(file) | docker-compose -f $(COMPOSE_FILE) exec -T db psql -U jidelnicek jidelnicek
-	@echo "$(GREEN)Database restored successfully!$(NC)"
+install-frontend:
+	@docker-compose exec frontend npm install
 
-status: ## Show status of all services
-	@echo "$(GREEN)Service Status:$(NC)"
-	docker-compose -f $(COMPOSE_FILE) ps
+format:
+	@echo "Formatting backend code..."
+	@docker-compose exec app black .
+	@docker-compose exec app isort .
+	@echo "Formatting frontend code..."
+	@docker-compose exec frontend npm run format
 
-restart: ## Restart all services
-	@echo "$(YELLOW)Restarting services...$(NC)"
-	$(MAKE) down
-	$(MAKE) up
-
-restart-app: ## Restart only the app service
-	@echo "$(YELLOW)Restarting app service...$(NC)"
-	docker-compose -f $(COMPOSE_FILE) restart app
-
-exec: ## Execute command in app container (usage: make exec cmd="command")
-	docker-compose -f $(COMPOSE_FILE) exec app $(cmd)
-
-prod-build: ## Build for production
-	@echo "$(GREEN)Building production images...$(NC)"
-	ENV=production docker-compose -f docker-compose.yml build
-
-prod-up: ## Start production services
-	@echo "$(GREEN)Starting production services...$(NC)"
-	ENV=production docker-compose -f docker-compose.yml up -d
-
-health: ## Check health of all services
-	@echo "$(GREEN)Checking service health...$(NC)"
-	@docker-compose -f $(COMPOSE_FILE) ps | grep -E "Up.*healthy" > /dev/null && echo "$(GREEN)All services are healthy!$(NC)" || echo "$(RED)Some services are not healthy!$(NC)"
-	@docker-compose -f $(COMPOSE_FILE) ps
+lint:
+	@echo "Linting backend code..."
+	@docker-compose exec app flake8
+	@docker-compose exec app mypy .
+	@echo "Linting frontend code..."
+	@docker-compose exec frontend npm run lint

@@ -20,9 +20,15 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: true, // Listen on all addresses
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: process.env.VITE_WS_BASE_URL || 'ws://localhost:8000',
+        ws: true,
         changeOrigin: true,
       },
     },

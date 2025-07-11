@@ -121,6 +121,22 @@ export const rotateVariants: Variants = {
   },
 };
 
+// Flip transitions
+export const flipVariants: Variants = {
+  initial: {
+    rotateY: 90,
+    opacity: 0,
+  },
+  animate: {
+    rotateY: 0,
+    opacity: 1,
+  },
+  exit: {
+    rotateY: -90,
+    opacity: 0,
+  },
+};
+
 // Combined transitions
 export const slideScaleVariants: Variants = {
   initial: {
@@ -174,7 +190,7 @@ export const pageTransitions = {
 
 // Get transition variants by mode
 export const getTransitionVariants = (
-  mode: 'fade' | 'slide' | 'scale' | 'none' = 'fade',
+  mode: 'fade' | 'slide' | 'scale' | 'flip' | 'none' = 'fade',
   duration: number = 0.3
 ): Variants => {
   switch (mode) {
@@ -200,6 +216,14 @@ export const getTransitionVariants = (
         animate: {
           ...scaleVariants.animate,
           transition: { duration, type: 'spring', stiffness: 300, damping: 30 },
+        },
+      };
+    case 'flip':
+      return {
+        ...flipVariants,
+        animate: {
+          ...flipVariants.animate,
+          transition: { duration, type: 'tween', ease: 'easeInOut' },
         },
       };
     case 'none':

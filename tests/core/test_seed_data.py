@@ -157,8 +157,8 @@ async def test_tag_properties(db_session: AsyncSession):
 async def test_check_and_seed_empty_db(db_session: AsyncSession):
     """Test check_and_seed on empty database."""
     # Ensure database is empty first
-    await db_session.execute(text("DELETE FROM tags"))
-    await db_session.execute(text("DELETE FROM categories"))
+    await db_session.execute(text("DELETE FROM recipe_tags"))
+    await db_session.execute(text("DELETE FROM recipe_categories"))
     await db_session.commit()
     
     # Use the test database session

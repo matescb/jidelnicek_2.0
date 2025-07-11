@@ -6,6 +6,34 @@ export {
 } from './RouteTransition';
 
 export {
+  PageTransitions,
+  PageTransitionWrapper,
+  StaggeredContent,
+  StaggeredItem,
+} from './PageTransitions';
+
+export {
+  TransitionProvider,
+  useTransitionProvider,
+  transitionPresets,
+  applyTransitionPreset,
+  useTransitionSettings,
+} from './TransitionProvider';
+
+export {
+  ScrollRestoration,
+  useScrollRestoration,
+  ScrollToTopButton,
+} from './ScrollRestoration';
+
+export {
+  PreloadManager,
+  usePreloadRoute,
+  PreloadLink,
+  ResourceHints,
+} from './PreloadManager';
+
+export {
   RouteErrorBoundary,
   AsyncErrorBoundary,
 } from './RouteErrorBoundary';
@@ -62,7 +90,13 @@ export {
   useMultipleLoadingStates,
   useAnimatedListLoading,
   useRoutePrefetch,
+  usePageTransition,
+  useNavigationDirection,
+  useTransitionState,
+  useGestureTransition,
+  useTransitionPerformance,
 } from './hooks';
 
 // Types
 export type { RouteTransitionOptions, LoadingStateOptions } from './hooks';
+export type { TransitionMode, TransitionDirection } from './PageTransitions';

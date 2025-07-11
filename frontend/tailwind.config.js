@@ -173,6 +173,11 @@ export default {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' },
         },
+        wave: {
+          '0%': { opacity: '0.3' },
+          '50%': { opacity: '1' },
+          '100%': { opacity: '0.3' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.3s ease-in-out',
@@ -181,6 +186,7 @@ export default {
         slideDown: 'slideDown 0.3s ease-out',
         scaleIn: 'scaleIn 0.2s ease-out',
         shimmer: 'shimmer 1.5s infinite',
+        wave: 'wave 1.5s ease-in-out infinite',
       },
       transitionDuration: {
         '400': '400ms',

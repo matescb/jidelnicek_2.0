@@ -149,7 +149,7 @@ async def list_trips(
     min_duration_days: Optional[int] = Query(None, ge=1, description="Minimum trip duration"),
     max_duration_days: Optional[int] = Query(None, ge=1, description="Maximum trip duration"),
     is_archived: Optional[bool] = Query(None, description="Filter by archived status"),
-    current_user: AuthUser = Depends(get_current_user),
+    current_user: Optional[AuthUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -172,6 +172,18 @@ async def list_trips(
     )
     
     try:
+        # If no user is authenticated, return empty results
+        if current_user is None:
+            return TripListResponse(
+                items=[],
+                total=0,
+                page=page,
+                page_size=page_size,
+                total_pages=0,
+                has_next=False,
+                has_prev=False
+            )
+        
         return await service.list_trips(
             user_id=current_user.id,
             filters=filters,
