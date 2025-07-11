@@ -50,6 +50,8 @@ from jidelnicek.auth.exceptions import (
     AccountLockedError,
     SessionInvalidError,
     SessionExpiredError,
+    TokenInvalidError,
+    TokenExpiredError,
 )
 from jidelnicek.auth.dependencies.rate_limit import RateLimitDep, RateLimitExceeded
 from jidelnicek.auth.dependencies.auth import CurrentUser, CurrentUserOptional
@@ -609,6 +611,114 @@ async def verify_email(
 
 
 @router.post(
+    "/verify-email",
+    response_model=dict,
+    summary="Verify email address",
+    description="Verify user's email address using verification token"
+)
+async def verify_email_post(
+    token_data: EmailVerificationDTO,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> dict:
+    """
+    Verify user's email address (POST version).
+    
+    This endpoint:
+    - Validates the verification token from request body
+    - Marks the email as verified
+    - Marks the token as used
+    - Returns success status
+    """
+    from jidelnicek.auth.models import AuditLog
+    
+    try:
+        # Find the verification token
+        result = await db.execute(
+            select(AuthEmailVerificationToken)
+            .where(AuthEmailVerificationToken.token == token_data.token)
+            .options(selectinload(AuthEmailVerificationToken.user))
+        )
+        verification_token = result.scalar_one_or_none()
+        
+        if not verification_token:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid verification token"
+            )
+        
+        # Check if token is already used
+        if verification_token.is_used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification token has already been used"
+            )
+        
+        # Check if token is expired
+        if verification_token.is_expired:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification token has expired. Please request a new verification email."
+            )
+        
+        # Get the user
+        user = verification_token.user
+        
+        # Check if email is already verified
+        if user.email_verified:
+            # Mark token as used anyway
+            verification_token.used_at = datetime.now(timezone.utc)
+            await db.commit()
+            
+            return {
+                "status": "success",
+                "message": "Email is already verified"
+            }
+        
+        # Mark email as verified
+        user.email_verified = True
+        user.email_verified_at = datetime.now(timezone.utc)
+        
+        # Mark token as used
+        verification_token.used_at = datetime.now(timezone.utc)
+        
+        # Log the verification
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("User-Agent", "unknown")
+        
+        audit_log = AuditLog(
+            user_id=user.id,
+            action=AuditLog.EMAIL_VERIFIED,
+            entity_type="user",
+            entity_id=user.id,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            changes={"email": user.email}
+        )
+        db.add(audit_log)
+        
+        # Commit all changes
+        await db.commit()
+        
+        logger.info(f"Email verified for user: {user.email} via POST")
+        
+        return {
+            "status": "success",
+            "message": "Email verified successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Email verification error (POST): {str(e)}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during email verification"
+        )
+
+
+@router.post(
     "/resend-verification",
     response_model=dict,
     summary="Resend verification email",
@@ -740,7 +850,7 @@ async def resend_verification_email(
 
 
 @router.post(
-    "/forgot-password",
+    "/reset-password",
     response_model=dict,
     summary="Request password reset",
     description="Request a password reset email"
@@ -876,7 +986,7 @@ async def request_password_reset(
 
 
 @router.post(
-    "/reset-password",
+    "/reset-password/confirm",
     response_model=dict,
     summary="Confirm password reset",
     description="Reset password using the reset token"
@@ -1069,6 +1179,33 @@ async def confirm_password_reset(
         )
 
 
+# Keep /forgot-password endpoint for backwards compatibility
+@router.post(
+    "/forgot-password",
+    response_model=dict,
+    summary="Request password reset (deprecated)",
+    description="Request a password reset email. Use /reset-password instead.",
+    deprecated=True
+)
+async def request_password_reset_deprecated(
+    reset_data: PasswordResetRequestDTO,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    redis_client = Depends(get_redis_client),
+    _: None = Depends(RateLimitDep(key_prefix="password_reset", max_attempts=3, window_hours=1))
+) -> dict:
+    """Backwards compatibility wrapper for /reset-password endpoint."""
+    return await request_password_reset(
+        reset_data=reset_data,
+        background_tasks=background_tasks,
+        request=request,
+        db=db,
+        redis_client=redis_client,
+        _=_
+    )
+
+
 @router.post(
     "/refresh",
     response_model=TokenResponseDTO,
@@ -1192,7 +1329,7 @@ async def refresh_token(
             user=user_service.to_response_dto(user)
         )
         
-    except (SessionInvalidError, SessionExpiredError):
+    except (SessionInvalidError, SessionExpiredError, TokenInvalidError, TokenExpiredError):
         # Log failed refresh attempt
         audit_log = AuditLog(
             action="token_refresh_failed",

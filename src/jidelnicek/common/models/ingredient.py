@@ -94,11 +94,11 @@ class Ingredient(Base):
         comment="Dietary flags (e.g., {\"vegan\": true, \"gluten_free\": false})"
     )
     
-    # Optional image URL
-    image_url: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        comment="URL to ingredient image"
-    )
+    # Optional image URL - TODO: Add migration to create this column
+    # image_url: Mapped[Optional[str]] = mapped_column(
+    #     String(500),
+    #     comment="URL to ingredient image"
+    # )
     
     # Flags
     is_global: Mapped[bool] = mapped_column(

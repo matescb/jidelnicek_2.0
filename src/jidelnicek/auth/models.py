@@ -18,7 +18,7 @@ from sqlalchemy import (
     Boolean, Column, DateTime, String, Integer, ForeignKey, 
     CheckConstraint, UniqueConstraint, text, Index, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, INET
 from sqlalchemy.orm import relationship, Mapped, mapped_column, validates
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -314,7 +314,7 @@ class AuthSession(Base):
         nullable=False,
         index=True
     )
-    ip_address: Mapped[Optional[str]] = mapped_column(String(45))  # IPv4/IPv6
+    ip_address: Mapped[Optional[str]] = mapped_column(INET)  # IPv4/IPv6
     user_agent: Mapped[Optional[str]] = mapped_column(String(500))
     
     # Device information parsed from User-Agent
@@ -620,7 +620,7 @@ class AuditLog(Base):
     
     # Additional context
     changes: Mapped[Optional[dict]] = mapped_column(JSON)  # JSONB in PostgreSQL
-    ip_address: Mapped[Optional[str]] = mapped_column(String(45))  # IPv4/IPv6
+    ip_address: Mapped[Optional[str]] = mapped_column(INET)  # IPv4/IPv6
     user_agent: Mapped[Optional[str]] = mapped_column(String(500))
     
     # Timestamp

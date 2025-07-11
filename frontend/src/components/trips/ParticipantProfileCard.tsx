@@ -17,6 +17,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { LazyImage } from '@/components/performance/LazyImage'
 
 interface ExtendedParticipant {
   id: string
@@ -97,10 +98,16 @@ export const ParticipantProfileCard: React.FC<ParticipantProfileCardProps> = ({
                 "bg-gray-100 dark:bg-gray-800"
               )}>
                 {participant.avatar ? (
-                  <img 
+                  <LazyImage 
                     src={participant.avatar} 
                     alt={participant.name} 
                     className="w-full h-full rounded-full object-cover"
+                    width={40}
+                    height={40}
+                    sizes="40px"
+                    placeholder="shimmer"
+                    quality={70}
+                    formats={['webp', 'jpeg']}
                   />
                 ) : (
                   <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -163,10 +170,16 @@ export const ParticipantProfileCard: React.FC<ParticipantProfileCardProps> = ({
               "dark:from-primary-900 dark:to-primary-800"
             )}>
               {participant.avatar ? (
-                <img 
+                <LazyImage 
                   src={participant.avatar} 
                   alt={participant.name} 
                   className="w-full h-full rounded-full object-cover"
+                  width={64}
+                  height={64}
+                  sizes="64px"
+                  placeholder="shimmer"
+                  quality={70}
+                  formats={['webp', 'jpeg']}
                 />
               ) : (
                 <User className="w-8 h-8 text-primary-600 dark:text-primary-400" />

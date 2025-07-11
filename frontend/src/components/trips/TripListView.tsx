@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, memo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
@@ -36,13 +36,19 @@ import { useTripStore } from '@/store/slices/tripStore'
 import { TripFilters } from './TripFilters'
 import { TripCalendarView } from './TripCalendarView'
 import type { Trip } from '@/store/slices/tripStore'
+import { OptimizationPresets, withMemo, smartMemoCompare } from '@/components/performance'
+import { useMemoizedCallback, useWhyDidYouUpdate } from '@/hooks/useOptimization'
 
 interface TripListViewProps {
   onTripSelect?: (trip: Trip) => void
   className?: string
 }
 
-export function TripListView({ onTripSelect, className = '' }: TripListViewProps) {
+function TripListViewComponent({ onTripSelect, className = '' }: TripListViewProps) {
+  // Debug optimization in development
+  if (process.env.NODE_ENV === 'development') {
+    useWhyDidYouUpdate('TripListView', { onTripSelect, className })
+  }
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
@@ -104,39 +110,39 @@ export function TripListView({ onTripSelect, className = '' }: TripListViewProps
     return `${format(start, 'd MMM')} - ${format(end, 'd MMM yyyy')}`
   }
 
-  // Handle trip actions
-  const handleView = (trip: Trip) => {
+  // Memoized trip action handlers
+  const handleView = useCallback((trip: Trip) => {
     if (onTripSelect) {
       onTripSelect(trip)
     } else {
       navigate(`/trips/${trip.id}`)
     }
-  }
+  }, [onTripSelect, navigate])
 
-  const handleEdit = (trip: Trip) => {
+  const handleEdit = useCallback((trip: Trip) => {
     navigate(`/trips/${trip.id}/edit`)
-  }
+  }, [navigate])
 
-  const handleDuplicate = async (trip: Trip) => {
+  const handleDuplicate = useCallback(async (trip: Trip) => {
     try {
       const newTrip = await duplicateTrip(trip.id)
       navigate(`/trips/${newTrip.id}/edit`)
     } catch (error) {
       console.error('Failed to duplicate trip:', error)
     }
-  }
+  }, [duplicateTrip, navigate])
 
-  const handleArchive = async (trip: Trip) => {
+  const handleArchive = useCallback(async (trip: Trip) => {
     try {
       await updateTrip(trip.id, { isArchived: !trip.isArchived })
       await fetchTrips(currentPage)
     } catch (error) {
       console.error('Failed to archive trip:', error)
     }
-  }
+  }, [updateTrip, fetchTrips, currentPage])
 
-  // Status badge component
-  const StatusBadge = ({ status }: { status: Trip['status'] }) => {
+  // Memoized Status badge component
+  const StatusBadge = memo(({ status }: { status: Trip['status'] }) => {
     const variants = {
       planning: 'secondary',
       active: 'default',
@@ -155,10 +161,10 @@ export function TripListView({ onTripSelect, className = '' }: TripListViewProps
         {t(`trips.status.${status}`)}
       </Badge>
     )
-  }
+  })
 
-  // Budget indicator component
-  const BudgetIndicator = ({ trip }: { trip: Trip }) => {
+  // Memoized Budget indicator component
+  const BudgetIndicator = memo(({ trip }: { trip: Trip }) => {
     const budget = getBudgetStatus(trip)
     const isOver = budget.status === 'over'
     
@@ -175,7 +181,7 @@ export function TripListView({ onTripSelect, className = '' }: TripListViewProps
         )}
       </div>
     )
-  }
+  }, (prev, next) => prev.trip.id === next.trip.id)
 
   // Define table columns
   const columns: Column<Trip>[] = [
@@ -297,8 +303,8 @@ export function TripListView({ onTripSelect, className = '' }: TripListViewProps
     </DropdownMenu>
   )
 
-  // Mobile render item
-  const mobileRenderItem = (trip: Trip) => (
+  // Memoized mobile render item
+  const mobileRenderItem = useCallback((trip: Trip) => (
     <div className="space-y-3">
       <div className="flex justify-between items-start">
         <div>
@@ -350,12 +356,12 @@ export function TripListView({ onTripSelect, className = '' }: TripListViewProps
         </Button>
       </div>
     </div>
-  )
+  ), [t, calculateMealProgress, handleView])
 
-  // Handle sorting
-  const handleSort = (key: string, order: 'asc' | 'desc') => {
+  // Memoized sort handler
+  const handleSort = useCallback((key: string, order: 'asc' | 'desc') => {
     setSorting(key as any, order)
-  }
+  }, [setSorting])
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -455,3 +461,12 @@ export function TripListView({ onTripSelect, className = '' }: TripListViewProps
     </div>
   )
 }
+
+// Export memoized component with smart comparison
+export const TripListView = memo(TripListViewComponent, (prevProps, nextProps) => {
+  // Only re-render if onTripSelect or className changes
+  return (
+    prevProps.onTripSelect === nextProps.onTripSelect &&
+    prevProps.className === nextProps.className
+  )
+})

@@ -74,7 +74,7 @@ class IngredientBase(BaseModel):
     brand: Optional[str] = Field(None, max_length=100, description="Brand name")
     barcode: Optional[str] = Field(None, max_length=50, description="Barcode (EAN/UPC)")
     category: Optional[str] = Field(None, max_length=50, description="Ingredient category")
-    image_url: Optional[str] = Field(None, max_length=500, description="URL to ingredient image")
+    # image_url: Optional[str] = Field(None, max_length=500, description="URL to ingredient image")  # TODO: Add after migration
     
     @validator('name')
     def validate_name(cls, v):
@@ -98,7 +98,7 @@ class IngredientUpdate(BaseModel):
     brand: Optional[str] = Field(None, max_length=100)
     barcode: Optional[str] = Field(None, max_length=50)
     category: Optional[str] = Field(None, max_length=50)
-    image_url: Optional[str] = Field(None, max_length=500)
+    # image_url: Optional[str] = Field(None, max_length=500)  # TODO: Add after migration
     nutritional_data: Optional[NutritionalData] = None
     unit_conversions: Optional[UnitConversions] = None
     dietary_flags: Optional[DietaryFlags] = None

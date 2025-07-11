@@ -10,7 +10,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -222,6 +222,59 @@ if settings.is_production:
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
+# HTTPException handler to ensure proper error response format
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Handle HTTPExceptions and convert to OpenAPI-compliant format.
+    
+    Converts FastAPI's default {"detail": "message"} format to:
+    {"error": "ERROR_CODE", "message": "Human readable message"}
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    
+    # Map common status codes to error codes
+    status_code_map = {
+        400: "BAD_REQUEST",
+        401: "AUTHENTICATION_REQUIRED", 
+        403: "ACCESS_FORBIDDEN",
+        404: "NOT_FOUND",
+        405: "METHOD_NOT_ALLOWED",
+        406: "NOT_ACCEPTABLE",
+        409: "CONFLICT",
+        413: "REQUEST_TOO_LARGE",
+        415: "UNSUPPORTED_MEDIA_TYPE",
+        422: "VALIDATION_ERROR",
+        429: "RATE_LIMIT_EXCEEDED",
+        500: "INTERNAL_SERVER_ERROR",
+        501: "NOT_IMPLEMENTED",
+        503: "SERVICE_UNAVAILABLE",
+        504: "GATEWAY_TIMEOUT"
+    }
+    
+    # Get error code from status code
+    error_code = status_code_map.get(exc.status_code, "HTTP_ERROR")
+    
+    # Extract message from detail
+    message = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+    
+    # Build response content in OpenAPI format
+    content = {
+        "error": error_code,
+        "message": message
+    }
+    
+    # Add request ID for tracking
+    if request_id != "unknown":
+        content["request_id"] = request_id
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=content,
+        headers=exc.headers
+    )
+
+
 # Register validation exception handlers
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(ResponseValidationError, response_validation_exception_handler)
@@ -272,7 +325,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
-                "detail": "An internal server error occurred",
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "An internal server error occurred",
                 "request_id": request_id
             }
         )
@@ -280,9 +334,12 @@ async def global_exception_handler(request: Request, exc: Exception):
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
-                "detail": str(exc),
-                "request_id": request_id,
-                "type": type(exc).__name__
+                "error": "INTERNAL_SERVER_ERROR", 
+                "message": str(exc),
+                "details": {
+                    "type": type(exc).__name__,
+                    "request_id": request_id
+                }
             }
         )
 

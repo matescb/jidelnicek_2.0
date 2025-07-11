@@ -187,7 +187,7 @@ async def get_ingredient(
             brand=ingredient.brand,
             barcode=ingredient.barcode,
             category=ingredient.category,
-            image_url=ingredient.image_url,
+            # image_url=ingredient.image_url,  # TODO: Add after migration
             user_id=ingredient.user_id,
             nutritional_data=ingredient.nutritional_data or {},
             unit_conversions=ingredient.unit_conversions or {},
@@ -251,7 +251,7 @@ async def create_ingredient(
             brand=ingredient.brand,
             barcode=ingredient.barcode,
             category=ingredient.category,
-            image_url=ingredient.image_url,
+            # image_url=ingredient.image_url,  # TODO: Add after migration
             user_id=ingredient.user_id,
             nutritional_data=ingredient.nutritional_data or {},
             unit_conversions=ingredient.unit_conversions or {},
@@ -315,7 +315,7 @@ async def update_ingredient(
             brand=ingredient.brand,
             barcode=ingredient.barcode,
             category=ingredient.category,
-            image_url=ingredient.image_url,
+            # image_url=ingredient.image_url,  # TODO: Add after migration
             user_id=ingredient.user_id,
             nutritional_data=ingredient.nutritional_data or {},
             unit_conversions=ingredient.unit_conversions or {},

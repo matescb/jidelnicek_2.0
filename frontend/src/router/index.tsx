@@ -1,4 +1,4 @@
-import { lazy } from 'react'
+import { Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { ProtectedRoute } from '@components/auth/ProtectedRoute'
 import { PublicRoute } from '@components/auth/PublicRoute'
@@ -6,51 +6,88 @@ import { RootLayout } from '@components/layouts/RootLayout'
 import { AuthLayout } from '@components/layouts/AuthLayout'
 import { DashboardLayout } from '@components/layouts/DashboardLayout'
 import { ErrorBoundary } from '@components/common/ErrorBoundary'
+import { lazyRoute } from '@utils/lazyLoad'
+import { RouteMetadata } from '@utils/routePreloader'
 
-// Lazy load pages for code splitting
-const HomePage = lazy(() => import('@pages/HomePage'))
-const LoginPage = lazy(() => import('@pages/auth/LoginPage'))
-const RegisterPage = lazy(() => import('@pages/auth/RegisterPage'))
-const ForgotPasswordPage = lazy(() => import('@pages/auth/ForgotPasswordPage'))
-const ResetPasswordPage = lazy(() => import('@pages/auth/ResetPasswordPage'))
-const VerifyEmailPage = lazy(() => import('@pages/auth/VerifyEmailPage'))
+// Loading fallback component
+const RouteLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <div className="animate-pulse">
+      <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    </div>
+  </div>
+)
 
-const DashboardPage = lazy(() => import('@pages/dashboard/DashboardPage'))
-const RecipeListPage = lazy(() => import('@pages/recipes/RecipeListPage'))
-const RecipeDetailPage = lazy(() => import('@pages/recipes/RecipeDetailPage'))
-const RecipeCreatePage = lazy(() => import('@pages/recipes/RecipeCreatePage'))
-const RecipeEditPage = lazy(() => import('@pages/recipes/RecipeEditPage'))
+// Lazy load pages with enhanced error handling and retry logic
+const HomePage = lazyRoute(() => import('@pages/HomePage'), 'HomePage', {
+  preload: true,
+  onLoadError: (name, error) => {
+    console.error(`Failed to load ${name}:`, error)
+  }
+})
 
-const TripListPage = lazy(() => import('@pages/TripListPage'))
-const TripDetailPage = lazy(() => import('@pages/trips/TripDetailPage'))
-const TripCreatePage = lazy(() => import('@pages/trips/TripCreatePage'))
-const TripEditPage = lazy(() => import('@pages/trips/TripEditPage'))
-const TripPlannerPage = lazy(() => import('@pages/trips/TripPlannerPage'))
-const TripParticipantsPage = lazy(() => import('@pages/trips/TripParticipantsPage'))
+// Auth pages
+const LoginPage = lazyRoute(() => import('@pages/auth/LoginPage'), 'LoginPage')
+const RegisterPage = lazyRoute(() => import('@pages/auth/RegisterPage'), 'RegisterPage')
+const ForgotPasswordPage = lazyRoute(() => import('@pages/auth/ForgotPasswordPage'), 'ForgotPasswordPage')
+const ResetPasswordPage = lazyRoute(() => import('@pages/auth/ResetPasswordPage'), 'ResetPasswordPage')
+const VerifyEmailPage = lazyRoute(() => import('@pages/auth/VerifyEmailPage'), 'VerifyEmailPage')
 
-const ProfilePage = lazy(() => import('@pages/profile/ProfilePage'))
-const SettingsPage = lazy(() => import('@pages/profile/SettingsPage'))
+// Dashboard pages
+const DashboardPage = lazyRoute(() => import('@pages/dashboard/DashboardPage'), 'DashboardPage', {
+  preload: true // Preload dashboard as it's commonly accessed after login
+})
 
-const NotFoundPage = lazy(() => import('@pages/NotFoundPage'))
+// Recipe pages
+const RecipeListPage = lazyRoute(() => import('@pages/recipes/RecipeListPage'), 'RecipeListPage')
+const RecipeDetailPage = lazyRoute(() => import('@pages/recipes/RecipeDetailPage'), 'RecipeDetailPage')
+const RecipeCreatePage = lazyRoute(() => import('@pages/recipes/RecipeCreatePage'), 'RecipeCreatePage')
+const RecipeEditPage = lazyRoute(() => import('@pages/recipes/RecipeEditPage'), 'RecipeEditPage')
+
+// Trip pages
+const TripListPage = lazyRoute(() => import('@pages/TripListPage'), 'TripListPage')
+const TripDetailPage = lazyRoute(() => import('@pages/trips/TripDetailPage'), 'TripDetailPage')
+const TripCreatePage = lazyRoute(() => import('@pages/trips/TripCreatePage'), 'TripCreatePage')
+const TripEditPage = lazyRoute(() => import('@pages/trips/TripEditPage'), 'TripEditPage')
+const TripPlannerPage = lazyRoute(() => import('@pages/trips/TripPlannerPage'), 'TripPlannerPage')
+const TripParticipantsPage = lazyRoute(() => import('@pages/trips/TripParticipantsPage'), 'TripParticipantsPage')
+
+// Profile pages
+const ProfilePage = lazyRoute(() => import('@pages/profile/ProfilePage'), 'ProfilePage')
+const SettingsPage = lazyRoute(() => import('@pages/profile/SettingsPage'), 'SettingsPage')
+
+// Error pages
+const NotFoundPage = lazyRoute(() => import('@pages/NotFoundPage'), 'NotFoundPage')
 
 // Component-based pages (wrapping existing components)
-const ShoppingListView = lazy(() => import('@components/trips/ShoppingListView'))
-const TripCalendarView = lazy(() => import('@components/trips/TripCalendarView'))
+const ShoppingListView = lazyRoute(() => import('@components/trips/ShoppingListView'), 'ShoppingListView')
+const TripCalendarView = lazyRoute(() => import('@components/trips/TripCalendarView'), 'TripCalendarView')
 
 // Development-only pages
-const ThemeShowcasePage = lazy(() => import('@pages/theme/ThemeShowcasePage'))
-const UserProfileDemo = lazy(() => import('@pages/participants/UserProfileDemo'))
-const AnimationShowcase = lazy(() => import('@components/examples/AnimationShowcase'))
+const ThemeShowcasePage = lazyRoute(() => import('@pages/theme/ThemeShowcasePage'), 'ThemeShowcasePage')
+const UserProfileDemo = lazyRoute(() => import('@pages/participants/UserProfileDemo'), 'UserProfileDemo')
+const AnimationShowcase = lazyRoute(() => import('@components/examples/AnimationShowcase'), 'AnimationShowcase')
+
+// Wrapper component for adding Suspense boundaries to routes
+const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<RouteLoadingFallback />}>
+    {children}
+  </Suspense>
+)
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <RootLayout />,
-    errorElement: <ErrorBoundary />,
+    errorElement: <ErrorBoundary level="page" />,
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: (
+          <SuspenseWrapper>
+            <HomePage />
+          </SuspenseWrapper>
+        ),
       },
       {
         path: 'auth',
@@ -59,26 +96,47 @@ export const router = createBrowserRouter([
             <AuthLayout />
           </PublicRoute>
         ),
+        errorElement: <ErrorBoundary level="section" />,
         children: [
           {
             path: 'login',
-            element: <LoginPage />,
+            element: (
+              <SuspenseWrapper>
+                <LoginPage />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: 'register',
-            element: <RegisterPage />,
+            element: (
+              <SuspenseWrapper>
+                <RegisterPage />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: 'forgot-password',
-            element: <ForgotPasswordPage />,
+            element: (
+              <SuspenseWrapper>
+                <ForgotPasswordPage />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: 'reset-password',
-            element: <ResetPasswordPage />,
+            element: (
+              <SuspenseWrapper>
+                <ResetPasswordPage />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: 'verify-email',
-            element: <VerifyEmailPage />,
+            element: (
+              <SuspenseWrapper>
+                <VerifyEmailPage />
+              </SuspenseWrapper>
+            ),
           },
         ],
       },
@@ -89,29 +147,50 @@ export const router = createBrowserRouter([
             <DashboardLayout />
           </ProtectedRoute>
         ),
+        errorElement: <ErrorBoundary level="section" />,
         children: [
           {
             index: true,
-            element: <DashboardPage />,
+            element: (
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: 'recipes',
             children: [
               {
                 index: true,
-                element: <RecipeListPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <RecipeListPage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: 'new',
-                element: <RecipeCreatePage />,
+                element: (
+                  <SuspenseWrapper>
+                    <RecipeCreatePage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: ':id',
-                element: <RecipeDetailPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <RecipeDetailPage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: ':id/edit',
-                element: <RecipeEditPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <RecipeEditPage />
+                  </SuspenseWrapper>
+                ),
               },
             ],
           },
@@ -120,41 +199,77 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <TripListPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <TripListPage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: 'new',
-                element: <TripCreatePage />,
+                element: (
+                  <SuspenseWrapper>
+                    <TripCreatePage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: ':id',
-                element: <TripDetailPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <TripDetailPage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: ':id/edit',
-                element: <TripEditPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <TripEditPage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: ':id/planner',
-                element: <TripPlannerPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <TripPlannerPage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: ':id/participants',
-                element: <TripParticipantsPage />,
+                element: (
+                  <SuspenseWrapper>
+                    <TripParticipantsPage />
+                  </SuspenseWrapper>
+                ),
               },
               {
                 path: 'calendar',
-                element: <TripCalendarView />,
+                element: (
+                  <SuspenseWrapper>
+                    <TripCalendarView />
+                  </SuspenseWrapper>
+                ),
               },
             ],
           },
           {
             path: 'profile',
-            element: <ProfilePage />,
+            element: (
+              <SuspenseWrapper>
+                <ProfilePage />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: 'settings',
-            element: <SettingsPage />,
+            element: (
+              <SuspenseWrapper>
+                <SettingsPage />
+              </SuspenseWrapper>
+            ),
           },
         ],
       },
@@ -166,30 +281,55 @@ export const router = createBrowserRouter([
             <DashboardLayout />
           </ProtectedRoute>
         ),
+        errorElement: <ErrorBoundary level="section" />,
         children: [
           {
             index: true,
-            element: <DashboardPage />,
+            element: (
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: 'users',
-            element: <DashboardPage />, // Placeholder
+            element: (
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            ), // Placeholder
           },
           {
             path: 'users/:id',
-            element: <DashboardPage />, // Placeholder
+            element: (
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            ), // Placeholder
           },
           {
             path: 'moderation',
-            element: <DashboardPage />, // Placeholder
+            element: (
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            ), // Placeholder
           },
           {
             path: 'reports',
-            element: <DashboardPage />, // Placeholder
+            element: (
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            ), // Placeholder
           },
           {
             path: 'settings',
-            element: <DashboardPage />, // Placeholder
+            element: (
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            ), // Placeholder
           },
         ],
       },
@@ -201,44 +341,77 @@ export const router = createBrowserRouter([
             <DashboardLayout />
           </ProtectedRoute>
         ),
+        errorElement: <ErrorBoundary level="section" />,
         children: [
           {
             index: true,
-            element: <ShoppingListView />,
+            element: (
+              <SuspenseWrapper>
+                <ShoppingListView />
+              </SuspenseWrapper>
+            ),
           },
           {
             path: ':id',
-            element: <ShoppingListView />, // Placeholder for detail view
+            element: (
+              <SuspenseWrapper>
+                <ShoppingListView />
+              </SuspenseWrapper>
+            ), // Placeholder for detail view
           },
         ],
       },
       // Error routes
       {
         path: '403',
-        element: <NotFoundPage />, // Placeholder
+        element: (
+          <SuspenseWrapper>
+            <NotFoundPage />
+          </SuspenseWrapper>
+        ), // Placeholder
       },
       {
         path: '500',
-        element: <NotFoundPage />, // Placeholder
+        element: (
+          <SuspenseWrapper>
+            <NotFoundPage />
+          </SuspenseWrapper>
+        ), // Placeholder
       },
       // Development-only routes
       ...(import.meta.env.DEV ? [
         {
           path: 'theme-showcase',
-          element: <ThemeShowcasePage />,
+          element: (
+            <SuspenseWrapper>
+              <ThemeShowcasePage />
+            </SuspenseWrapper>
+          ),
         },
         {
           path: 'user-profile-demo',
-          element: <UserProfileDemo />,
+          element: (
+            <SuspenseWrapper>
+              <UserProfileDemo />
+            </SuspenseWrapper>
+          ),
         },
         {
           path: 'animation-showcase',
-          element: <AnimationShowcase />,
+          element: (
+            <SuspenseWrapper>
+              <AnimationShowcase />
+            </SuspenseWrapper>
+          ),
         },
       ] : []),
       {
         path: '*',
-        element: <NotFoundPage />,
+        element: (
+          <SuspenseWrapper>
+            <NotFoundPage />
+          </SuspenseWrapper>
+        ),
       },
     ],
   },
@@ -275,3 +448,32 @@ export const routeConfig = {
     '/animation-showcase': { label: 'Animation Showcase', icon: 'play' },
   } : {}),
 }
+
+// Route metadata for preloading
+export const routeMetadata: RouteMetadata[] = [
+  // High priority routes
+  { path: '/', component: HomePage, preloadPriority: 'high', preloadOn: 'immediate' },
+  { path: '/dashboard', component: DashboardPage, preloadPriority: 'high', preloadOn: 'immediate' },
+  
+  // Auth routes - preload on hover
+  { path: '/auth/login', component: LoginPage, preloadPriority: 'medium', preloadOn: 'hover' },
+  { path: '/auth/register', component: RegisterPage, preloadPriority: 'medium', preloadOn: 'hover' },
+  
+  // Main feature routes - preload on idle
+  { path: '/dashboard/recipes', component: RecipeListPage, preloadPriority: 'medium', preloadOn: 'idle' },
+  { path: '/dashboard/trips', component: TripListPage, preloadPriority: 'medium', preloadOn: 'idle' },
+  
+  // Detail pages - preload on hover/visible
+  { path: '/dashboard/recipes/:id', component: RecipeDetailPage, preloadPriority: 'low', preloadOn: 'hover' },
+  { path: '/dashboard/trips/:id', component: TripDetailPage, preloadPriority: 'low', preloadOn: 'hover' },
+  
+  // Create/Edit pages - preload on hover
+  { path: '/dashboard/recipes/new', component: RecipeCreatePage, preloadPriority: 'low', preloadOn: 'hover' },
+  { path: '/dashboard/recipes/:id/edit', component: RecipeEditPage, preloadPriority: 'low', preloadOn: 'hover' },
+  { path: '/dashboard/trips/new', component: TripCreatePage, preloadPriority: 'low', preloadOn: 'hover' },
+  { path: '/dashboard/trips/:id/edit', component: TripEditPage, preloadPriority: 'low', preloadOn: 'hover' },
+  
+  // Profile routes
+  { path: '/dashboard/profile', component: ProfilePage, preloadPriority: 'low', preloadOn: 'idle' },
+  { path: '/dashboard/settings', component: SettingsPage, preloadPriority: 'low', preloadOn: 'idle' },
+]

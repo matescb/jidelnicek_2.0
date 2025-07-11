@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, memo, useCallback } from 'react'
 import { ChevronUp, ChevronDown, MoreVertical } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { TouchableArea } from './TouchableArea'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { OptimizationPresets } from '@/components/performance'
+import { useMemoizedCallback } from '@/hooks/useOptimization'
 
 export interface Column<T> {
   key: string
@@ -27,7 +29,7 @@ export interface DataTableProps<T> {
   mobileRenderItem?: (item: T) => React.ReactNode
 }
 
-export function DataTable<T>({
+function DataTableComponent<T>({
   columns,
   data,
   keyExtractor,
@@ -45,14 +47,14 @@ export function DataTable<T>({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set())
   
-  const handleSort = (column: Column<T>) => {
+  const handleSort = useMemoizedCallback((column: Column<T>) => {
     if (!column.sortable || !onSort) return
     
     const newOrder = sortColumn === column.key && sortOrder === 'asc' ? 'desc' : 'asc'
     setSortColumn(column.key)
     setSortOrder(newOrder)
     onSort(column.key, newOrder)
-  }
+  }, [sortColumn, sortOrder, onSort], 'handleSort')
   
   const toggleRowExpansion = (id: string | number) => {
     const newExpanded = new Set(expandedRows)
@@ -220,3 +222,8 @@ export function DataTable<T>({
     </div>
   )
 }
+
+// Export memoized DataTable
+export const DataTable = memo(DataTableComponent) as <T>(
+  props: DataTableProps<T>
+) => React.ReactElement

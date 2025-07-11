@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Clock, Users, Flame, Star, Heart, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,8 @@ import { useAuthStore } from '@/store/slices/authStore'
 import { useI18nFormats } from '@/hooks/useI18nFormats'
 import { TouchableArea } from '@/components/ui/TouchableArea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { OptimizationPresets } from '@/components/performance'
+import { LazyImage } from '@/components/performance/LazyImage'
 
 interface RecipeCardProps {
   recipe: Recipe
@@ -19,7 +21,7 @@ interface RecipeCardProps {
   actions?: React.ReactNode
 }
 
-export function RecipeCard({ 
+const RecipeCardComponent = ({ 
   recipe, 
   onToggleFavorite,
   onClick,
@@ -27,7 +29,7 @@ export function RecipeCard({
   onSelect,
   showCheckbox = false,
   actions
-}: RecipeCardProps) {
+}: RecipeCardProps) => {
   const { t } = useTranslation()
   const { formatNumber } = useI18nFormats()
   const user = useAuthStore((state) => state.user)
@@ -37,7 +39,7 @@ export function RecipeCard({
   const isFavorite = favorites.includes(recipe.id)
   const isOwner = user?.id === recipe.userId
   
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
+  const handleFavoriteClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     
@@ -46,7 +48,7 @@ export function RecipeCard({
     } else {
       await toggleFavorite(recipe.id)
     }
-  }
+  }, [onToggleFavorite, recipe.id, toggleFavorite])
   
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -84,11 +86,16 @@ export function RecipeCard({
         {/* Image Section */}
         <div className="aspect-w-16 aspect-h-9 relative">
           {recipe.imageUrl ? (
-            <img
+            <LazyImage
               src={recipe.imageUrl}
               alt={recipe.name}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
+              width="100%"
+              height={192}
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              placeholder="shimmer"
+              quality={75}
+              formats={['webp', 'jpeg']}
             />
           ) : (
             <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -212,3 +219,23 @@ export function RecipeCard({
     </CardWrapper>
   )
 }
+
+// Export memoized component with custom comparison
+export const RecipeCard = memo(RecipeCardComponent, (prevProps, nextProps) => {
+  // Deep compare recipe object
+  if (prevProps.recipe.id !== nextProps.recipe.id) return false
+  if (prevProps.recipe.name !== nextProps.recipe.name) return false
+  if (prevProps.recipe.imageUrl !== nextProps.recipe.imageUrl) return false
+  if (prevProps.recipe.ratingAverage !== nextProps.recipe.ratingAverage) return false
+  if (prevProps.recipe.ratingCount !== nextProps.recipe.ratingCount) return false
+  
+  // Compare other props
+  if (prevProps.selected !== nextProps.selected) return false
+  if (prevProps.showCheckbox !== nextProps.showCheckbox) return false
+  if (prevProps.onClick !== nextProps.onClick) return false
+  if (prevProps.onToggleFavorite !== nextProps.onToggleFavorite) return false
+  if (prevProps.onSelect !== nextProps.onSelect) return false
+  if (prevProps.actions !== nextProps.actions) return false
+  
+  return true
+})

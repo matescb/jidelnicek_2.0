@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, memo } from 'react'
 import {
   DragDropContext,
   Droppable,
@@ -28,6 +28,8 @@ import type { Recipe } from '@/types/recipe'
 import { useTripStore } from '@/store/slices/tripStore'
 import { TouchableArea } from '../ui/TouchableArea'
 import { toast } from 'react-hot-toast'
+import { OptimizationPresets, smartMemoCompare, withMemo } from '@/components/performance'
+import { useMemoizedCallback, useWhyDidYouUpdate } from '@/hooks/useOptimization'
 
 interface MealPlanningBoardProps {
   trip: Trip
@@ -61,11 +63,11 @@ function calculateDayNutrition(meals: Meal[]): NutritionSummary {
   )
 }
 
-// Recipe Card Component for Sidebar
-const RecipeCardDraggable: React.FC<{
+// Recipe Card Component for Sidebar - Memoized
+const RecipeCardDraggable = memo<{
   recipe: Recipe
   index: number
-}> = ({ recipe, index }) => {
+}>(({ recipe, index }) => {
   const { t } = useTranslation()
   
   return (
@@ -338,7 +340,7 @@ const DayCard: React.FC<{
   )
 }
 
-export const MealPlanningBoard: React.FC<MealPlanningBoardProps> = ({ trip, recipes }) => {
+const MealPlanningBoardComponent: React.FC<MealPlanningBoardProps> = ({ trip, recipes }) => {
   const { t } = useTranslation()
   const { assignMeal, removeMeal, updateTrip } = useTripStore()
   
@@ -651,3 +653,15 @@ export const MealPlanningBoard: React.FC<MealPlanningBoardProps> = ({ trip, reci
     </DragDropContext>
   )
 }
+
+// Export with memoization - only re-render when trip or recipes change significantly
+export const MealPlanningBoard = memo(MealPlanningBoardComponent, (prevProps, nextProps) => {
+  // Compare trip
+  if (prevProps.trip.id !== nextProps.trip.id) return false
+  if (prevProps.trip.days.length !== nextProps.trip.days.length) return false
+  
+  // Compare recipes array length (actual recipe changes are less important for board layout)
+  if (prevProps.recipes.length !== nextProps.recipes.length) return false
+  
+  return true
+})

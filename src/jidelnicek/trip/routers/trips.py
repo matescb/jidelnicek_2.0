@@ -94,6 +94,9 @@ async def create_trip(
     try:
         trip = await service.create_trip(current_user.id, trip_data)
         
+        # Load participants and days
+        trip = await service.get_trip_with_details(trip.id)
+        
         # Convert to response model
         return TripResponse(
             id=trip.id,
@@ -103,21 +106,42 @@ async def create_trip(
             end_date=trip.end_date,
             meal_slots=trip.meal_slots,
             recipe_storage_mode="snapshot",  # Default for now
-            notes=None,
+            notes=trip.description,
             is_archived=trip.is_archived,
             created_at=trip.created_at,
             updated_at=trip.updated_at,
             duration_days=trip.duration_days,
-            participants=[],  # TODO: Add when participants are available
-            days=[],  # TODO: Add when days are available
-            has_stove=False,
-            stove_efficiency=None,
-            total_meals_planned=0,
-            completion_percentage=0.0,
-            total_calories=None,
-            total_weight_g=None,
-            total_water_ml=None,
-            total_fuel_g=None
+            participants=[
+                TripParticipantResponse(
+                    id=p.id,
+                    trip_id=p.trip_id,
+                    name=p.name,
+                    number=p.number,
+                    coefficient=p.coefficient,
+                    created_at=p.created_at,
+                    updated_at=p.updated_at
+                ) for p in trip.participants
+            ],
+            days=[
+                TripDaySummary(
+                    id=d.id,
+                    day_number=d.day_number,
+                    date=d.date,
+                    meals_planned=len(d.meals) if hasattr(d, 'meals') else 0,
+                    total_calories=None,  # TODO: Calculate from meals
+                    total_weight_g=None,  # TODO: Calculate from meals
+                    has_all_meals=len(d.meals) == len(trip.meal_slots) if hasattr(d, 'meals') else False,
+                    notes=d.notes
+                ) for d in trip.days
+            ],
+            has_stove=bool(trip.stove),
+            stove_efficiency=trip.stove.efficiency if trip.stove else None,
+            total_meals_planned=sum(len(d.meals) for d in trip.days),
+            completion_percentage=service.calculate_completion_percentage(trip),
+            total_calories=None,  # TODO: Calculate from meals
+            total_weight_g=None,  # TODO: Calculate from meals
+            total_water_ml=None,  # TODO: Calculate from meals
+            total_fuel_g=None  # TODO: Calculate from stove usage
         )
     except ValidationError as e:
         raise HTTPException(
@@ -240,7 +264,7 @@ async def get_shared_trip(
     service = TripService(db)
     
     try:
-        trip = await service.get_shared_trip(share_token)
+        trip = await service.get_shared_trip_with_details(share_token)
         
         # Convert to response model
         return TripResponse(
@@ -251,21 +275,42 @@ async def get_shared_trip(
             end_date=trip.end_date,
             meal_slots=trip.meal_slots,
             recipe_storage_mode="snapshot",
-            notes=None,
+            notes=trip.description,
             is_archived=trip.is_archived,
             created_at=trip.created_at,
             updated_at=trip.updated_at,
             duration_days=trip.duration_days,
-            participants=[],  # TODO: Add when participants are available
-            days=[],  # TODO: Add when days are available
-            has_stove=False,
-            stove_efficiency=None,
-            total_meals_planned=0,
-            completion_percentage=0.0,
-            total_calories=None,
-            total_weight_g=None,
-            total_water_ml=None,
-            total_fuel_g=None
+            participants=[
+                TripParticipantResponse(
+                    id=p.id,
+                    trip_id=p.trip_id,
+                    name=p.name,
+                    number=p.number,
+                    coefficient=p.coefficient,
+                    created_at=p.created_at,
+                    updated_at=p.updated_at
+                ) for p in trip.participants
+            ],
+            days=[
+                TripDaySummary(
+                    id=d.id,
+                    day_number=d.day_number,
+                    date=d.date,
+                    meals_planned=len(d.meals) if hasattr(d, 'meals') else 0,
+                    total_calories=None,  # TODO: Calculate from meals
+                    total_weight_g=None,  # TODO: Calculate from meals
+                    has_all_meals=len(d.meals) == len(trip.meal_slots) if hasattr(d, 'meals') else False,
+                    notes=d.notes
+                ) for d in trip.days
+            ],
+            has_stove=bool(trip.stove),
+            stove_efficiency=trip.stove.efficiency if trip.stove else None,
+            total_meals_planned=sum(len(d.meals) for d in trip.days),
+            completion_percentage=service.calculate_completion_percentage(trip),
+            total_calories=None,  # TODO: Calculate from meals
+            total_weight_g=None,  # TODO: Calculate from meals
+            total_water_ml=None,  # TODO: Calculate from meals
+            total_fuel_g=None  # TODO: Calculate from stove usage
         )
     except NotFoundError:
         raise HTTPException(
@@ -299,7 +344,7 @@ async def get_trip(
     service = TripService(db)
     
     try:
-        trip = await service.get_trip(trip_id, current_user.id)
+        trip = await service.get_trip_with_details(trip_id, current_user.id)
         
         # Convert to response model
         return TripResponse(
@@ -310,21 +355,42 @@ async def get_trip(
             end_date=trip.end_date,
             meal_slots=trip.meal_slots,
             recipe_storage_mode="snapshot",
-            notes=None,
+            notes=trip.description,
             is_archived=trip.is_archived,
             created_at=trip.created_at,
             updated_at=trip.updated_at,
             duration_days=trip.duration_days,
-            participants=[],  # TODO: Add when participants are available
-            days=[],  # TODO: Add when days are available
-            has_stove=False,
-            stove_efficiency=None,
-            total_meals_planned=0,
-            completion_percentage=0.0,
-            total_calories=None,
-            total_weight_g=None,
-            total_water_ml=None,
-            total_fuel_g=None
+            participants=[
+                TripParticipantResponse(
+                    id=p.id,
+                    trip_id=p.trip_id,
+                    name=p.name,
+                    number=p.number,
+                    coefficient=p.coefficient,
+                    created_at=p.created_at,
+                    updated_at=p.updated_at
+                ) for p in trip.participants
+            ],
+            days=[
+                TripDaySummary(
+                    id=d.id,
+                    day_number=d.day_number,
+                    date=d.date,
+                    meals_planned=len(d.meals) if hasattr(d, 'meals') else 0,
+                    total_calories=None,  # TODO: Calculate from meals
+                    total_weight_g=None,  # TODO: Calculate from meals
+                    has_all_meals=len(d.meals) == len(trip.meal_slots) if hasattr(d, 'meals') else False,
+                    notes=d.notes
+                ) for d in trip.days
+            ],
+            has_stove=bool(trip.stove),
+            stove_efficiency=trip.stove.efficiency if trip.stove else None,
+            total_meals_planned=sum(len(d.meals) for d in trip.days),
+            completion_percentage=service.calculate_completion_percentage(trip),
+            total_calories=None,  # TODO: Calculate from meals
+            total_weight_g=None,  # TODO: Calculate from meals
+            total_water_ml=None,  # TODO: Calculate from meals
+            total_fuel_g=None  # TODO: Calculate from stove usage
         )
     except NotFoundError:
         raise HTTPException(
@@ -367,6 +433,9 @@ async def update_trip(
     try:
         trip = await service.update_trip(trip_id, current_user.id, update_data)
         
+        # Load full details after update
+        trip = await service.get_trip_with_details(trip_id, current_user.id)
+        
         # Convert to response model
         return TripResponse(
             id=trip.id,
@@ -376,21 +445,42 @@ async def update_trip(
             end_date=trip.end_date,
             meal_slots=trip.meal_slots,
             recipe_storage_mode="snapshot",
-            notes=None,
+            notes=trip.description,
             is_archived=trip.is_archived,
             created_at=trip.created_at,
             updated_at=trip.updated_at,
             duration_days=trip.duration_days,
-            participants=[],  # TODO: Add when participants are available
-            days=[],  # TODO: Add when days are available
-            has_stove=False,
-            stove_efficiency=None,
-            total_meals_planned=0,
-            completion_percentage=0.0,
-            total_calories=None,
-            total_weight_g=None,
-            total_water_ml=None,
-            total_fuel_g=None
+            participants=[
+                TripParticipantResponse(
+                    id=p.id,
+                    trip_id=p.trip_id,
+                    name=p.name,
+                    number=p.number,
+                    coefficient=p.coefficient,
+                    created_at=p.created_at,
+                    updated_at=p.updated_at
+                ) for p in trip.participants
+            ],
+            days=[
+                TripDaySummary(
+                    id=d.id,
+                    day_number=d.day_number,
+                    date=d.date,
+                    meals_planned=len(d.meals) if hasattr(d, 'meals') else 0,
+                    total_calories=None,  # TODO: Calculate from meals
+                    total_weight_g=None,  # TODO: Calculate from meals
+                    has_all_meals=len(d.meals) == len(trip.meal_slots) if hasattr(d, 'meals') else False,
+                    notes=d.notes
+                ) for d in trip.days
+            ],
+            has_stove=bool(trip.stove),
+            stove_efficiency=trip.stove.efficiency if trip.stove else None,
+            total_meals_planned=sum(len(d.meals) for d in trip.days),
+            completion_percentage=service.calculate_completion_percentage(trip),
+            total_calories=None,  # TODO: Calculate from meals
+            total_weight_g=None,  # TODO: Calculate from meals
+            total_water_ml=None,  # TODO: Calculate from meals
+            total_fuel_g=None  # TODO: Calculate from stove usage
         )
     except NotFoundError:
         raise HTTPException(

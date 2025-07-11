@@ -13,7 +13,8 @@ from jidelnicek.users.schemas.user import (
     UserResponse,
     UserListResponse,
     UserPreferences,
-    UserPreferencesUpdate
+    UserPreferencesUpdate,
+    UserStats
 )
 from jidelnicek.users.services.user_service import UserService
 
@@ -41,6 +42,17 @@ async def update_current_user_profile(
     service = UserService(db)
     updated_user = await service.update_user_profile(current_user.id, user_update)
     return updated_user
+
+
+@router.get("/me/stats", response_model=UserStats)
+async def get_current_user_stats(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> UserStats:
+    """Get current user's statistics."""
+    service = UserService(db)
+    stats = await service.get_user_stats(current_user.id)
+    return stats
 
 
 @router.get("/me/preferences", response_model=UserPreferences)

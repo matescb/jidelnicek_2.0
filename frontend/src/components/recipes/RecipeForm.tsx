@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, useFieldArray, Controller, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,6 +10,8 @@ import { useRecipeStore } from '@/store/slices/recipeStore'
 import { useToast } from '@/hooks/useToast'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { FileField } from '@/components/forms/FileField'
+import { OptimizationPresets, withMemo } from '@/components/performance'
+import { useMemoizedCallback } from '@/hooks/useOptimization'
 
 // Form validation schema
 const recipeSchema = z.object({
@@ -43,7 +45,7 @@ interface RecipeFormProps {
   onCancel: () => void
 }
 
-export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
+const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) => {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -86,18 +88,18 @@ export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
     name: 'ingredients'
   })
   
-  const removeExistingImage = (imageId: string) => {
+  const removeExistingImage = useMemoizedCallback((imageId: string) => {
     setExistingImages(existingImages.filter(img => img.id !== imageId))
     setRemovedImageIds([...removedImageIds, imageId])
-  }
+  }, [existingImages, removedImageIds], 'removeExistingImage')
   
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = useCallback((result: any) => {
     if (!result.destination) return
     
     moveInstruction(result.source.index, result.destination.index)
-  }
+  }, [moveInstruction])
   
-  const onFormSubmit = async (data: RecipeFormData) => {
+  const onFormSubmit = useMemoizedCallback(async (data: RecipeFormData) => {
     setIsSubmitting(true)
     try {
       // Include removed image IDs if we're editing and have removed images
@@ -115,7 +117,7 @@ export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
     } finally {
       setIsSubmitting(false)
     }
-  }
+  }, [recipe, removedImageIds, onSubmit, toast, t], 'onFormSubmit')
   
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
@@ -460,3 +462,12 @@ export function RecipeForm({ recipe, onSubmit, onCancel }: RecipeFormProps) {
     </form>
   )
 }
+
+// Export memoized component - only re-render when recipe changes
+export const RecipeForm = memo(RecipeFormComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.recipe?.id === nextProps.recipe?.id &&
+    prevProps.onSubmit === nextProps.onSubmit &&
+    prevProps.onCancel === nextProps.onCancel
+  )
+})

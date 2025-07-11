@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, memo, useCallback } from 'react'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, isSameMonth, isSameDay, parseISO } from 'date-fns'
 import { cs, enUS } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Calendar, Users, ChefHat, AlertCircle } from 'lucide-react'
 import clsx from 'clsx'
 import type { Trip, DayPlan, MealSlot } from '@/store/slices/tripStore'
 import { useI18nFormats } from '@/hooks/useI18nFormats'
+import { OptimizationPresets } from '@/components/performance'
+import { useMemoizedCallback } from '@/hooks/useOptimization'
 
 interface TripCalendarViewProps {
   trip: Trip
@@ -13,7 +15,7 @@ interface TripCalendarViewProps {
   locale?: 'cs' | 'en'
 }
 
-export const TripCalendarView: React.FC<TripCalendarViewProps> = ({
+const TripCalendarViewComponent: React.FC<TripCalendarViewProps> = ({
   trip,
   onDayClick,
   selectedDate,
@@ -23,8 +25,8 @@ export const TripCalendarView: React.FC<TripCalendarViewProps> = ({
   const dateLocale = locale === 'cs' ? cs : enUS
   
   // Calculate the date range for the trip
-  const tripStart = parseISO(trip.startDate)
-  const tripEnd = parseISO(trip.endDate)
+  const tripStart = useMemo(() => parseISO(trip.startDate), [trip.startDate])
+  const tripEnd = useMemo(() => parseISO(trip.endDate), [trip.endDate])
   
   // State for current viewing month
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -37,7 +39,10 @@ export const TripCalendarView: React.FC<TripCalendarViewProps> = ({
   // Get all days in the current month
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
+  const daysInMonth = useMemo(() => 
+    eachDayOfInterval({ start: monthStart, end: monthEnd }),
+    [monthStart, monthEnd]
+  )
 
   // Create a map of trip days for quick lookup
   const tripDaysMap = useMemo(() => {
@@ -49,24 +54,27 @@ export const TripCalendarView: React.FC<TripCalendarViewProps> = ({
   }, [trip.days])
 
   // Get active meal slots
-  const activeMealSlots = trip.mealSlotConfiguration.filter(slot => slot.isActive)
+  const activeMealSlots = useMemo(() => 
+    trip.mealSlotConfiguration.filter(slot => slot.isActive),
+    [trip.mealSlotConfiguration]
+  )
 
-  // Navigate months
-  const goToPreviousMonth = () => {
+  // Navigate months - memoized
+  const goToPreviousMonth = useCallback(() => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
-  }
+  }, [])
 
-  const goToNextMonth = () => {
+  const goToNextMonth = useCallback(() => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
-  }
+  }, [])
 
-  // Check if a date is within the trip range
-  const isWithinTrip = (date: Date) => {
+  // Check if a date is within the trip range - memoized
+  const isWithinTrip = useCallback((date: Date) => {
     return isWithinInterval(date, { start: tripStart, end: tripEnd })
-  }
+  }, [tripStart, tripEnd])
 
-  // Get day statistics
-  const getDayStats = (dayPlan: DayPlan | undefined) => {
+  // Get day statistics - memoized
+  const getDayStats = useCallback((dayPlan: DayPlan | undefined) => {
     if (!dayPlan) return { plannedMeals: 0, totalMeals: 0, participantCount: 0 }
     
     const totalMeals = activeMealSlots.length
@@ -74,17 +82,17 @@ export const TripCalendarView: React.FC<TripCalendarViewProps> = ({
     const participantCount = dayPlan.participantCount || trip.participantCount
     
     return { plannedMeals, totalMeals, participantCount }
-  }
+  }, [activeMealSlots.length, trip.participantCount])
 
-  // Handle day click
-  const handleDayClick = (date: Date) => {
+  // Handle day click - memoized
+  const handleDayClick = useMemoizedCallback((date: Date) => {
     if (!isWithinTrip(date)) return
     
     const dateStr = format(date, 'yyyy-MM-dd')
     const dayPlan = tripDaysMap.get(dateStr) || null
     
     onDayClick?.(dayPlan, date)
-  }
+  }, [isWithinTrip, tripDaysMap, onDayClick], 'handleDayClick')
 
   // Get week days
   const weekDays = locale === 'cs' 
@@ -257,3 +265,20 @@ export const TripCalendarView: React.FC<TripCalendarViewProps> = ({
     </div>
   )
 }
+
+// Export memoized component
+export const TripCalendarView = memo(TripCalendarViewComponent, (prevProps, nextProps) => {
+  // Deep compare trip data
+  if (prevProps.trip.id !== nextProps.trip.id) return false
+  if (prevProps.trip.startDate !== nextProps.trip.startDate) return false
+  if (prevProps.trip.endDate !== nextProps.trip.endDate) return false
+  if (prevProps.trip.days.length !== nextProps.trip.days.length) return false
+  if (prevProps.trip.participantCount !== nextProps.trip.participantCount) return false
+  
+  // Compare other props
+  if (prevProps.selectedDate !== nextProps.selectedDate) return false
+  if (prevProps.locale !== nextProps.locale) return false
+  if (prevProps.onDayClick !== nextProps.onDayClick) return false
+  
+  return true
+})

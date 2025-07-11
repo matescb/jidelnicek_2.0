@@ -90,17 +90,26 @@ class TripService(BaseService):
             self.session.add(trip)
             await self.session.flush()  # Get trip ID
             
-            # TODO: Add participants when TripParticipant model is available
-            # if trip_data.participants:
-            #     for idx, participant_data in enumerate(trip_data.participants):
-            #         participant = TripParticipant(
-            #             trip_id=trip.id,
-            #             name=participant_data.name,
-            #             number=participant_data.number,
-            #             coefficient=participant_data.coefficient,
-            #             display_order=idx
-            #         )
-            #         self.session.add(participant)
+            # Add participants
+            if trip_data.participants:
+                for participant_data in trip_data.participants:
+                    participant = TripParticipant(
+                        trip_id=trip.id,
+                        name=participant_data.name,
+                        number=participant_data.number,
+                        coefficient=participant_data.coefficient
+                    )
+                    self.session.add(participant)
+            
+            # Create trip days
+            for day_num in range(trip.duration_days):
+                day_date = trip.start_date + timedelta(days=day_num)
+                day = TripDay(
+                    trip_id=trip.id,
+                    day_number=day_num + 1,
+                    date=day_date
+                )
+                self.session.add(day)
             
             await self.session.commit()
             
@@ -842,3 +851,97 @@ class TripService(BaseService):
             meal_slots=meal_slots,
             attendance_dates=attendance_dates
         )
+    
+    async def get_trip_with_details(
+        self,
+        trip_id: UUID,
+        user_id: Optional[UUID] = None
+    ) -> Trip:
+        """
+        Get trip with all details eagerly loaded.
+        
+        Args:
+            trip_id: ID of the trip
+            user_id: Optional user ID for permission check
+            
+        Returns:
+            Trip instance with all relationships loaded
+            
+        Raises:
+            NotFoundError: If trip not found
+            PermissionError: If user doesn't have access
+        """
+        # Build query with eager loading
+        query = select(Trip).where(Trip.id == trip_id).options(
+            selectinload(Trip.participants),
+            selectinload(Trip.days).selectinload(TripDay.meals),
+            selectinload(Trip.stove)
+        )
+        
+        result = await self.session.execute(query)
+        trip = result.scalar_one_or_none()
+        
+        if not trip:
+            raise NotFoundError(f"Trip {trip_id} not found")
+        
+        # Check permissions if user_id provided
+        if user_id and trip.user_id != user_id:
+            raise PermissionError("You don't have permission to view this trip")
+        
+        return trip
+    
+    async def get_shared_trip_with_details(self, share_token: str) -> Trip:
+        """
+        Get shared trip with all details eagerly loaded.
+        
+        Args:
+            share_token: Share token for the trip
+            
+        Returns:
+            Trip instance with all relationships loaded
+            
+        Raises:
+            NotFoundError: If share link not found or expired
+        """
+        # Build query with eager loading
+        query = select(Trip).where(
+            and_(
+                Trip.share_token == share_token,
+                or_(
+                    Trip.share_expires_at.is_(None),
+                    Trip.share_expires_at > datetime.now(timezone.utc)
+                )
+            )
+        ).options(
+            selectinload(Trip.participants),
+            selectinload(Trip.days).selectinload(TripDay.meals),
+            selectinload(Trip.stove)
+        )
+        
+        result = await self.session.execute(query)
+        trip = result.scalar_one_or_none()
+        
+        if not trip:
+            raise NotFoundError("Share link not found or expired")
+        
+        return trip
+    
+    def calculate_completion_percentage(self, trip: Trip) -> float:
+        """
+        Calculate trip completion percentage based on meals planned.
+        
+        Args:
+            trip: Trip instance with days loaded
+            
+        Returns:
+            Completion percentage (0-100)
+        """
+        if not trip.days:
+            return 0.0
+        
+        total_slots = len(trip.meal_slots) * len(trip.days)
+        if total_slots == 0:
+            return 0.0
+        
+        planned_meals = sum(len(day.meals) for day in trip.days)
+        return min(100.0, (planned_meals / total_slots) * 100)

@@ -12,6 +12,7 @@ import { useI18nFormats } from '@/hooks/useI18nFormats'
 import { TouchableArea } from '@/components/ui/TouchableArea'
 import { useToast } from '@/hooks/useToast'
 import { ResponsiveWrapper } from '@/components/layout/ResponsiveWrapper'
+import { LazyImage } from '@/components/performance/LazyImage'
 
 interface RecipeDetailProps {
   recipe: Recipe
@@ -134,19 +135,32 @@ export function RecipeDetail({ recipe, onEdit, onDelete }: RecipeDetailProps) {
           {/* Image Gallery */}
           {recipe.images && recipe.images.length > 0 && (
             <div className="relative h-64 md:h-96">
-              <img
+              <LazyImage
                 src={recipe.images[0].url}
                 alt={recipe.name}
                 className="w-full h-full object-cover"
+                width="100%"
+                height="100%"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 896px"
+                priority={true}
+                placeholder="blur"
+                quality={85}
+                formats={['webp', 'jpeg']}
               />
               {recipe.images.length > 1 && (
                 <div className="absolute bottom-4 left-4 flex gap-2">
                   {recipe.images.slice(1, 4).map((image, index) => (
-                    <img
+                    <LazyImage
                       key={image.id}
                       src={image.url}
                       alt={`${recipe.name} ${index + 2}`}
                       className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform"
+                      width={64}
+                      height={64}
+                      sizes="64px"
+                      placeholder="shimmer"
+                      quality={70}
+                      formats={['webp', 'jpeg']}
                     />
                   ))}
                   {recipe.images.length > 4 && (

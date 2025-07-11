@@ -148,9 +148,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 content={
-                    "detail": f"Unsupported API version: {requested_version}",
-                    "supported_versions": self.supported_versions,
-                    "current_version": self.api_version
+                    "error": "UNSUPPORTED_API_VERSION",
+                    "message": f"Unsupported API version: {requested_version}",
+                    "details": {
+                        "requested_version": requested_version,
+                        "supported_versions": self.supported_versions,
+                        "current_version": self.api_version
+                    }
                 }
             )
         
@@ -462,8 +466,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 return JSONResponse(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     content={
-                        "detail": "Rate limit exceeded",
-                        "retry_after": retry_after
+                        "error": "RATE_LIMIT_EXCEEDED",
+                        "message": "Rate limit exceeded",
+                        "details": {
+                            "retry_after": retry_after,
+                            "limit": self.requests_per_window,
+                            "window": self.window_seconds
+                        }
                     },
                     headers={
                         "Retry-After": str(retry_after),

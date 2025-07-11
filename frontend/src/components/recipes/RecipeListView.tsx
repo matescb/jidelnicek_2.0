@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   Grid2X2, 
@@ -46,6 +46,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { AnimatedList } from '@/components/ui/animated/AnimatedList'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
+import { MemoizedList, OptimizationPresets, smartMemoCompare } from '@/components/performance'
+import { useWhyDidYouUpdate, useMemoizedCallback } from '@/hooks/useOptimization'
 
 type ViewMode = 'grid' | 'list' | 'table'
 
@@ -57,13 +59,23 @@ interface RecipeListViewProps {
   customActions?: (recipe: Recipe) => React.ReactNode
 }
 
-export function RecipeListView({
+function RecipeListViewComponent({
   initialFilters = {},
   onRecipeSelect,
   showFilters = true,
   allowBatchOperations = true,
   customActions
 }: RecipeListViewProps) {
+  // Debug optimization in development
+  if (process.env.NODE_ENV === 'development') {
+    useWhyDidYouUpdate('RecipeListView', { 
+      initialFilters, 
+      onRecipeSelect, 
+      showFilters, 
+      allowBatchOperations,
+      customActions 
+    })
+  }
   const { t } = useTranslation()
   const navigate = useNavigate()
   const breakpoint = useBreakpoint()
@@ -118,16 +130,16 @@ export function RecipeListView({
     }
   }, [error])
   
-  // Handlers
-  const handleRecipeClick = (recipe: Recipe) => {
+  // Memoized Handlers
+  const handleRecipeClick = useMemoizedCallback((recipe: Recipe) => {
     if (onRecipeSelect) {
       onRecipeSelect(recipe)
     } else {
       navigate(`/recipes/${recipe.id}`)
     }
-  }
+  }, [onRecipeSelect, navigate], 'handleRecipeClick')
   
-  const handleToggleFavorite = async (recipeId: string, e?: React.MouseEvent) => {
+  const handleToggleFavorite = useMemoizedCallback(async (recipeId: string, e?: React.MouseEvent) => {
     e?.stopPropagation()
     try {
       await toggleFavorite(recipeId)
@@ -139,14 +151,14 @@ export function RecipeListView({
     } catch (error) {
       // Error is handled by the store
     }
-  }
+  }, [toggleFavorite, toast, favorites, t], 'handleToggleFavorite')
   
-  const handleEdit = (recipe: Recipe, e?: React.MouseEvent) => {
+  const handleEdit = useMemoizedCallback((recipe: Recipe, e?: React.MouseEvent) => {
     e?.stopPropagation()
     navigate(`/recipes/${recipe.id}/edit`)
-  }
+  }, [navigate], 'handleEdit')
   
-  const handleDuplicate = async (recipe: Recipe, e?: React.MouseEvent) => {
+  const handleDuplicate = useMemoizedCallback(async (recipe: Recipe, e?: React.MouseEvent) => {
     e?.stopPropagation()
     try {
       const duplicated = await duplicateRecipe(recipe.id)
@@ -158,9 +170,9 @@ export function RecipeListView({
     } catch (error) {
       // Error is handled by the store
     }
-  }
+  }, [duplicateRecipe, toast, t, navigate], 'handleDuplicate')
   
-  const handleDelete = async (recipe: Recipe, e?: React.MouseEvent) => {
+  const handleDelete = useMemoizedCallback(async (recipe: Recipe, e?: React.MouseEvent) => {
     e?.stopPropagation()
     if (confirm(t('recipes.deleteConfirm', { name: recipe.name }))) {
       try {
@@ -173,13 +185,13 @@ export function RecipeListView({
         // Error is handled by the store
       }
     }
-  }
+  }, [deleteRecipe, toast, t], 'handleDelete')
   
-  const handleAddToTrip = (recipe: Recipe, e?: React.MouseEvent) => {
+  const handleAddToTrip = useMemoizedCallback((recipe: Recipe, e?: React.MouseEvent) => {
     e?.stopPropagation()
     // Navigate to trip planning with selected recipe
     navigate('/trips/new', { state: { selectedRecipeId: recipe.id } })
-  }
+  }, [navigate], 'handleAddToTrip')
   
   const handleSelectRecipe = (recipeId: string) => {
     const newSelected = new Set(selectedRecipes)
@@ -673,3 +685,6 @@ export function RecipeListView({
     </div>
   )
 }
+
+// Export memoized component
+export const RecipeListView = memo(RecipeListViewComponent, smartMemoCompare)

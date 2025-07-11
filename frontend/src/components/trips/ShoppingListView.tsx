@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, memo, useCallback } from 'react'
 import { 
   ShoppingCart, 
   ChevronDown,
@@ -23,6 +23,8 @@ import {
   calculateTotalVolume, 
   formatQuantity
 } from '@/utils/shoppingCalculations'
+import { OptimizationPresets } from '@/components/performance'
+import { useMemoizedCallback } from '@/hooks/useOptimization'
 
 interface ShoppingListViewProps {
   trip: Trip
@@ -65,7 +67,7 @@ const categoryOrder = [
   'other'
 ]
 
-export const ShoppingListView: React.FC<ShoppingListViewProps> = ({ trip, className }) => {
+const ShoppingListViewComponent: React.FC<ShoppingListViewProps> = ({ trip, className }) => {
   const { 
     shoppingList, 
     shoppingListLoading, 
@@ -405,3 +407,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({ trip, classN
     </div>
   )
 }
+
+// Export memoized component
+export const ShoppingListView = memo(ShoppingListViewComponent, (prevProps, nextProps) => {
+  // Only re-render if trip ID changes or className changes
+  return (
+    prevProps.trip.id === nextProps.trip.id &&
+    prevProps.className === nextProps.className
+  )
+})

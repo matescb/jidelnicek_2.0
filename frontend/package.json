@@ -54,6 +54,7 @@
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.0",
+    "web-vitals": "^3.5.2",
     "zod": "^3.22.4",
     "zustand": "^4.4.7"
   },
@@ -62,6 +63,10 @@
     "glob": "^10.3.10",
     "i18next-parser": "^8.13.0",
     "@storybook/addon-onboarding": "^9.0.16",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-pwa": "^0.19.0",
+    "lighthouse": "^11.0.0",
     "@storybook/react-vite": "^9.0.16",
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.10",
@@ -110,7 +115,11 @@
     "i18n:parser": "i18next --config i18next-parser.config.js",
     "i18n:check": "npm run i18n:extract && npm run i18n:validate",
     "i18n:update": "npm run i18n:extract && npm run i18n:sync:auto && npm run i18n:types",
-    "i18n:cli": "node src/i18n/scripts/cli.js"
+    "i18n:cli": "node src/i18n/scripts/cli.js",
+    "bundle:analyze": "ANALYZE=true vite build",
+    "bundle:size": "vite build && node scripts/check-bundle-size.js",
+    "perf:check": "node scripts/performance-check.js",
+    "perf:lighthouse": "lighthouse http://localhost:3000 --output html --view"
   },
   "browserslist": {
     "production": [
