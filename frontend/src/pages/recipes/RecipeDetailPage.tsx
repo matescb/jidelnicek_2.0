@@ -11,7 +11,7 @@ import {
   Copy, 
   Trash2,
   Share2,
-  Print,
+  Printer,
   ChefHat,
   Calendar,
   Eye,
@@ -368,7 +368,7 @@ const RecipeDetailPage: React.FC = () => {
                           {t('common.share')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handlePrint}>
-                          <Print className="mr-2 h-4 w-4" />
+                          <Printer className="mr-2 h-4 w-4" />
                           {t('common.print')}
                         </DropdownMenuItem>
                         {user && (

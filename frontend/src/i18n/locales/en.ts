@@ -293,6 +293,18 @@ export default {
     confirmCopyWeek: 'Copy the first week\'s meals to all remaining weeks?',
     weekCopied: 'First week copied to all weeks',
     weekCopyError: 'Failed to copy week',
+    
+    // Trip status
+    status: {
+      planning: 'Planning',
+      active: 'Active', 
+      completed: 'Completed',
+      archived: 'Archived',
+    },
+    
+    // Trip empty state
+    getStarted: 'Get started by creating your first trip',
+    createFirstTrip: 'Create Your First Trip',
   },
   
   shoppingList: {

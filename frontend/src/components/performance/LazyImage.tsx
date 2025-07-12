@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, memo } from 'react'
-import { BrokenImage } from 'lucide-react'
+import { ImageOff } from 'lucide-react'
 
 interface LazyImageProps {
   src: string
@@ -238,7 +238,7 @@ const LazyImageComponent: React.FC<LazyImageProps> = ({
       aria-label={ariaLabel || alt}
     >
       <div className="text-center p-4">
-        <BrokenImage className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+        <ImageOff className="w-8 h-8 mx-auto mb-2 text-gray-400" />
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {alt || 'Image failed to load'}
         </p>

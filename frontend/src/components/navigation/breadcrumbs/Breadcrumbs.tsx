@@ -71,7 +71,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
           if (breadcrumb.id === 'ellipsis') {
             return (
               <BreadcrumbEllipsis
-                key={breadcrumb.id}
+                key={`mobile-${breadcrumb.id}-${index}`}
                 separator={separator}
                 separatorClassName={separatorClassName}
               />
@@ -80,7 +80,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
 
           return (
             <BreadcrumbItem
-              key={breadcrumb.id}
+              key={`mobile-${breadcrumb.id}-${index}`}
               label={breadcrumb.label}
               path={breadcrumb.path}
               icon={breadcrumb.icon}
@@ -104,7 +104,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
           if (breadcrumb.id === 'ellipsis') {
             return (
               <BreadcrumbEllipsis
-                key={breadcrumb.id}
+                key={`desktop-${breadcrumb.id}-${index}`}
                 separator={separator}
                 separatorClassName={separatorClassName}
               />
@@ -113,7 +113,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
 
           return (
             <BreadcrumbItem
-              key={breadcrumb.id}
+              key={`desktop-${breadcrumb.id}-${index}`}
               label={breadcrumb.label}
               path={breadcrumb.path}
               icon={breadcrumb.icon}

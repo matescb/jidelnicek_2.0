@@ -17,7 +17,7 @@ export interface ColumnGroup<T> {
 }
 
 // Sorting utilities
-export function createSortFunction<T>(
+export function createSortFunction<T extends Record<string, any>>(
   sortConfigs: Array<{ key: string; direction: SortDirection }>,
   columns: Column<T>[]
 ) {
@@ -47,7 +47,7 @@ export function createSortFunction<T>(
 }
 
 // Filtering utilities
-export function createFilterFunction<T>(
+export function createFilterFunction<T extends Record<string, any>>(
   filters: FilterConfig<T>[],
   columns: Column<T>[]
 ) {
@@ -88,7 +88,7 @@ export function createFilterFunction<T>(
 }
 
 // Column presets
-export const createDateColumn = <T>(
+export const createDateColumn = <T extends Record<string, any>>(
   key: keyof T,
   header: string,
   options: Partial<Column<T>> = {}
@@ -100,7 +100,7 @@ export const createDateColumn = <T>(
   ...options,
 });
 
-export const createCurrencyColumn = <T>(
+export const createCurrencyColumn = <T extends Record<string, any>>(
   key: keyof T,
   header: string,
   currency = 'USD',
@@ -117,7 +117,7 @@ export const createCurrencyColumn = <T>(
   ...options,
 });
 
-export const createPercentColumn = <T>(
+export const createPercentColumn = <T extends Record<string, any>>(
   key: keyof T,
   header: string,
   options: Partial<Column<T>> = {}
@@ -129,7 +129,7 @@ export const createPercentColumn = <T>(
   ...options,
 });
 
-export const createBooleanColumn = <T>(
+export const createBooleanColumn = <T extends Record<string, any>>(
   key: keyof T,
   header: string,
   trueLabel = 'Yes',
@@ -148,7 +148,7 @@ export const createBooleanColumn = <T>(
 });
 
 // Export utilities
-export function exportToCSV<T>(
+export function exportToCSV<T extends Record<string, any>>(
   data: T[],
   columns: Column<T>[],
   filename = 'export'
@@ -188,7 +188,7 @@ export function exportToCSV<T>(
   URL.revokeObjectURL(url);
 }
 
-export function exportToJSON<T>(
+export function exportToJSON<T extends Record<string, any>>(
   data: T[],
   filename = 'export'
 ): void {
@@ -206,7 +206,7 @@ export function exportToJSON<T>(
 }
 
 // Accessibility helpers
-export function getTableAriaLabel<T>(
+export function getTableAriaLabel<T extends Record<string, any>>(
   data: T[],
   selectedCount: number,
   totalCount: number

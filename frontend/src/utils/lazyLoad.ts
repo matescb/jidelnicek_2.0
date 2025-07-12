@@ -21,7 +21,15 @@ const defaultConfig: Required<LazyLoadConfig> = {
   retryDelay: 1000,
   onLoadStart: () => {},
   onLoadSuccess: () => {},
-  onLoadError: () => {},
+  onLoadError: (name, error) => {
+    // Safe error logging to avoid object-to-string conversion issues
+    try {
+      const errorMessage = error?.message || (error && typeof error === 'object' ? JSON.stringify(error) : String(error))
+      console.error(`Component load error for ${name}:`, errorMessage)
+    } catch (e) {
+      console.error(`Component load error for ${name}: [Error details unavailable]`)
+    }
+  },
   preload: false,
   chunkName: ''
 }
@@ -131,7 +139,12 @@ export function lazyLoad<T extends ComponentType<any>>(
         })
         .catch(error => {
           loadingPromises.delete(componentName)
-          console.error(`Failed to preload ${componentName}:`, error)
+          try {
+            const errorMessage = error?.message || (error && typeof error === 'object' ? JSON.stringify(error) : String(error))
+            console.error(`Failed to preload ${componentName}:`, errorMessage)
+          } catch (e) {
+            console.error(`Failed to preload ${componentName}: [Error details unavailable]`)
+          }
           throw error
         })
       
@@ -257,7 +270,12 @@ export function lazyRoute<T extends ComponentType<any>>(
     ...getNetworkAwareConfig(),
     ...config,
     onLoadError: (name, error, retryCount) => {
-      console.error(`Failed to load route ${name}:`, error)
+      try {
+        const errorMessage = error?.message || (error && typeof error === 'object' ? JSON.stringify(error) : String(error))
+        console.error(`Failed to load route ${name}:`, errorMessage)
+      } catch (e) {
+        console.error(`Failed to load route ${name}: [Error details unavailable]`)
+      }
       
       // Report to error tracking service
       if (retryCount === (config?.maxRetries ?? defaultConfig.maxRetries)) {

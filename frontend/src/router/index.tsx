@@ -45,7 +45,7 @@ const RecipeCreatePage = lazyRoute(() => import('@pages/recipes/RecipeCreatePage
 const RecipeEditPage = lazyRoute(() => import('@pages/recipes/RecipeEditPage'), 'RecipeEditPage')
 
 // Trip pages
-const TripListPage = lazyRoute(() => import('@pages/TripListPage'), 'TripListPage')
+const TripListPage = lazyRoute(() => import('@pages/trips/TripListPage'), 'TripListPage')
 const TripDetailPage = lazyRoute(() => import('@pages/trips/TripDetailPage'), 'TripDetailPage')
 const TripCreatePage = lazyRoute(() => import('@pages/trips/TripCreatePage'), 'TripCreatePage')
 const TripEditPage = lazyRoute(() => import('@pages/trips/TripEditPage'), 'TripEditPage')
@@ -73,9 +73,41 @@ const AnimationShowcase = lazyRoute(() => import('@components/examples/Animation
 
 // Wrapper component for adding Suspense boundaries to routes
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<RouteLoadingFallback />}>
-    {children}
-  </Suspense>
+  <ErrorBoundary 
+    level="component" 
+    fallback={
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="text-center">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Failed to load component
+          </h2>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Reload page
+          </button>
+        </div>
+      </div>
+    }
+    onError={(error, errorInfo) => {
+      // Safe error logging to prevent object-to-string conversion issues
+      try {
+        const errorMessage = error?.message || 'Unknown error'
+        // Create a safe copy of errorInfo without circular references
+        const safeErrorInfo = {
+          componentStack: typeof errorInfo?.componentStack === 'string' ? errorInfo.componentStack : '[Component stack unavailable]'
+        }
+        console.error('Component error:', errorMessage, safeErrorInfo)
+      } catch (e) {
+        console.error('Component error: [Error details unavailable]')
+      }
+    }}
+  >
+    <Suspense fallback={<RouteLoadingFallback />}>
+      {children}
+    </Suspense>
+  </ErrorBoundary>
 )
 
 export const router = createBrowserRouter([
@@ -456,9 +488,9 @@ export const router = createBrowserRouter([
     ],
   },
 ], {
-  // future: {
-  //   v7_startTransition: true,
-  // },
+  future: {
+    v7_startTransition: true,
+  },
 })
 
 // Route configuration for breadcrumbs

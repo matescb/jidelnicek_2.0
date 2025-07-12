@@ -371,10 +371,24 @@ class ErrorLogger {
     console.error('Error:', entry.error);
     
     if (entry.errorInfo) {
-      console.error('Component Stack:', entry.errorInfo.componentStack);
+      try {
+        // Safely handle componentStack to avoid conversion errors
+        const componentStack = typeof entry.errorInfo.componentStack === 'string' 
+          ? entry.errorInfo.componentStack 
+          : '[Component stack unavailable]';
+        console.error('Component Stack:', componentStack);
+      } catch (e) {
+        console.error('Component Stack: [Error displaying component stack]');
+      }
     }
     
-    console.log('Context:', entry.context);
+    try {
+      // Safely handle context object to avoid conversion errors
+      const safeContext = JSON.parse(JSON.stringify(entry.context));
+      console.log('Context:', safeContext);
+    } catch (e) {
+      console.log('Context: [Context details unavailable]');
+    }
     console.log('Recoverable:', entry.isRecoverable);
     console.log('Error ID:', entry.id);
     
