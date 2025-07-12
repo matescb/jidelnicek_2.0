@@ -52,6 +52,9 @@ const TripEditPage = lazyRoute(() => import('@pages/trips/TripEditPage'), 'TripE
 const TripPlannerPage = lazyRoute(() => import('@pages/trips/TripPlannerPage'), 'TripPlannerPage')
 const TripParticipantsPage = lazyRoute(() => import('@pages/trips/TripParticipantsPage'), 'TripParticipantsPage')
 
+// Ingredient pages
+const IngredientsPage = lazyRoute(() => import('@pages/ingredients'), 'IngredientsPage')
+
 // Profile pages
 const ProfilePage = lazyRoute(() => import('@pages/profile/ProfilePage'), 'ProfilePage')
 const SettingsPage = lazyRoute(() => import('@pages/profile/SettingsPage'), 'SettingsPage')
@@ -256,6 +259,43 @@ export const router = createBrowserRouter([
             ],
           },
           {
+            path: 'ingredients',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseWrapper>
+                    <IngredientsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: 'new',
+                element: (
+                  <SuspenseWrapper>
+                    <IngredientsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: ':id',
+                element: (
+                  <SuspenseWrapper>
+                    <IngredientsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+              {
+                path: ':id/edit',
+                element: (
+                  <SuspenseWrapper>
+                    <IngredientsPage />
+                  </SuspenseWrapper>
+                ),
+              },
+            ],
+          },
+          {
             path: 'profile',
             element: (
               <SuspenseWrapper>
@@ -422,7 +462,7 @@ export const router = createBrowserRouter([
 })
 
 // Route configuration for breadcrumbs
-export const routeConfig = {
+const routeConfig = {
   '/': { label: 'Home', icon: 'home' },
   '/auth/login': { label: 'Login' },
   '/auth/register': { label: 'Register' },
@@ -449,8 +489,7 @@ export const routeConfig = {
   } : {}),
 }
 
-// Route metadata for preloading
-export const routeMetadata: RouteMetadata[] = [
+const routeMetadata: RouteMetadata[] = [
   // High priority routes
   { path: '/', component: HomePage, preloadPriority: 'high', preloadOn: 'immediate' },
   { path: '/dashboard', component: DashboardPage, preloadPriority: 'high', preloadOn: 'immediate' },
@@ -477,3 +516,5 @@ export const routeMetadata: RouteMetadata[] = [
   { path: '/dashboard/profile', component: ProfilePage, preloadPriority: 'low', preloadOn: 'idle' },
   { path: '/dashboard/settings', component: SettingsPage, preloadPriority: 'low', preloadOn: 'idle' },
 ]
+
+export { routeConfig, routeMetadata }

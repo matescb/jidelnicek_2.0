@@ -315,7 +315,7 @@ export default {
     title: 'Něco se pokazilo',
     generic: 'Nastala neočekávaná chyba',
     network: 'Chyba sítě. Zkontrolujte prosím své připojení.',
-    unauthorized: 'Pro přístup k této stránce se musíte přihlásit',
+    unauthorizedAccess: 'Pro přístup k této stránce se musíte přihlásit',
     forbidden: 'Nemáte oprávnění k přístupu k tomuto zdroji',
     notFound: 'Zdroj nebyl nalezen',
     validation: 'Zkontrolujte prosím zadané údaje',
@@ -754,7 +754,7 @@ export default {
   },
   
   // Error recovery messages
-  errors: {
+  errorRecovery: {
     // Recovery messages
     recovery_suggestions: 'Návrhy řešení',
     recovery_in_progress: 'Pokus o obnovení...',

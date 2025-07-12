@@ -205,7 +205,7 @@ export function generateSizes(
 /**
  * Detect supported image formats
  */
-export function detectSupportedFormats(): Promise<string[]> {
+export async function detectSupportedFormats(): Promise<string[]> {
   const formats = ['webp', 'avif']
   const supported: string[] = []
 

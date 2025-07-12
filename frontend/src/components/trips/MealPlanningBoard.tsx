@@ -128,7 +128,7 @@ const RecipeCardDraggable = memo<{
       )}
     </Draggable>
   )
-}
+})
 
 // Meal Slot Component
 const MealSlotDroppable: React.FC<{

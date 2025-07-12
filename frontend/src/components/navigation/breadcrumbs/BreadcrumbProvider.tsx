@@ -3,7 +3,8 @@ import { useLocation, useParams } from 'react-router-dom';
 import { BreadcrumbItem, BreadcrumbContextValue } from './types';
 import { generateBreadcrumbsFromRoute } from './utils';
 
-export const BreadcrumbContext = createContext<BreadcrumbContextValue | null>(null);
+const BreadcrumbContext = createContext<BreadcrumbContextValue | null>(null);
+export { BreadcrumbContext };
 
 interface BreadcrumbProviderProps {
   children: ReactNode;

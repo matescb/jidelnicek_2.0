@@ -1,3 +1,4 @@
+import React from 'react';
 import { RouteMetadata, BreadcrumbItem } from './types';
 import { routes } from '@/routes/config';
 import { RouteConfig } from '@/routes/types';
@@ -98,7 +99,7 @@ export function generateBreadcrumbsFromRoute(
       path: currentPath,
       isDynamic,
       isActive: index === segments.length - 1,
-      icon: metadata?.icon,
+      icon: metadata?.icon ? React.createElement(metadata.icon, { className: "h-4 w-4" }) : undefined,
     });
   });
 

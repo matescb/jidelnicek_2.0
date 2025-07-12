@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
-import { Plus, Upload, Download, Filter, Beaker, DollarSign, Utensils, AlertTriangle, Merge, Edit2, Eye, Trash2 } from 'lucide-react'
+import { Plus, Upload, Download, Filter, Beaker, DollarSign, Utensils, AlertTriangle, Merge, Edit2, Eye, Trash2, Search } from 'lucide-react'
 import { BaseDataTable, Column } from '@/components/common/BaseDataTable'
 import { useIngredientStore, IngredientWithDetails } from '@/store/slices/ingredientStore'
 import { Badge } from '@/components/ui/badge'

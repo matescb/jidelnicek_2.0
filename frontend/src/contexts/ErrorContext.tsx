@@ -45,6 +45,7 @@ export interface ErrorContextValue {
 
 // Create context
 const ErrorContext = createContext<ErrorContextValue | undefined>(undefined);
+export { ErrorContext };
 
 // Provider props
 interface ErrorProviderProps {
