@@ -14,7 +14,9 @@
     "@storybook/react-vite": "^9.0.16",
     "@types/socket.io-client": "^1.4.36",
     "prop-types": "^15.8.1",
-    "storybook": "^9.0.16"
+    "storybook": "^9.0.16",
+    "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-pwa": "^1.0.1"
   },
   "scripts": {
     "storybook": "storybook dev -p 6006",

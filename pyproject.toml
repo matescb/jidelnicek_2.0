@@ -33,6 +33,7 @@ aiofiles = "^24.1.0"
 backoff = "^2.2.1"
 aiosmtplib = "^4.0.1"
 openpyxl = "^3.1.2"
+reportlab = "^4.2.0"
 qrcode = {extras = ["pil"], version = "^8.2"}
 
 [tool.poetry.extras]
