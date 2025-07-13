@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Tests for adaptive layout components
  */
@@ -15,7 +16,7 @@ import { mockWindowResize, viewports, mockResizeObserver } from './utils';
 
 describe('Container', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockResizeObserver();
   });
 
@@ -219,7 +220,7 @@ describe('ResponsiveTable', () => {
   it('should handle sorting', () => {
     mockWindowResize(viewports.desktop.width, viewports.desktop.height);
 
-    const handleSort = jest.fn();
+    const handleSort = vi.fn();
     render(
       <ResponsiveTable
         data={mockData}
@@ -238,7 +239,7 @@ describe('ResponsiveTable', () => {
   it('should handle row selection', () => {
     mockWindowResize(viewports.desktop.width, viewports.desktop.height);
 
-    const handleSelect = jest.fn();
+    const handleSelect = vi.fn();
     render(
       <ResponsiveTable
         data={mockData}
@@ -271,7 +272,7 @@ describe('ResponsiveTable', () => {
 
 describe('AdaptiveDialog', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should render as modal on desktop', () => {
@@ -354,8 +355,8 @@ describe('AdaptiveDialog', () => {
   });
 
   it('should handle close actions', () => {
-    const handleClose = jest.fn();
-    const handleConfirm = jest.fn();
+    const handleClose = vi.fn();
+    const handleConfirm = vi.fn();
 
     render(
       <AdaptiveDialog
@@ -446,7 +447,7 @@ describe('ResponsiveForm', () => {
   });
 
   it('should handle form submission', async () => {
-    const handleSubmit = jest.fn();
+    const handleSubmit = vi.fn();
     const user = userEvent.setup();
 
     render(

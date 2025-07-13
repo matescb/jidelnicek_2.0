@@ -12,11 +12,11 @@ const mockMatchMedia = (matches: boolean) => ({
   matches,
   media: '(prefers-color-scheme: dark)',
   onchange: null,
-  addListener: jest.fn(),
-  removeListener: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
 })
 
 describe('Theme Utilities', () => {
@@ -29,7 +29,7 @@ describe('Theme Utilities', () => {
     originalDocumentElement = document.documentElement
 
     // Mock matchMedia
-    window.matchMedia = jest.fn().mockImplementation((query) => {
+    window.matchMedia = vi.fn().mockImplementation((query) => {
       if (query === '(prefers-color-scheme: dark)') {
         return mockMatchMedia(false)
       }
@@ -67,7 +67,7 @@ describe('Theme Utilities', () => {
 
   describe('getSystemTheme', () => {
     it('should return light when system prefers light', () => {
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-color-scheme: dark)') {
           return mockMatchMedia(false)
         }
@@ -78,7 +78,7 @@ describe('Theme Utilities', () => {
     })
 
     it('should return dark when system prefers dark', () => {
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-color-scheme: dark)') {
           return mockMatchMedia(true)
         }
@@ -99,7 +99,7 @@ describe('Theme Utilities', () => {
     })
 
     it('should return system theme when mode is system', () => {
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-color-scheme: dark)') {
           return mockMatchMedia(true)
         }
@@ -132,7 +132,7 @@ describe('Theme Utilities', () => {
     })
 
     it('should apply smooth transition when requested', () => {
-      const addEventListenerSpy = jest.spyOn(document.documentElement, 'addEventListener')
+      const addEventListenerSpy = vi.spyOn(document.documentElement, 'addEventListener')
       
       applyTheme('dark', true)
 
@@ -184,7 +184,7 @@ describe('Theme Utilities', () => {
       localStorage.setItem('theme', 'system')
       
       // Mock system prefers light
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-color-scheme: dark)') {
           return mockMatchMedia(false)
         }
@@ -221,7 +221,7 @@ describe('Theme Utilities', () => {
       localStorage.setItem('theme', 'system')
       
       // Mock dark system preference
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-color-scheme: dark)') {
           return mockMatchMedia(true)
         }
@@ -250,11 +250,11 @@ describe('Theme Utilities', () => {
     it('should handle initialization errors gracefully', () => {
       // Mock localStorage to throw error
       const originalGetItem = Storage.prototype.getItem
-      Storage.prototype.getItem = jest.fn(() => {
+      Storage.prototype.getItem = vi.fn(() => {
         throw new Error('Storage error')
       })
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation()
 
       expect(() => initializeTheme()).not.toThrow()
 
@@ -276,11 +276,11 @@ describe('Theme Utilities', () => {
 
     it('should handle localStorage quota exceeded', () => {
       const originalSetItem = Storage.prototype.setItem
-      Storage.prototype.setItem = jest.fn(() => {
+      Storage.prototype.setItem = vi.fn(() => {
         throw new DOMException('QuotaExceededError')
       })
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation()
 
       expect(() => toggleTheme()).not.toThrow()
 

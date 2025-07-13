@@ -9,7 +9,7 @@ import { mockWindowResize, viewports, getComputedStyles } from './utils';
 
 describe('Grid', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should render with default props', () => {

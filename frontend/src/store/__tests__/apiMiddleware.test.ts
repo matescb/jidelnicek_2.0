@@ -1,20 +1,20 @@
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { create } from 'zustand';
 import { createAPIMiddleware } from '../middleware/apiMiddleware';
 import type { APIMiddlewareConfig, APIRequest, CircuitBreakerState } from '../middleware/apiMiddleware';
 
 // Mock fetch
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 describe('API Middleware', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('Basic API Calls', () => {
@@ -216,7 +216,7 @@ describe('API Middleware', () => {
       expect(mockFetch).toHaveBeenCalledTimes(3);
 
       // Check that retries happened with delays
-      jest.runAllTimers();
+      vi.runAllTimers();
       const elapsed = Date.now() - startTime;
       expect(elapsed).toBeGreaterThanOrEqual(300); // 100ms + 200ms delays
     });
@@ -241,7 +241,7 @@ describe('API Middleware', () => {
 
       await expect(useStore.getState().api.get('/test')).rejects.toThrow('Persistent error');
       
-      jest.runAllTimers();
+      vi.runAllTimers();
       expect(mockFetch).toHaveBeenCalledTimes(2); // Initial + 1 retry
     });
 
@@ -283,7 +283,7 @@ describe('API Middleware', () => {
 
       const result = await useStore.getState().api.get('/test');
       
-      jest.runAllTimers();
+      vi.runAllTimers();
       expect(result).toEqual({ data: 'success' });
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
@@ -322,7 +322,7 @@ describe('API Middleware', () => {
 
       await useStore.getState().api.get('/test');
       
-      jest.runAllTimers();
+      vi.runAllTimers();
 
       // Check that delays have some variation due to jitter
       const uniqueDelays = new Set(delays.slice(1)); // Skip first immediate call
@@ -401,7 +401,7 @@ describe('API Middleware', () => {
       expect(getCircuitState()).toBe('OPEN');
 
       // Wait for reset timeout
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
 
       // Should allow one request in half-open state
       const result = await api.get('/test');
@@ -440,7 +440,7 @@ describe('API Middleware', () => {
       }
 
       // Wait for reset timeout
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
 
       // Request fails in half-open state
       await expect(api.get('/test')).rejects.toThrow('Still failing');
@@ -526,7 +526,7 @@ describe('API Middleware', () => {
       ];
 
       // Advance timers to trigger batch
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
 
       const results = await Promise.all(promises);
 
@@ -582,7 +582,7 @@ describe('API Middleware', () => {
         api.batch({ url: `/item/${i + 1}`, method: 'GET' })
       );
 
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
 
       await Promise.all(promises);
 
@@ -617,7 +617,7 @@ describe('API Middleware', () => {
         api.batch({ url: '/item/2', method: 'GET' }),
       ];
 
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
 
       // All requests in the batch should fail
       await expect(Promise.all(promises)).rejects.toThrow('Batch failed');
@@ -742,7 +742,7 @@ describe('API Middleware', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network failure'));
 
       const config: APIMiddlewareConfig = {
-        onError: jest.fn(),
+        onError: vi.fn(),
       };
 
       const apiMiddleware = createAPIMiddleware(config);
@@ -787,7 +787,7 @@ describe('API Middleware', () => {
 
       const promise = useStore.getState().api.get('/test');
       
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       
       await expect(promise).rejects.toThrow('Request timeout');
     });
@@ -863,7 +863,7 @@ describe('API Middleware', () => {
       expect(mockFetch).toHaveBeenCalledTimes(1); // Still 1
 
       // Advance time past TTL
-      jest.advanceTimersByTime(1001);
+      vi.advanceTimersByTime(1001);
 
       // Third request should hit API again
       mockFetch.mockResolvedValueOnce({

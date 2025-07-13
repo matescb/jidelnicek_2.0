@@ -331,7 +331,7 @@ describe('Tooltip', () => {
       
       await waitFor(() => {
         const tooltip = screen.getByRole('tooltip');
-        expect(tooltip).toHaveClass('bg-gray-900');
+        expect(tooltip).toHaveClass('bg-secondary-900');
       });
       
       fireEvent.mouseLeave(button);
@@ -349,7 +349,7 @@ describe('Tooltip', () => {
       
       await waitFor(() => {
         const tooltip = screen.getByRole('tooltip');
-        expect(tooltip).toHaveClass('bg-white');
+        expect(tooltip).toHaveClass('bg-surface');
       });
     });
   });

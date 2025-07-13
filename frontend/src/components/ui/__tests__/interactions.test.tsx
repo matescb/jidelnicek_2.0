@@ -13,6 +13,9 @@ jest.mock('framer-motion', () => ({
     div: ({ children, className, ...props }: any) => (
       <div className={className} {...props}>{children}</div>
     ),
+    svg: React.forwardRef(({ children, className, ...props }: any, ref: any) => (
+      <svg ref={ref} className={className} role="status" {...props}>{children}</svg>
+    )),
   },
   AnimatePresence: ({ children }: any) => children,
 }));
@@ -35,7 +38,7 @@ describe('Switch', () => {
     const user = userEvent.setup();
     render(<Switch />);
     
-    const label = screen.getByRole('generic').closest('label');
+    const label = screen.getByRole('checkbox', { hidden: true }).closest('label');
     expect(label).toBeInTheDocument();
     
     await user.click(label!);
@@ -52,7 +55,7 @@ describe('Switch', () => {
     const onCheckedChange = jest.fn();
     render(<Switch onCheckedChange={onCheckedChange} />);
     
-    const label = screen.getByRole('generic').closest('label');
+    const label = screen.getByRole('checkbox', { hidden: true }).closest('label');
     
     await user.click(label!);
     expect(onCheckedChange).toHaveBeenCalledWith(true);
@@ -66,7 +69,7 @@ describe('Switch', () => {
     const onChange = jest.fn();
     render(<Switch onChange={onChange} />);
     
-    const label = screen.getByRole('generic').closest('label');
+    const label = screen.getByRole('checkbox', { hidden: true }).closest('label');
     
     await user.click(label!);
     expect(onChange).toHaveBeenCalled();
@@ -127,7 +130,7 @@ describe('Switch', () => {
 
 describe('Button interactions', () => {
   it('shows loading state with spinner', () => {
-    render(<Button loading>Click me</Button>);
+    render(<Button isLoading>Click me</Button>);
     
     // Check for loading spinner
     const spinner = screen.getByRole('status');
@@ -165,7 +168,7 @@ describe('Button interactions', () => {
   it('prevents click when loading', async () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
-    render(<Button loading onClick={onClick}>Click me</Button>);
+    render(<Button isLoading onClick={onClick}>Click me</Button>);
     
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
@@ -240,7 +243,7 @@ describe('Button interactions', () => {
   });
 
   it('combines loading spinner with text', () => {
-    render(<Button loading>Loading...</Button>);
+    render(<Button isLoading>Loading...</Button>);
     
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -270,7 +273,7 @@ describe('Micro-interactions', () => {
   });
 
   it('loading spinner has animation', () => {
-    render(<Button loading>Loading</Button>);
+    render(<Button isLoading>Loading</Button>);
     
     const spinner = screen.getByRole('status');
     expect(spinner).toHaveClass('animate-spin');
@@ -280,7 +283,7 @@ describe('Micro-interactions', () => {
     render(<Button>Shadow Effect</Button>);
     
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('shadow-sm', 'hover:shadow-md');
+    expect(button).toHaveClass('shadow', 'hover:shadow-md');
   });
 
   it('focus states are accessible', async () => {

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Tests for mobile-specific components
  */
@@ -45,7 +46,7 @@ describe('BottomSheet', () => {
   });
 
   it('should call onClose when backdrop is clicked', () => {
-    const handleClose = jest.fn();
+    const handleClose = vi.fn();
     render(
       <BottomSheet isOpen={true} onClose={handleClose}>
         <div>Content</div>
@@ -58,7 +59,7 @@ describe('BottomSheet', () => {
   });
 
   it('should handle swipe down to close', async () => {
-    const handleClose = jest.fn();
+    const handleClose = vi.fn();
     render(
       <BottomSheet isOpen={true} onClose={handleClose}>
         <div data-testid="sheet">Content</div>
@@ -159,7 +160,7 @@ describe('TabBar', () => {
   });
 
   it('should call onTabChange when tab is clicked', () => {
-    const handleChange = jest.fn();
+    const handleChange = vi.fn();
     render(
       <TabBar
         tabs={mockTabs}
@@ -207,7 +208,7 @@ describe('TabBar', () => {
   });
 
   it('should be keyboard accessible', () => {
-    const handleChange = jest.fn();
+    const handleChange = vi.fn();
     render(
       <TabBar
         tabs={mockTabs}
@@ -269,7 +270,7 @@ describe('PullToRefresh', () => {
   });
 
   it('should trigger refresh when threshold is reached', async () => {
-    const handleRefresh = jest.fn(() => Promise.resolve());
+    const handleRefresh = vi.fn(() => Promise.resolve());
     render(
       <PullToRefresh onRefresh={handleRefresh} threshold={80}>
         <div data-testid="content">Content</div>
@@ -312,7 +313,7 @@ describe('PullToRefresh', () => {
   });
 
   it('should be disabled when prop is set', async () => {
-    const handleRefresh = jest.fn();
+    const handleRefresh = vi.fn();
     render(
       <PullToRefresh onRefresh={handleRefresh} disabled>
         <div data-testid="content">Content</div>
@@ -341,7 +342,7 @@ describe('SwipeableListItem', () => {
   });
 
   it('should reveal left actions on swipe right', async () => {
-    const handleAction = jest.fn();
+    const handleAction = vi.fn();
     render(
       <SwipeableListItem
         leftActions={[
@@ -364,7 +365,7 @@ describe('SwipeableListItem', () => {
   });
 
   it('should reveal right actions on swipe left', async () => {
-    const handleDelete = jest.fn();
+    const handleDelete = vi.fn();
     render(
       <SwipeableListItem
         leftActions={[]}
@@ -410,8 +411,8 @@ describe('SwipeableListItem', () => {
   });
 
   it('should handle multiple actions', async () => {
-    const handleEdit = jest.fn();
-    const handleDelete = jest.fn();
+    const handleEdit = vi.fn();
+    const handleDelete = vi.fn();
     
     render(
       <SwipeableListItem

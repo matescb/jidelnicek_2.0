@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Tests for responsive typography components
  */
@@ -14,7 +15,7 @@ import { mockWindowResize, viewports, getComputedStyles } from './utils';
 
 describe('FluidText', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should render with default size', () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { create } from 'zustand';
 import { optimisticMiddleware } from '../optimistic/optimisticMiddleware';
 import { RollbackManager } from '../optimistic/rollbackManager';
@@ -9,11 +9,11 @@ import type { OptimisticConfig, OptimisticUpdate } from '../optimistic/types';
 
 describe('Optimistic Updates', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('UpdateQueue', () => {
@@ -215,9 +215,9 @@ describe('Optimistic Updates', () => {
 
     it('should apply optimistic updates immediately', async () => {
       const mockApi = {
-        addItem: jest.fn().mockResolvedValue({ id: 'new-id', name: 'New Item', status: 'active' }),
-        updateItem: jest.fn().mockResolvedValue(true),
-        deleteItem: jest.fn().mockResolvedValue(true),
+        addItem: vi.fn().mockResolvedValue({ id: 'new-id', name: 'New Item', status: 'active' }),
+        updateItem: vi.fn().mockResolvedValue(true),
+        deleteItem: vi.fn().mockResolvedValue(true),
       };
 
       const config: OptimisticConfig<TestState> = {
@@ -295,7 +295,7 @@ describe('Optimistic Updates', () => {
 
     it('should rollback on failure', async () => {
       const mockApi = {
-        updateItem: jest.fn().mockRejectedValue(new Error('API Error')),
+        updateItem: vi.fn().mockRejectedValue(new Error('API Error')),
       };
 
       const config: OptimisticConfig<TestState> = {
@@ -353,7 +353,7 @@ describe('Optimistic Updates', () => {
       let resolveUpdate2: () => void;
 
       const mockApi = {
-        updateItem: jest.fn()
+        updateItem: vi.fn()
           .mockImplementationOnce(() => new Promise(resolve => { resolveUpdate1 = () => resolve(true); }))
           .mockImplementationOnce(() => new Promise(resolve => { resolveUpdate2 = () => resolve(true); })),
       };
@@ -534,7 +534,7 @@ describe('Optimistic Updates', () => {
 
     it('should use optimistic update hook', async () => {
       const mockApi = {
-        increment: jest.fn().mockResolvedValue(true),
+        increment: vi.fn().mockResolvedValue(true),
       };
 
       const useStore = create<TestState>()((set) => ({
@@ -574,7 +574,7 @@ describe('Optimistic Updates', () => {
 
     it('should track optimistic state', async () => {
       const mockApi = {
-        updateText: jest.fn()
+        updateText: vi.fn()
           .mockImplementationOnce(() => new Promise(resolve => setTimeout(() => resolve(true), 50))),
       };
 
@@ -620,7 +620,7 @@ describe('Optimistic Updates', () => {
 
     it('should handle rollback in hooks', async () => {
       const mockApi = {
-        increment: jest.fn().mockRejectedValue(new Error('API Error')),
+        increment: vi.fn().mockRejectedValue(new Error('API Error')),
       };
 
       const useStore = create<TestState>()((set) => ({

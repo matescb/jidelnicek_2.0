@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import React from 'react';
 import { create } from 'zustand';
 import { renderHook, act } from '@testing-library/react';
@@ -11,11 +11,11 @@ import type { HydrationConfig, SerializedState, HydrationDependency } from '../h
 
 describe('Hydration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('StateSerializer', () => {
@@ -360,7 +360,7 @@ describe('Hydration', () => {
         timestamp: Date.now(),
       };
 
-      const onError = jest.fn();
+      const onError = vi.fn();
 
       const config: HydrationConfig<TestState> = {
         name: 'test-store',
@@ -606,7 +606,7 @@ describe('Hydration', () => {
     });
 
     it('should handle hydration mismatch warnings', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const clientState = {
         count: 0,

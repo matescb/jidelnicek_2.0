@@ -1,19 +1,18 @@
+import { vi } from 'vitest';
 /**
  * Tests for responsive hooks
  */
 
 import { renderHook, act } from '@testing-library/react';
-import {
-  useMediaQuery,
-  useBreakpoint,
-  useResponsive,
-  useWindowSize,
-} from '../../hooks/useResponsive';
-import { mockWindowResize, mockMediaQuery, viewports } from './utils';
+import { useMediaQuery } from '../../hooks/responsive/useMediaQuery';
+import { useBreakpoint } from '../../hooks/responsive/useBreakpoint';
+import { useResponsive } from '../../hooks/responsive/useResponsive';
+import { useWindowSize } from '../../hooks/responsive/useWindowSize';
+import { mockWindowResize, mockMediaQuery, VIEWPORT_PRESETS } from '../utils/responsive';
 
 describe('useMediaQuery', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should return correct match status', () => {
@@ -70,11 +69,11 @@ describe('useMediaQuery', () => {
 
 describe('useBreakpoint', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should detect mobile breakpoint', () => {
-    mockWindowResize(viewports.mobile.width, viewports.mobile.height);
+    mockWindowResize(VIEWPORT_PRESETS.mobile.medium.width, VIEWPORT_PRESETS.mobile.medium.height);
     mockMediaQuery('(max-width: 639px)', true);
     mockMediaQuery('(min-width: 640px) and (max-width: 767px)', false);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', false);
@@ -86,7 +85,7 @@ describe('useBreakpoint', () => {
   });
 
   it('should detect tablet breakpoint', () => {
-    mockWindowResize(viewports.tablet.width, viewports.tablet.height);
+    mockWindowResize(VIEWPORT_PRESETS.tablet.portrait.width, VIEWPORT_PRESETS.tablet.portrait.height);
     mockMediaQuery('(max-width: 639px)', false);
     mockMediaQuery('(min-width: 640px) and (max-width: 767px)', false);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', true);
@@ -98,7 +97,7 @@ describe('useBreakpoint', () => {
   });
 
   it('should detect desktop breakpoint', () => {
-    mockWindowResize(viewports.desktop.width, viewports.desktop.height);
+    mockWindowResize(VIEWPORT_PRESETS.desktop.medium.width, VIEWPORT_PRESETS.desktop.medium.height);
     mockMediaQuery('(max-width: 639px)', false);
     mockMediaQuery('(min-width: 640px) and (max-width: 767px)', false);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', false);
@@ -110,7 +109,7 @@ describe('useBreakpoint', () => {
   });
 
   it('should update on window resize', () => {
-    mockWindowResize(viewports.mobile.width, viewports.mobile.height);
+    mockWindowResize(VIEWPORT_PRESETS.mobile.medium.width, VIEWPORT_PRESETS.mobile.medium.height);
     mockMediaQuery('(max-width: 639px)', true);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', false);
 
@@ -119,7 +118,7 @@ describe('useBreakpoint', () => {
 
     // Resize to tablet
     act(() => {
-      mockWindowResize(viewports.tablet.width, viewports.tablet.height);
+      mockWindowResize(VIEWPORT_PRESETS.tablet.portrait.width, VIEWPORT_PRESETS.tablet.portrait.height);
       mockMediaQuery('(max-width: 639px)', false);
       mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', true);
     });
@@ -130,11 +129,11 @@ describe('useBreakpoint', () => {
 
 describe('useResponsive', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should detect mobile device', () => {
-    mockWindowResize(viewports.mobile.width, viewports.mobile.height);
+    mockWindowResize(VIEWPORT_PRESETS.mobile.medium.width, VIEWPORT_PRESETS.mobile.medium.height);
     mockMediaQuery('(max-width: 767px)', true);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', false);
     mockMediaQuery('(min-width: 1024px)', false);
@@ -149,7 +148,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect tablet device', () => {
-    mockWindowResize(viewports.tablet.width, viewports.tablet.height);
+    mockWindowResize(VIEWPORT_PRESETS.tablet.portrait.width, VIEWPORT_PRESETS.tablet.portrait.height);
     mockMediaQuery('(max-width: 767px)', false);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', true);
     mockMediaQuery('(min-width: 1024px)', false);
@@ -164,7 +163,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect desktop device', () => {
-    mockWindowResize(viewports.desktop.width, viewports.desktop.height);
+    mockWindowResize(VIEWPORT_PRESETS.desktop.medium.width, VIEWPORT_PRESETS.desktop.medium.height);
     mockMediaQuery('(max-width: 767px)', false);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', false);
     mockMediaQuery('(min-width: 1024px)', true);
@@ -185,7 +184,7 @@ describe('useResponsive', () => {
       writable: true,
     });
 
-    mockWindowResize(viewports.tablet.width, viewports.tablet.height);
+    mockWindowResize(VIEWPORT_PRESETS.tablet.portrait.width, VIEWPORT_PRESETS.tablet.portrait.height);
     mockMediaQuery('(max-width: 767px)', false);
     mockMediaQuery('(min-width: 768px) and (max-width: 1023px)', true);
     mockMediaQuery('(min-width: 1024px)', false);
@@ -200,37 +199,37 @@ describe('useResponsive', () => {
 
 describe('useWindowSize', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockWindowResize(viewports.desktop.width, viewports.desktop.height);
+    vi.clearAllMocks();
+    mockWindowResize(VIEWPORT_PRESETS.desktop.medium.width, VIEWPORT_PRESETS.desktop.medium.height);
   });
 
   it('should return initial window size', () => {
     const { result } = renderHook(() => useWindowSize());
     expect(result.current).toEqual({
-      width: viewports.desktop.width,
-      height: viewports.desktop.height,
+      width: VIEWPORT_PRESETS.desktop.medium.width,
+      height: VIEWPORT_PRESETS.desktop.medium.height,
     });
   });
 
   it('should update on window resize', () => {
     const { result } = renderHook(() => useWindowSize());
     expect(result.current).toEqual({
-      width: viewports.desktop.width,
-      height: viewports.desktop.height,
+      width: VIEWPORT_PRESETS.desktop.medium.width,
+      height: VIEWPORT_PRESETS.desktop.medium.height,
     });
 
     act(() => {
-      mockWindowResize(viewports.mobile.width, viewports.mobile.height);
+      mockWindowResize(VIEWPORT_PRESETS.mobile.medium.width, VIEWPORT_PRESETS.mobile.medium.height);
     });
 
     expect(result.current).toEqual({
-      width: viewports.mobile.width,
-      height: viewports.mobile.height,
+      width: VIEWPORT_PRESETS.mobile.medium.width,
+      height: VIEWPORT_PRESETS.mobile.medium.height,
     });
   });
 
   it('should debounce resize events', async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { result } = renderHook(() => useWindowSize());
 
     // Trigger multiple rapid resizes
@@ -241,17 +240,17 @@ describe('useWindowSize', () => {
     });
 
     // Should not update immediately
-    expect(result.current.width).toBe(viewports.desktop.width);
+    expect(result.current.width).toBe(VIEWPORT_PRESETS.desktop.medium.width);
 
     // Fast forward debounce timer
     act(() => {
-      jest.advanceTimersByTime(150);
+      vi.advanceTimersByTime(150);
     });
 
     // Should update to last resize
     expect(result.current.width).toBe(1200);
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should handle SSR safely', () => {
@@ -269,7 +268,7 @@ describe('useWindowSize', () => {
   });
 
   it('should clean up resize listener on unmount', () => {
-    const removeEventListener = jest.spyOn(window, 'removeEventListener');
+    const removeEventListener = vi.spyOn(window, 'removeEventListener');
     const { unmount } = renderHook(() => useWindowSize());
     
     unmount();

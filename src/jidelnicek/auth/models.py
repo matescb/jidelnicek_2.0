@@ -271,7 +271,11 @@ class AuthUser(Base):
         return datetime.now(timezone.utc) < self.locked_until
     
     def __repr__(self):
-        return f"<AuthUser(id={self.id}, email={self.email}, role={self.role})>"
+        try:
+            return f"<AuthUser(id={self.id}, email={self.email}, role={self.role})>"
+        except Exception:
+            # Fallback for detached instances
+            return f"<AuthUser(detached)>"
 
 
 class AuthSession(Base):

@@ -2,6 +2,7 @@
  * Tests for gesture hooks
  */
 
+import { vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import {
   useSwipe,
@@ -30,7 +31,7 @@ describe('useSwipe', () => {
   });
 
   it('should detect swipe left', async () => {
-    const onSwipe = jest.fn();
+    const onSwipe = vi.fn();
     renderHook(() => useSwipe(element, { onSwipe }));
 
     await simulateSwipe(element, 200, 100, 50, 100, 200);
@@ -46,7 +47,7 @@ describe('useSwipe', () => {
   });
 
   it('should detect swipe right', async () => {
-    const onSwipe = jest.fn();
+    const onSwipe = vi.fn();
     renderHook(() => useSwipe(element, { onSwipe }));
 
     await simulateSwipe(element, 50, 100, 200, 100, 200);
@@ -62,7 +63,7 @@ describe('useSwipe', () => {
   });
 
   it('should detect swipe up', async () => {
-    const onSwipe = jest.fn();
+    const onSwipe = vi.fn();
     renderHook(() => useSwipe(element, { onSwipe }));
 
     await simulateSwipe(element, 100, 200, 100, 50, 200);
@@ -78,7 +79,7 @@ describe('useSwipe', () => {
   });
 
   it('should detect swipe down', async () => {
-    const onSwipe = jest.fn();
+    const onSwipe = vi.fn();
     renderHook(() => useSwipe(element, { onSwipe }));
 
     await simulateSwipe(element, 100, 50, 100, 200, 200);
@@ -94,7 +95,7 @@ describe('useSwipe', () => {
   });
 
   it('should respect threshold', async () => {
-    const onSwipe = jest.fn();
+    const onSwipe = vi.fn();
     renderHook(() => useSwipe(element, { onSwipe, threshold: 100 }));
 
     // Swipe less than threshold
@@ -109,9 +110,9 @@ describe('useSwipe', () => {
   });
 
   it('should call onSwipeStart and onSwipeEnd', async () => {
-    const onSwipeStart = jest.fn();
-    const onSwipeEnd = jest.fn();
-    const onSwipe = jest.fn();
+    const onSwipeStart = vi.fn();
+    const onSwipeEnd = vi.fn();
+    const onSwipe = vi.fn();
 
     renderHook(() =>
       useSwipe(element, { onSwipe, onSwipeStart, onSwipeEnd })
@@ -135,7 +136,7 @@ describe('useSwipe', () => {
   });
 
   it('should handle mouse events when touch is not available', () => {
-    const onSwipe = jest.fn();
+    const onSwipe = vi.fn();
     renderHook(() => useSwipe(element, { onSwipe }));
 
     act(() => {
@@ -165,7 +166,7 @@ describe('useSwipe', () => {
   });
 
   it('should cleanup event listeners on unmount', () => {
-    const removeEventListener = jest.spyOn(element, 'removeEventListener');
+    const removeEventListener = vi.spyOn(element, 'removeEventListener');
     const { unmount } = renderHook(() => useSwipe(element, {}));
 
     unmount();
@@ -194,7 +195,7 @@ describe('usePinch', () => {
   });
 
   it('should detect pinch zoom in', async () => {
-    const onPinch = jest.fn();
+    const onPinch = vi.fn();
     renderHook(() => usePinch(element, { onPinch }));
 
     await simulatePinch(element, 2, 200);
@@ -211,7 +212,7 @@ describe('usePinch', () => {
   });
 
   it('should detect pinch zoom out', async () => {
-    const onPinch = jest.fn();
+    const onPinch = vi.fn();
     renderHook(() => usePinch(element, { onPinch }));
 
     await simulatePinch(element, 0.5, 200);
@@ -221,11 +222,11 @@ describe('usePinch', () => {
   });
 
   it('should call onPinchStart and onPinchEnd', async () => {
-    const onPinchStart = jest.fn();
-    const onPinchEnd = jest.fn();
+    const onPinchStart = vi.fn();
+    const onPinchEnd = vi.fn();
 
     renderHook(() =>
-      usePinch(element, { onPinch: jest.fn(), onPinchStart, onPinchEnd })
+      usePinch(element, { onPinch: vi.fn(), onPinchStart, onPinchEnd })
     );
 
     act(() => {
@@ -252,7 +253,7 @@ describe('usePinch', () => {
   });
 
   it('should respect minimum scale', async () => {
-    const onPinch = jest.fn();
+    const onPinch = vi.fn();
     renderHook(() => usePinch(element, { onPinch, minScale: 0.5 }));
 
     // Try to pinch below minimum
@@ -263,7 +264,7 @@ describe('usePinch', () => {
   });
 
   it('should respect maximum scale', async () => {
-    const onPinch = jest.fn();
+    const onPinch = vi.fn();
     renderHook(() => usePinch(element, { onPinch, maxScale: 3 }));
 
     // Try to pinch above maximum
@@ -280,16 +281,16 @@ describe('useLongPress', () => {
   beforeEach(() => {
     element = document.createElement('div');
     document.body.appendChild(element);
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     document.body.removeChild(element);
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should trigger long press after delay', () => {
-    const onLongPress = jest.fn();
+    const onLongPress = vi.fn();
     renderHook(() => useLongPress(element, { onLongPress }));
 
     act(() => {
@@ -301,14 +302,14 @@ describe('useLongPress', () => {
     expect(onLongPress).not.toHaveBeenCalled();
 
     act(() => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
 
     expect(onLongPress).toHaveBeenCalledWith({ x: 100, y: 100 });
   });
 
   it('should respect custom delay', () => {
-    const onLongPress = jest.fn();
+    const onLongPress = vi.fn();
     renderHook(() => useLongPress(element, { onLongPress, delay: 1000 }));
 
     act(() => {
@@ -318,20 +319,20 @@ describe('useLongPress', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(999);
+      vi.advanceTimersByTime(999);
     });
 
     expect(onLongPress).not.toHaveBeenCalled();
 
     act(() => {
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
     });
 
     expect(onLongPress).toHaveBeenCalled();
   });
 
   it('should cancel on move beyond threshold', () => {
-    const onLongPress = jest.fn();
+    const onLongPress = vi.fn();
     renderHook(() =>
       useLongPress(element, { onLongPress, moveThreshold: 10 })
     );
@@ -349,14 +350,14 @@ describe('useLongPress', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
 
     expect(onLongPress).not.toHaveBeenCalled();
   });
 
   it('should cancel on touch end', () => {
-    const onLongPress = jest.fn();
+    const onLongPress = vi.fn();
     renderHook(() => useLongPress(element, { onLongPress }));
 
     act(() => {
@@ -366,7 +367,7 @@ describe('useLongPress', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(250);
+      vi.advanceTimersByTime(250);
     });
 
     act(() => {
@@ -376,19 +377,19 @@ describe('useLongPress', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(250);
+      vi.advanceTimersByTime(250);
     });
 
     expect(onLongPress).not.toHaveBeenCalled();
   });
 
   it('should call onPressStart and onPressEnd', () => {
-    const onPressStart = jest.fn();
-    const onPressEnd = jest.fn();
+    const onPressStart = vi.fn();
+    const onPressEnd = vi.fn();
 
     renderHook(() =>
       useLongPress(element, {
-        onLongPress: jest.fn(),
+        onLongPress: vi.fn(),
         onPressStart,
         onPressEnd,
       })
@@ -429,7 +430,7 @@ describe('useDrag', () => {
   });
 
   it('should track drag movement', () => {
-    const onDrag = jest.fn();
+    const onDrag = vi.fn();
     renderHook(() => useDrag(element, { onDrag }));
 
     act(() => {
@@ -453,7 +454,7 @@ describe('useDrag', () => {
   });
 
   it('should respect constraints', () => {
-    const onDrag = jest.fn();
+    const onDrag = vi.fn();
     renderHook(() =>
       useDrag(element, {
         onDrag,
@@ -488,7 +489,7 @@ describe('useDrag', () => {
   });
 
   it('should handle axis locking', () => {
-    const onDrag = jest.fn();
+    const onDrag = vi.fn();
     renderHook(() => useDrag(element, { onDrag, axis: 'x' }));
 
     act(() => {
@@ -512,12 +513,12 @@ describe('useDrag', () => {
   });
 
   it('should call lifecycle callbacks', () => {
-    const onDragStart = jest.fn();
-    const onDragEnd = jest.fn();
+    const onDragStart = vi.fn();
+    const onDragEnd = vi.fn();
 
     renderHook(() =>
       useDrag(element, {
-        onDrag: jest.fn(),
+        onDrag: vi.fn(),
         onDragStart,
         onDragEnd,
       })
@@ -541,7 +542,7 @@ describe('useDrag', () => {
   });
 
   it('should handle momentum', async () => {
-    const onDrag = jest.fn();
+    const onDrag = vi.fn();
     renderHook(() => useDrag(element, { onDrag, momentum: true }));
 
     act(() => {

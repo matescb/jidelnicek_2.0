@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { usePresence } from '../usePresence'
 import type { UsePresenceOptions } from '../usePresence'
@@ -6,11 +7,11 @@ import type { UsePresenceOptions } from '../usePresence'
 
 describe('usePresence', () => {
   beforeEach(() => {
-    jest.useFakeTimers()
+    vi.useFakeTimers()
   })
 
   afterEach(() => {
-    jest.useRealTimers()
+    vi.useRealTimers()
   })
   const defaultOptions: UsePresenceOptions = {
     tripId: 'trip-123',
@@ -20,8 +21,8 @@ describe('usePresence', () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    jest.clearAllTimers()
+    vi.clearAllMocks()
+    vi.clearAllTimers()
   })
 
   describe('Initial State', () => {
@@ -55,7 +56,7 @@ describe('usePresence', () => {
       
       // Fast-forward WebSocket connection
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       await waitFor(() => {
@@ -70,7 +71,7 @@ describe('usePresence', () => {
       
       // Fast-forward to establish connection
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       await waitFor(() => {
@@ -84,7 +85,7 @@ describe('usePresence', () => {
       )
       
       act(() => {
-        jest.advanceTimersByTime(1000)
+        vi.advanceTimersByTime(1000)
       })
       
       expect(result.current.isConnected).toBe(false)
@@ -95,7 +96,7 @@ describe('usePresence', () => {
       
       // Establish connection
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       await waitFor(() => {
@@ -103,11 +104,11 @@ describe('usePresence', () => {
       })
       
       // Clear previous calls
-      jest.clearAllMocks()
+      vi.clearAllMocks()
       
       // Fast-forward to trigger heartbeat
       act(() => {
-        jest.advanceTimersByTime(10000) // 10 seconds
+        vi.advanceTimersByTime(10000) // 10 seconds
       })
       
       // Should have sent heartbeat
@@ -119,7 +120,7 @@ describe('usePresence', () => {
       
       // Establish connection
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       await waitFor(() => {
@@ -133,7 +134,7 @@ describe('usePresence', () => {
       
       // Should attempt reconnection after delay
       act(() => {
-        jest.advanceTimersByTime(1000)
+        vi.advanceTimersByTime(1000)
       })
       
       await waitFor(() => {
@@ -236,7 +237,7 @@ describe('usePresence', () => {
       
       // Fast-forward 5 seconds
       act(() => {
-        jest.advanceTimersByTime(5000)
+        vi.advanceTimersByTime(5000)
       })
       
       // Should no longer be new
@@ -276,7 +277,7 @@ describe('usePresence', () => {
       
       // Fast-forward to trigger polling
       act(() => {
-        jest.advanceTimersByTime(1000)
+        vi.advanceTimersByTime(1000)
       })
       
       await waitFor(() => {
@@ -298,7 +299,7 @@ describe('usePresence', () => {
       
       // Connect WebSocket
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       await waitFor(() => {
@@ -307,7 +308,7 @@ describe('usePresence', () => {
       
       // Wait for any WebSocket-related updates to settle
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       // Get state after WebSocket connection
@@ -322,7 +323,7 @@ describe('usePresence', () => {
       
       // Fast-forward past poll interval
       act(() => {
-        jest.advanceTimersByTime(2000)
+        vi.advanceTimersByTime(2000)
       })
       
       // Should not have polled (timestamps should be unchanged)
@@ -343,7 +344,7 @@ describe('usePresence', () => {
       
       // Connect first
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       await waitFor(() => {
@@ -364,7 +365,7 @@ describe('usePresence', () => {
       
       // Establish connection
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
       
       // Unmount should close connection
@@ -380,7 +381,7 @@ describe('usePresence', () => {
       
       // Start polling
       act(() => {
-        jest.advanceTimersByTime(1000)
+        vi.advanceTimersByTime(1000)
       })
       
       // Unmount should clear timer
@@ -388,7 +389,7 @@ describe('usePresence', () => {
       
       // Advancing time should not cause any updates
       act(() => {
-        jest.advanceTimersByTime(10000)
+        vi.advanceTimersByTime(10000)
       })
       
       // No errors should occur
@@ -531,7 +532,7 @@ describe('usePresence', () => {
       
       // Advance time less than interval
       act(() => {
-        jest.advanceTimersByTime(customInterval - 1000)
+        vi.advanceTimersByTime(customInterval - 1000)
       })
       
       // Should not have polled yet - compare timestamps
@@ -547,7 +548,7 @@ describe('usePresence', () => {
       
       // Advance to interval
       act(() => {
-        jest.advanceTimersByTime(1000)
+        vi.advanceTimersByTime(1000)
       })
       
       // Should have polled - at least one participant should have updated lastSeen

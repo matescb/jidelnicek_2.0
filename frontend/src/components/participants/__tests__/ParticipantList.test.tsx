@@ -128,7 +128,7 @@ describe('ParticipantList', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   const renderComponent = (props = {}) => {

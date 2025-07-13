@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jidelnicek.auth.dependencies.auth import get_current_user
 from jidelnicek.core.dependencies import get_db
-from jidelnicek.core.models.user import User
+from jidelnicek.auth.models import AuthUser as User
 from jidelnicek.users.schemas.user import (
     UserCreate,
     UserUpdate,

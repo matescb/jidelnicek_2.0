@@ -82,6 +82,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecipeList'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -150,6 +154,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       tags:
       - Recipes
@@ -194,6 +204,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/{recipeId}/duplicate:
     post:
       tags:
@@ -218,12 +234,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           description: Recipe limit reached
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/{recipeId}/versions:
     get:
       tags:
@@ -245,6 +271,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/{recipeId}/versions/{versionId}/restore:
     post:
       tags:
@@ -266,10 +298,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/{recipeId}/images:
     post:
       tags:
@@ -304,6 +346,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/{recipeId}/images/{imageId}:
     delete:
       tags:
@@ -325,6 +373,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/{recipeId}/publish:
     post:
       tags:
@@ -340,10 +394,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/{recipeId}/unpublish:
     post:
       tags:
@@ -362,6 +426,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /recipes/search:
     get:
       tags:
@@ -410,6 +480,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecipeList'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
         '401':
           $ref: '#/components/responses/Unauthorized'
 components:
@@ -539,6 +613,27 @@ components:
           example:
             error: Too Many Requests
             message: Rate limit exceeded. Please try again later.
+    ValidationError:
+      description: Validation error - invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Validation Error
+            message: Request validation failed
+            details:
+              - field: parameterId
+                issue: Invalid UUID format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Internal Server Error
+            message: An unexpected error occurred
   schemas:
     Error:
       type: object

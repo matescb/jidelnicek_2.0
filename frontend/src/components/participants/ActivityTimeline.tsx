@@ -14,11 +14,11 @@ import {
   Paper,
   Chip,
   Avatar,
-  useTheme,
   IconButton,
   Collapse,
   Button,
-} from 'react';
+  useTheme,
+} from '@mui/material';
 import {
   PersonAdd,
   PersonRemove,

@@ -47,11 +47,9 @@ class ValidationException(Exception):
     def to_dict(self) -> Dict[str, Any]:
         """Convert exception to dictionary for API responses."""
         return {
-            "error": {
-                "code": self.error_code,
-                "message": self.message,
-                "details": self.errors
-            }
+            "error": self.error_code,
+            "message": self.message,
+            "details": self.errors
         }
 
 
@@ -160,11 +158,9 @@ class ValidationMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={
-                    "error": {
-                        "code": "VALIDATION_MIDDLEWARE_ERROR",
-                        "message": error_detail,
-                        "request_id": request_id
-                    }
+                    "error": "VALIDATION_MIDDLEWARE_ERROR",
+                    "message": error_detail,
+                    "request_id": request_id
                 },
                 headers={"X-Request-ID": request_id}
             )
@@ -296,11 +292,9 @@ def format_validation_error(error: Union[RequestValidationError, ResponseValidat
             error_details.append(error_detail)
     
     return {
-        "error": {
-            "code": "VALIDATION_ERROR",
-            "message": "Request validation failed",
-            "details": error_details
-        }
+        "error": "VALIDATION_ERROR",
+        "message": "Request validation failed",
+        "details": error_details
     }
 
 
@@ -321,7 +315,7 @@ def create_validation_error_response(
     formatted_error = format_validation_error(error)
     
     if request_id:
-        formatted_error["error"]["request_id"] = request_id
+        formatted_error["request_id"] = request_id
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -353,11 +347,9 @@ async def response_validation_exception_handler(request: Request, exc: ResponseV
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
-                "error": {
-                    "code": "INTERNAL_SERVER_ERROR",
-                    "message": "Internal server error occurred",
-                    "request_id": request_id
-                }
+                "error": "INTERNAL_SERVER_ERROR",
+                "message": "Internal server error occurred",
+                "request_id": request_id
             },
             headers={"X-Request-ID": request_id}
         )
@@ -380,7 +372,7 @@ async def custom_validation_exception_handler(request: Request, exc: ValidationE
     
     response_data = exc.to_dict()
     if request_id:
-        response_data["error"]["request_id"] = request_id
+        response_data["request_id"] = request_id
     
     return JSONResponse(
         status_code=exc.status_code,

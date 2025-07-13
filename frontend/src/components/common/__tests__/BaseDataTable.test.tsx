@@ -98,7 +98,7 @@ describe('BaseDataTable', () => {
   });
 
   it('handles row selection correctly', () => {
-    const onSelectionChange = jest.fn();
+    const onSelectionChange = vi.fn();
     
     render(
       <BaseDataTable
@@ -202,7 +202,7 @@ describe('BaseDataTable', () => {
   });
 
   it('handles export functionality', () => {
-    const onExport = jest.fn();
+    const onExport = vi.fn();
     
     render(
       <BaseDataTable
@@ -221,7 +221,7 @@ describe('BaseDataTable', () => {
   });
 
   it('handles row click', () => {
-    const onRowClick = jest.fn();
+    const onRowClick = vi.fn();
     
     render(
       <BaseDataTable

@@ -381,6 +381,280 @@ async def build_recipe_search_query(
 # Main Recipe CRUD Endpoints
 # =============================================================================
 
+# =============================================================================
+# Recipe Version Endpoints (MUST come before generic {recipe_id} patterns)
+# =============================================================================
+
+@router.get("/{recipe_id}/versions")
+async def get_recipe_versions(
+    recipe_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[AuthUser] = Depends(get_current_user_optional)
+):
+    """
+    Get recipe version history.
+    
+    - Returns last 10 versions of a recipe
+    - Shows version number, change type, and metadata
+    - Only recipe owner can view versions
+    """
+    recipe = await get_recipe_or_404(recipe_id, db, current_user)
+    
+    # Check permissions - only owner can see versions
+    if not current_user or not await is_recipe_owner(recipe, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "FORBIDDEN", 
+                "message": "Only the recipe owner can view version history"
+            }
+        )
+    
+    # For now, return 501 - not implemented yet (versioning is complex feature)
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail={
+            "error": "NOT_IMPLEMENTED",
+            "message": "Recipe versioning is not yet implemented",
+            "details": [{"feature": "recipe_versioning", "status": "planned"}]
+        }
+    )
+
+
+@router.post("/{recipe_id}/versions/{version_id}/restore")  
+async def restore_recipe_version(
+    recipe_id: UUID,
+    version_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: AuthUser = Depends(get_current_user)
+):
+    """
+    Restore a previous version of a recipe.
+    
+    - Only recipe owner can restore versions
+    - Creates new version based on specified version
+    - Returns updated recipe data
+    """
+    recipe = await get_recipe_or_404(recipe_id, db, current_user)
+    
+    # Check permissions - only owner can restore versions
+    if not await is_recipe_owner(recipe, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can restore recipe versions" 
+            }
+        )
+    
+    # For now, return 501 - not implemented yet (versioning is complex feature)
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail={
+            "error": "NOT_IMPLEMENTED", 
+            "message": "Recipe version restoration is not yet implemented",
+            "details": [{"feature": "recipe_versioning", "status": "planned"}]
+        }
+    )
+
+
+# =============================================================================
+# Recipe Image Endpoints (MUST come before generic {recipe_id} patterns)
+# =============================================================================
+
+@router.post("/{recipe_id}/images")
+async def upload_recipe_image_to_recipe(
+    recipe_id: UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: AuthUser = Depends(get_current_user)
+):
+    """
+    Upload an image for a specific recipe.
+    
+    - Validates file type, size, and dimensions
+    - Only recipe owner can upload images
+    - Max 5MB per image, max 10 images per recipe
+    - Returns image metadata
+    """
+    recipe = await get_recipe_or_404(recipe_id, db, current_user)
+    
+    # Check permissions - only owner can upload images
+    if not await is_recipe_owner(recipe, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can upload images"
+            }
+        )
+    
+    # Check current image count
+    current_image_count = await db.execute(
+        select(func.count()).select_from(RecipeImage).where(RecipeImage.recipe_id == recipe_id)
+    )
+    image_count = current_image_count.scalar()
+    
+    if image_count >= 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "IMAGE_LIMIT_EXCEEDED",
+                "message": "Maximum 10 images allowed per recipe"
+            }
+        )
+    
+    # Validate file
+    try:
+        # Basic file validation
+        if not file.content_type or not file.content_type.startswith('image/'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_FILE_TYPE",
+                    "message": "Only image files are allowed"
+                }
+            )
+        
+        content = await file.read()
+        if len(content) > 5 * 1024 * 1024:  # 5MB limit
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "FILE_TOO_LARGE",
+                    "message": "Image file must be smaller than 5MB"
+                }
+            )
+        
+        # Generate URLs (in production would upload to cloud storage)
+        import uuid
+        import os
+        file_ext = os.path.splitext(file.filename)[1] if file.filename else '.jpg'
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        
+        base_url = "https://example.com/images/recipes"
+        image_url = f"{base_url}/{unique_filename}"
+        thumbnail_url = f"{base_url}/thumbs/{unique_filename}"
+        
+        # Create image record
+        recipe_image = RecipeImage(
+            recipe_id=recipe_id,
+            image_url=image_url,
+            thumbnail_url=thumbnail_url,
+            alt_text=f"Image for {recipe.name}",
+            display_order=image_count,
+            is_primary=(image_count == 0)  # First image is primary
+        )
+        
+        db.add(recipe_image)
+        await db.commit()
+        
+        return {
+            "id": str(recipe_image.id),
+            "image_url": image_url,
+            "thumbnail_url": thumbnail_url,
+            "file_size_bytes": len(content),
+            "uploaded_at": recipe_image.created_at.isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading recipe image: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "IMAGE_UPLOAD_ERROR",
+                "message": "Failed to upload image",
+                "details": [{"error": str(e)}]
+            }
+        )
+
+
+@router.delete("/{recipe_id}/images/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_recipe_image(
+    recipe_id: UUID,
+    image_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: AuthUser = Depends(get_current_user)
+):
+    """
+    Delete a recipe image.
+    
+    - Only recipe owner can delete images
+    - Removes image from recipe and storage
+    - Updates primary image if needed
+    """
+    recipe = await get_recipe_or_404(recipe_id, db, current_user)
+    
+    # Check permissions - only owner can delete images
+    if not await is_recipe_owner(recipe, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "FORBIDDEN",
+                "message": "Only the recipe owner can delete images"
+            }
+        )
+    
+    # Find the image
+    image_stmt = select(RecipeImage).where(
+        and_(
+            RecipeImage.recipe_id == recipe_id,
+            RecipeImage.id == image_id
+        )
+    )
+    image_result = await db.execute(image_stmt)
+    image = image_result.scalar_one_or_none()
+    
+    if not image:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "NOT_FOUND",
+                "message": "Image not found"
+            }
+        )
+    
+    try:
+        was_primary = image.is_primary
+        
+        # Delete the image
+        await db.delete(image)
+        
+        # If this was the primary image, make another one primary
+        if was_primary:
+            remaining_stmt = (
+                select(RecipeImage)
+                .where(RecipeImage.recipe_id == recipe_id)
+                .order_by(RecipeImage.display_order)
+                .limit(1)
+            )
+            remaining_result = await db.execute(remaining_stmt)
+            next_image = remaining_result.scalar_one_or_none()
+            
+            if next_image:
+                next_image.is_primary = True
+        
+        await db.commit()
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error deleting recipe image: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "IMAGE_DELETE_ERROR",
+                "message": "Failed to delete image",
+                "details": [{"error": str(e)}]
+            }
+        )
+
+
+# =============================================================================
+# Main Recipe CRUD Endpoints
+# =============================================================================
+
 @router.post("/", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
 async def create_recipe(
     recipe_data: RecipeCreate,
@@ -615,7 +889,7 @@ async def list_recipes(
         
         # Execute query with minimal loading
         stmt = stmt.options(
-            selectinload(Recipe.images).where(RecipeImage.is_primary == True),
+            selectinload(Recipe.images),
             selectinload(Recipe.ingredients)
         )
         
@@ -1740,3 +2014,5 @@ async def get_recipe_categorization(
         suggested_categories=suggested_category_responses,
         suggested_tags=suggested_tags
     )
+
+

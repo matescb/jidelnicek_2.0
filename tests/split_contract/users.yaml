@@ -41,6 +41,11 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+  - url: https://api.jidelnicek.cz/api/v1
+    description: Production server
 paths:
   /users/me:
     get:
@@ -57,6 +62,8 @@ paths:
                 $ref: '#/components/schemas/UserProfile'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       tags:
       - Users
@@ -67,7 +74,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserPreferences'
+              $ref: '#/components/schemas/UserUpdate'
       responses:
         '200':
           description: Profile updated successfully
@@ -79,6 +86,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /users/me/stats:
     get:
       tags:
@@ -94,6 +105,8 @@ paths:
                 $ref: '#/components/schemas/UserStats'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     bearerAuth:
@@ -339,1087 +352,104 @@ components:
         email:
           type: string
           format: email
+        is_active:
+          type: boolean
         email_verified:
           type: boolean
         role:
           type: string
-          enum:
-          - user
-          - admin
-        preferences:
-          $ref: '#/components/schemas/UserPreferences'
+        language:
+          type: string
+        unit_system:
+          type: string
+        energy_unit:
+          type: string
+        timezone:
+          type: string
+        has_pku:
+          type: boolean
         created_at:
+          type: string
+          format: date-time
+        updated_at:
           type: string
           format: date-time
         last_login:
           type: string
           format: date-time
+          nullable: true
         recipe_count:
           type: integer
         trip_count:
           type: integer
-    UserPreferences:
+    UserUpdate:
       type: object
+      additionalProperties: false
       properties:
+        email:
+          type: string
+          format: email
         language:
           type: string
-          enum:
-          - en
-          - cs
+          maxLength: 2
         unit_system:
           type: string
-          enum:
-          - metric
-          - imperial
+          maxLength: 10
         energy_unit:
           type: string
-          enum:
-          - kcal
-          - kJ
+          maxLength: 10
+        timezone:
+          type: string
+          maxLength: 50
     UserStats:
       type: object
       properties:
-        total_recipes:
+        total_recipes_created:
           type: integer
-        public_recipes:
+        total_trips_created:
           type: integer
-        total_trips:
+        total_trips_participated:
           type: integer
-        active_trips:
+        favorite_recipes_count:
           type: integer
-        total_ingredients:
+        recent_activity_count:
           type: integer
-        total_snacks:
+        joined_days_ago:
           type: integer
-        storage_used_mb:
-          type: number
-    NutritionalValues:
-      type: object
-      required:
-      - calories
-      - proteins_g
-      - carbohydrates_g
-      - fats_g
-      properties:
-        calories:
-          type: number
-          minimum: 0
-          description: Energy in calories (kcal)
-        proteins_g:
-          type: number
-          minimum: 0
-          description: Proteins in grams
-        carbohydrates_g:
-          type: number
-          minimum: 0
-          description: Total carbohydrates in grams
-        fats_g:
-          type: number
-          minimum: 0
-          description: Total fats in grams
-        sugars_g:
-          type: number
-          minimum: 0
-          description: Sugars (subset of carbohydrates)
-        saturated_fats_g:
-          type: number
-          minimum: 0
-        trans_fats_g:
-          type: number
-          minimum: 0
-        monounsaturated_fats_g:
-          type: number
-          minimum: 0
-        polyunsaturated_fats_g:
-          type: number
-          minimum: 0
-        cholesterol_mg:
-          type: number
-          minimum: 0
-        fiber_g:
-          type: number
-          minimum: 0
-        salt_g:
-          type: number
-          minimum: 0
-        calcium_mg:
-          type: number
-          minimum: 0
-        sodium_mg:
-          type: number
-          minimum: 0
-        water_g:
-          type: number
-          minimum: 0
-        phe_mg:
-          type: number
-          minimum: 0
-          description: Phenylalanine for PKU tracking
-        vitamin_a_ug:
-          type: number
-          minimum: 0
-        vitamin_b1_mg:
-          type: number
-          minimum: 0
-        vitamin_b2_mg:
-          type: number
-          minimum: 0
-        vitamin_b3_mg:
-          type: number
-          minimum: 0
-        vitamin_b5_mg:
-          type: number
-          minimum: 0
-        vitamin_b6_mg:
-          type: number
-          minimum: 0
-        vitamin_b7_ug:
-          type: number
-          minimum: 0
-        vitamin_b9_ug:
-          type: number
-          minimum: 0
-        vitamin_b12_ug:
-          type: number
-          minimum: 0
-        vitamin_c_mg:
-          type: number
-          minimum: 0
-        vitamin_d_ug:
-          type: number
-          minimum: 0
-        vitamin_e_mg:
-          type: number
-          minimum: 0
-        vitamin_k_ug:
-          type: number
-          minimum: 0
-    RecipeIngredientInput:
-      type: object
-      required:
-      - ingredient_id
-      - quantity_g
-      properties:
-        ingredient_id:
-          type: string
-          format: uuid
-        quantity_g:
-          type: number
-          minimum: 0.1
-          maximum: 10000
-          description: Quantity in grams
-    RecipeIngredient:
-      allOf:
-      - $ref: '#/components/schemas/RecipeIngredientInput'
-      - type: object
-        properties:
-          ingredient:
-            $ref: '#/components/schemas/Ingredient'
-    RecipeCreate:
-      type: object
-      required:
-      - name
-      - ingredients
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        instructions:
-          type: string
-          maxLength: 2000
-        prep_time_minutes:
-          type: integer
-          minimum: 0
-          maximum: 1440
-        cook_time_minutes:
-          type: integer
-          minimum: 0
-          maximum: 1440
-          description: Time on stove
-        water_ml:
-          type: integer
-          minimum: 0
-          description: Cooking water required
-          default: 0
-        servings:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 1
-        ingredients:
-          type: array
-          minItems: 1
-          maxItems: 50
-          items:
-            $ref: '#/components/schemas/RecipeIngredientInput'
-    RecipeUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        instructions:
-          type: string
-          maxLength: 2000
-        prep_time_minutes:
-          type: integer
-          minimum: 0
-          maximum: 1440
-        cook_time_minutes:
-          type: integer
-          minimum: 0
-          maximum: 1440
-        water_ml:
-          type: integer
-          minimum: 0
-        servings:
-          type: integer
-          minimum: 1
-          maximum: 100
-        ingredients:
-          type: array
-          minItems: 1
-          maxItems: 50
-          items:
-            $ref: '#/components/schemas/RecipeIngredientInput'
-    Recipe:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        instructions:
-          type: string
-        prep_time_minutes:
-          type: integer
-        cook_time_minutes:
-          type: integer
-        water_ml:
-          type: integer
-        servings:
-          type: integer
-        is_public:
-          type: boolean
-        published_at:
-          type: string
-          format: date-time
-        fork_count:
-          type: integer
-        forked_from_id:
-          type: string
-          format: uuid
-        can_unpublish:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        current_version_id:
-          type: string
-          format: uuid
-        version_number:
-          type: integer
-        ingredients:
-          type: array
-          items:
-            $ref: '#/components/schemas/RecipeIngredient'
-        nutrition:
-          $ref: '#/components/schemas/NutritionalValues'
-        images:
-          type: array
-          items:
-            $ref: '#/components/schemas/RecipeImage'
-        author:
-          type: object
-          properties:
-            id:
-              type: string
-              format: uuid
-            name:
-              type: string
-    RecipeList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Recipe'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    RecipeVersion:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        recipe_id:
-          type: string
-          format: uuid
-        version_number:
-          type: integer
-        name:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        created_by:
-          type: string
-          format: uuid
-        change_type:
-          type: string
-          enum:
-          - major
-          - minor
-          description: Major if nutrition changed >1%, minor for text only
-    RecipeImage:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        image_url:
-          type: string
-          format: uri
-        file_size_bytes:
-          type: integer
-        uploaded_at:
-          type: string
-          format: date-time
-    IngredientCreate:
-      type: object
-      required:
-      - name
-      - nutritional_values
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        category:
-          type: string
-          maxLength: 50
-        nutritional_values:
-          $ref: '#/components/schemas/NutritionalValues'
-    IngredientUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        category:
-          type: string
-          maxLength: 50
-        nutritional_values:
-          $ref: '#/components/schemas/NutritionalValues'
-    Ingredient:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: Null for global ingredients
-        name:
-          type: string
-        category:
-          type: string
-        is_global:
-          type: boolean
-        nutritional_values:
-          $ref: '#/components/schemas/NutritionalValues'
-        created_at:
-          type: string
-          format: date-time
-    IngredientList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Ingredient'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    SnackCreate:
-      type: object
-      required:
-      - name
-      - measurement_type
-      - nutritional_values
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        measurement_type:
-          type: string
-          enum:
-          - piece
-          - per_100g
-        piece_weight_g:
-          type: number
-          minimum: 0.1
-          description: Required if measurement_type is 'piece'
-        nutritional_values:
-          $ref: '#/components/schemas/NutritionalValues'
-    SnackUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        measurement_type:
-          type: string
-          enum:
-          - piece
-          - per_100g
-        piece_weight_g:
-          type: number
-          minimum: 0.1
-        nutritional_values:
-          $ref: '#/components/schemas/NutritionalValues'
-    Snack:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-          nullable: true
-        name:
-          type: string
-        measurement_type:
-          type: string
-          enum:
-          - piece
-          - per_100g
-        piece_weight_g:
-          type: number
-        is_global:
-          type: boolean
-        nutritional_values:
-          $ref: '#/components/schemas/NutritionalValues'
-        created_at:
-          type: string
-          format: date-time
-    SnackList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Snack'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    ParticipantCreate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        number:
-          type: integer
-          minimum: 1
-        coefficient:
-          type: number
-          minimum: 0.1
-          maximum: 500
-          default: 100
-          description: Percentage (100 = 100%)
-    ParticipantUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        coefficient:
-          type: number
-          minimum: 0.1
-          maximum: 500
-    Participant:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        number:
-          type: integer
-        coefficient:
-          type: number
-    StoveConfig:
-      type: object
-      required:
-      - efficiency_g_per_liter
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        efficiency_g_per_liter:
-          type: number
-          minimum: 0.1
-          description: Grams of fuel per liter of boiling water
-        altitude_adjustment_percent:
-          type: number
-          minimum: 0
-          maximum: 100
-          default: 0
-          description: Additional fuel percentage for altitude
-    Stove:
-      allOf:
-      - $ref: '#/components/schemas/StoveConfig'
-      - type: object
-        properties:
-          id:
-            type: string
-            format: uuid
-          trip_id:
-            type: string
-            format: uuid
-    TripCreate:
-      type: object
-      required:
-      - name
-      - start_date
-      - end_date
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        start_date:
-          type: string
-          format: date
-        end_date:
-          type: string
-          format: date
-        meal_slots:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          default:
-          - Breakfast
-          - Lunch
-          - Dinner
-        track_recipe_changes:
-          type: boolean
-          default: false
-          description: Track live recipe changes instead of snapshots
-        participants:
-          type: array
-          maxItems: 20
-          items:
-            $ref: '#/components/schemas/ParticipantCreate'
-    TripUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        start_date:
-          type: string
-          format: date
-        end_date:
-          type: string
-          format: date
-        meal_slots:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-        track_recipe_changes:
-          type: boolean
-    Trip:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        start_date:
-          type: string
-          format: date
-        end_date:
-          type: string
-          format: date
-        meal_slots:
-          type: array
-          items:
-            type: string
-        track_recipe_changes:
-          type: boolean
-        participant_count:
-          type: integer
-        day_count:
-          type: integer
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    TripList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Trip'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    TripDayCreate:
-      type: object
-      required:
-      - date
-      properties:
-        date:
-          type: string
-          format: date
-        notes:
-          type: string
-          maxLength: 2000
-    TripDayUpdate:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-        notes:
-          type: string
-          maxLength: 2000
-    TripDay:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        trip_id:
-          type: string
-          format: uuid
-        day_number:
-          type: integer
-        date:
-          type: string
-          format: date
-        notes:
-          type: string
-        meal_count:
-          type: integer
-        snack_count:
-          type: integer
-        drink_count:
-          type: integer
-    TripDayDetailed:
-      allOf:
-      - $ref: '#/components/schemas/TripDay'
-      - type: object
-        properties:
-          meals:
-            type: array
-            items:
-              $ref: '#/components/schemas/Meal'
-          snacks:
-            type: array
-            items:
-              $ref: '#/components/schemas/DaySnack'
-          drinks:
-            type: array
-            items:
-              $ref: '#/components/schemas/DayDrink'
-          nutrition_summary:
-            $ref: '#/components/schemas/NutritionalValues'
-    TripDetailed:
-      allOf:
-      - $ref: '#/components/schemas/Trip'
-      - type: object
-        properties:
-          participants:
-            type: array
-            items:
-              $ref: '#/components/schemas/Participant'
-          days:
-            type: array
-            items:
-              $ref: '#/components/schemas/TripDayDetailed'
-          stove:
-            $ref: '#/components/schemas/Stove'
-          summary:
-            $ref: '#/components/schemas/TripSummary'
-    TripSummary:
-      type: object
-      properties:
-        total_nutrition:
-          $ref: '#/components/schemas/NutritionalValues'
-        daily_average_nutrition:
-          $ref: '#/components/schemas/NutritionalValues'
-        per_person_average_nutrition:
-          $ref: '#/components/schemas/NutritionalValues'
-        total_food_weight_g:
-          type: number
-        per_person_food_weight_g:
-          type: number
-        total_water_cooking_ml:
-          type: integer
-        total_cooking_time_minutes:
-          type: integer
-        fuel_calculation:
-          type: object
-          properties:
-            base_fuel_g:
-              type: number
-            altitude_adjusted_fuel_g:
-              type: number
-            total_fuel_g:
-              type: number
-        meal_count:
-          type: integer
-        participant_count:
-          type: integer
-        day_count:
-          type: integer
-    MealCreate:
-      type: object
-      required:
-      - meal_slot
-      - recipe_id
-      - target_calories_per_person
-      properties:
-        meal_slot:
-          type: string
-          description: Must match one of the trip's configured meal slots
-        recipe_id:
-          type: string
-          format: uuid
-        target_calories_per_person:
-          type: number
-          minimum: 0
-          description: Target calories per person for this meal
-    MealUpdate:
-      type: object
-      properties:
-        recipe_id:
-          type: string
-          format: uuid
-        target_calories_per_person:
-          type: number
-          minimum: 0
-    Meal:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        trip_day_id:
-          type: string
-          format: uuid
-        meal_slot:
-          type: string
-        recipe_snapshot_id:
-          type: string
-          format: uuid
-        target_calories_per_person:
-          type: number
-        scaling_factor:
-          type: number
-          description: Factor applied to scale recipe to target calories
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        notes:
-          type: string
-    MealDetailed:
-      allOf:
-      - $ref: '#/components/schemas/Meal'
-      - type: object
-        properties:
-          recipe:
-            $ref: '#/components/schemas/Recipe'
-          scaled_ingredients:
-            type: array
-            items:
-              type: object
-              properties:
-                ingredient:
-                  $ref: '#/components/schemas/Ingredient'
-                original_quantity_g:
-                  type: number
-                scaled_quantity_g:
-                  type: number
-                per_person_g:
-                  type: number
-          scaled_nutrition:
-            $ref: '#/components/schemas/NutritionalValues'
-          per_person_nutrition:
-            $ref: '#/components/schemas/NutritionalValues'
-    DaySnackCreate:
-      type: object
-      required:
-      - snack_id
-      - quantity_per_person
-      properties:
-        snack_id:
-          type: string
-          format: uuid
-        quantity_per_person:
-          type: number
-          minimum: 0.1
-          description: Number of pieces or grams per person
-    DaySnackUpdate:
-      type: object
-      properties:
-        quantity_per_person:
-          type: number
-          minimum: 0.1
-    DaySnack:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        trip_day_id:
-          type: string
-          format: uuid
-        snack:
-          $ref: '#/components/schemas/Snack'
-        quantity_per_person:
-          type: number
-        total_quantity:
-          type: number
-    DayDrinkCreate:
-      type: object
-      required:
-      - ingredient_id
-      - quantity_per_person
-      properties:
-        ingredient_id:
-          type: string
-          format: uuid
-        quantity_per_person:
-          type: number
-          minimum: 0.1
-          description: Grams per person
-        water_ml:
-          type: integer
-          minimum: 0
-          description: Hot water required per person
-          default: 0
-    DayDrinkUpdate:
-      type: object
-      properties:
-        quantity_per_person:
-          type: number
-          minimum: 0.1
-        water_ml:
-          type: integer
-          minimum: 0
-    DayDrink:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        trip_day_id:
-          type: string
-          format: uuid
-        ingredient:
-          $ref: '#/components/schemas/Ingredient'
-        quantity_per_person:
-          type: number
-        total_quantity:
-          type: number
-        water_ml:
-          type: integer
-    MarketplaceRecipe:
-      allOf:
-      - $ref: '#/components/schemas/Recipe'
-      - type: object
-        properties:
-          average_rating:
-            type: number
-            minimum: 1
-            maximum: 5
-          rating_count:
-            type: integer
-          review_count:
-            type: integer
-          has_user_rating:
-            type: boolean
-          user_rating:
-            type: integer
-            minimum: 1
-            maximum: 5
-          forked_from:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              name:
-                type: string
-              author_name:
-                type: string
-    MarketplaceRecipeList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/MarketplaceRecipe'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    RecipeReview:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        recipe_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        user_name:
-          type: string
-        review_text:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    Template:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        is_day_template:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    TemplateList:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Template'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    TemplateDetailed:
-      allOf:
-      - $ref: '#/components/schemas/Template'
-      - type: object
-        properties:
-          template_data:
-            type: object
-            description: JSON structure containing meal slots, recipes, snacks
-    ShareLink:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        entity_type:
-          type: string
-          enum:
-          - recipe
-          - trip
-        entity_id:
-          type: string
-          format: uuid
-        share_token:
-          type: string
-        share_url:
-          type: string
-          format: uri
-        created_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
-        view_count:
-          type: integer
-    SharedRecipe:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - recipe
-        data:
-          $ref: '#/components/schemas/Recipe'
-        share_info:
-          type: object
-          properties:
-            created_by:
-              type: string
-            created_at:
-              type: string
-              format: date-time
-            view_count:
-              type: integer
-    SharedTrip:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - trip
-        data:
-          $ref: '#/components/schemas/TripDetailed'
-        share_info:
-          type: object
-          properties:
-            created_by:
-              type: string
-            created_at:
-              type: string
-              format: date-time
-            view_count:
-              type: integer
+  responses:
+    BadRequest:
+      description: Bad request - invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Invalid input
+            message: The provided data does not meet the required format
+    Unauthorized:
+      description: Unauthorized - invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Invalid or expired authentication token
+    ValidationError:
+      description: Validation error - invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Validation Error
+            message: Request validation failed
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Internal Server Error
+            message: An unexpected error occurred

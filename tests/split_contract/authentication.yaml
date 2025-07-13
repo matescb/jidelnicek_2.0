@@ -83,6 +83,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /auth/login:
@@ -172,6 +174,14 @@ paths:
           description: Logout successful
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /auth/verify-email:
@@ -436,60 +446,54 @@ components:
       type: object
       required:
       - error
+      - message
       properties:
         error:
-          type: object
-          required:
-          - code
-          - message
-          - details
-          properties:
-            code:
-              type: string
-              enum:
-              - VALIDATION_ERROR
-              description: Error code for validation failures
-            message:
-              type: string
-              description: Human-readable error message
-            details:
-              type: array
-              description: Detailed validation error information
-              items:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          description: Error code for validation failures
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: array
+          description: Detailed validation error information
+          items:
+            type: object
+            required:
+            - field
+            - message
+            - type
+            properties:
+              field:
+                type: string
+                description: Field that caused the validation error
+              message:
+                type: string
+                description: Validation error message
+              type:
+                type: string
+                description: Type of validation error
+              input:
+                description: The input value that caused the error
+              context:
                 type: object
-                required:
-                - field
-                - message
-                - type
-                properties:
-                  field:
-                    type: string
-                    description: Field that caused the validation error
-                  message:
-                    type: string
-                    description: Validation error message
-                  type:
-                    type: string
-                    description: Type of validation error
-                  input:
-                    description: The input value that caused the error
-                  context:
-                    type: object
-                    description: Additional context for the validation error
-            request_id:
-              type: string
-              description: Request ID for tracking
-          example:
-            code: VALIDATION_ERROR
-            message: Request validation failed
-            details:
-            - field: email
-              message: field required
-              type: missing
-            - field: password
-              message: ensure this value has at least 12 characters
-              type: value_error.any_str.min_length
-              input: short
+                description: Additional context for the validation error
+        request_id:
+          type: string
+          description: Request ID for tracking
+      example:
+        error: VALIDATION_ERROR
+        message: Request validation failed
+        details:
+        - field: email
+          message: field required
+          type: missing
+        - field: password
+          message: ensure this value has at least 12 characters
+          type: value_error.any_str.min_length
+          input: short
     Pagination:
       type: object
       properties:

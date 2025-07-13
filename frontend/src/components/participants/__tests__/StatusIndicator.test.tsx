@@ -10,7 +10,7 @@ jest.mock('date-fns', () => ({
   formatDistanceToNow: jest.fn(() => '5 minutes'),
 }))
 
-const mockFormatDistanceToNow = formatDistanceToNow as jest.MockedFunction<typeof formatDistanceToNow>
+const mockFormatDistanceToNow = formatDistanceToNow as vi.MockedFunction<typeof formatDistanceToNow>
 
 describe('StatusIndicator', () => {
   const theme = createTheme()

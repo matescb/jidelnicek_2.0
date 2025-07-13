@@ -239,7 +239,7 @@ describe('BaseDataTable - Comprehensive Tests', () => {
     });
 
     it('handles controlled global filter', async () => {
-      const onGlobalFilterChange = jest.fn();
+      const onGlobalFilterChange = vi.fn();
       const { rerender } = render(
         <BaseDataTable
           data={mockData}
@@ -396,7 +396,7 @@ describe('BaseDataTable - Comprehensive Tests', () => {
 
   describe('Selection', () => {
     it('handles single row selection', async () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       
       render(
         <BaseDataTable
@@ -422,7 +422,7 @@ describe('BaseDataTable - Comprehensive Tests', () => {
     });
 
     it('handles multi-row selection', async () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       
       render(
         <BaseDataTable
@@ -447,7 +447,7 @@ describe('BaseDataTable - Comprehensive Tests', () => {
     });
 
     it('handles select all functionality', async () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       
       render(
         <BaseDataTable
@@ -568,15 +568,15 @@ describe('BaseDataTable - Comprehensive Tests', () => {
   describe('Export Functionality', () => {
     beforeEach(() => {
       // Mock URL.createObjectURL and document.createElement
-      global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
-      global.URL.revokeObjectURL = jest.fn();
+      global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+      global.URL.revokeObjectURL = vi.fn();
       
       const mockAnchor = {
         href: '',
         download: '',
-        click: jest.fn(),
+        click: vi.fn(),
       };
-      jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
         if (tagName === 'a') {
           return mockAnchor as any;
         }
@@ -605,7 +605,7 @@ describe('BaseDataTable - Comprehensive Tests', () => {
     });
 
     it('exports selected rows only', async () => {
-      const onExport = jest.fn();
+      const onExport = vi.fn();
       
       render(
         <BaseDataTable
@@ -627,7 +627,7 @@ describe('BaseDataTable - Comprehensive Tests', () => {
     });
 
     it('uses custom export handler', async () => {
-      const onExport = jest.fn();
+      const onExport = vi.fn();
       
       render(
         <BaseDataTable
@@ -661,7 +661,7 @@ describe('BaseDataTable - Comprehensive Tests', () => {
 
   describe('Row Interactions', () => {
     it('handles row click events', async () => {
-      const onRowClick = jest.fn();
+      const onRowClick = vi.fn();
       
       render(
         <BaseDataTable
@@ -679,8 +679,8 @@ describe('BaseDataTable - Comprehensive Tests', () => {
     });
 
     it('prevents row click when clicking on selection checkbox', async () => {
-      const onRowClick = jest.fn();
-      const onSelectionChange = jest.fn();
+      const onRowClick = vi.fn();
+      const onSelectionChange = vi.fn();
       
       render(
         <BaseDataTable
@@ -741,11 +741,11 @@ describe('BaseDataTable - Comprehensive Tests', () => {
   describe('Responsive Behavior', () => {
     it('shows mobile view on small screens', () => {
       // Mock small screen
-      window.matchMedia = jest.fn().mockImplementation(query => ({
+      window.matchMedia = vi.fn().mockImplementation(query => ({
         matches: query.includes('max-width: 768px'),
         media: query,
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
       }));
 
       render(

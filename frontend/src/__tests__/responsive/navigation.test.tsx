@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Tests for responsive navigation components
  */
@@ -28,7 +29,7 @@ describe('ResponsiveNav', () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should render desktop navigation', () => {
@@ -188,7 +189,7 @@ describe('MobileMenu', () => {
   });
 
   it('should close when backdrop is clicked', () => {
-    const handleClose = jest.fn();
+    const handleClose = vi.fn();
     render(
       <RouterWrapper>
         <MobileMenu isOpen={true} onClose={handleClose} items={mockItems} />
@@ -201,7 +202,7 @@ describe('MobileMenu', () => {
   });
 
   it('should close when item is clicked', () => {
-    const handleClose = jest.fn();
+    const handleClose = vi.fn();
     render(
       <RouterWrapper>
         <MobileMenu isOpen={true} onClose={handleClose} items={mockItems} />
@@ -230,7 +231,7 @@ describe('MobileMenu', () => {
   });
 
   it('should be keyboard accessible', () => {
-    const handleClose = jest.fn();
+    const handleClose = vi.fn();
     render(
       <RouterWrapper>
         <MobileMenu isOpen={true} onClose={handleClose} items={mockItems} />
@@ -428,7 +429,7 @@ describe('SearchModal', () => {
   });
 
   it('should perform search', async () => {
-    const handleSearch = jest.fn().mockResolvedValue(mockResults);
+    const handleSearch = vi.fn().mockResolvedValue(mockResults);
     const user = userEvent.setup();
 
     render(
@@ -448,8 +449,8 @@ describe('SearchModal', () => {
   });
 
   it('should debounce search input', async () => {
-    jest.useFakeTimers();
-    const handleSearch = jest.fn().mockResolvedValue(mockResults);
+    vi.useFakeTimers();
+    const handleSearch = vi.fn().mockResolvedValue(mockResults);
     const user = userEvent.setup({ delay: null });
 
     render(
@@ -467,17 +468,17 @@ describe('SearchModal', () => {
     expect(handleSearch).not.toHaveBeenCalled();
 
     // Fast forward debounce
-    jest.advanceTimersByTime(300);
+    vi.advanceTimersByTime(300);
 
     expect(handleSearch).toHaveBeenCalledTimes(1);
     expect(handleSearch).toHaveBeenCalledWith('pas');
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should navigate with keyboard', async () => {
-    const handleSearch = jest.fn().mockResolvedValue(mockResults);
-    const handleSelect = jest.fn();
+    const handleSearch = vi.fn().mockResolvedValue(mockResults);
+    const handleSelect = vi.fn();
 
     render(
       <SearchModal
@@ -509,7 +510,7 @@ describe('SearchModal', () => {
   });
 
   it('should close on Escape', () => {
-    const handleClose = jest.fn();
+    const handleClose = vi.fn();
     render(
       <SearchModal isOpen={true} onClose={handleClose} />
     );
@@ -519,7 +520,7 @@ describe('SearchModal', () => {
   });
 
   it('should show loading state', async () => {
-    const handleSearch = jest.fn().mockImplementation(
+    const handleSearch = vi.fn().mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(mockResults), 1000))
     );
 
@@ -534,7 +535,7 @@ describe('SearchModal', () => {
   });
 
   it('should handle empty results', async () => {
-    const handleSearch = jest.fn().mockResolvedValue([]);
+    const handleSearch = vi.fn().mockResolvedValue([]);
 
     render(
       <SearchModal isOpen={true} onClose={() => {}} onSearch={handleSearch} />

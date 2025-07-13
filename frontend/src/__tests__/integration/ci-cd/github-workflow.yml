@@ -1,0 +1,568 @@
+name: Frontend Integration Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-integration.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: 'Test Level'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - 'smoke'
+          - 'integration'
+          - 'full'
+          - 'performance'
+
+jobs:
+  setup:
+    name: Setup Test Environment
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+      test-level: ${{ steps.test-level.outputs.level }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=integration-${{ hashFiles('frontend/package-lock.json', 'frontend/vite.config.ts', 'frontend/src/__tests__/**') }}" >> $GITHUB_OUTPUT
+
+      - name: Determine test level
+        id: test-level
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "level=${{ github.event.inputs.test_level }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "level=full" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "level=integration" >> $GITHUB_OUTPUT
+          else
+            echo "level=integration" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+            ~/.cache/Cypress
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            integration-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+  lint-and-type-check:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+    needs: setup
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run TypeScript type checking
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Check test file syntax
+        working-directory: frontend
+        run: |
+          npx tsc --noEmit --project src/__tests__/tsconfig.json
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [setup, lint-and-type-check]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run unit tests
+        working-directory: frontend
+        run: |
+          npm run test:run -- --coverage --reporter=json --reporter=github-actions
+        env:
+          NODE_ENV: test
+          CI: true
+
+      - name: Upload unit test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: frontend/coverage/coverage-final.json
+          flags: unit-tests
+          name: unit-test-coverage
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [setup, lint-and-type-check]
+    if: contains(fromJson('["integration", "full", "performance"]'), needs.setup.outputs.test-level)
+    
+    strategy:
+      matrix:
+        test-suite:
+          - name: 'User Journeys'
+            pattern: 'user-journeys'
+            critical: true
+          - name: 'Cross Component'
+            pattern: 'cross-component'
+            critical: true
+          - name: 'API Integration'
+            pattern: 'api'
+            critical: true
+          - name: 'Business Logic'
+            pattern: 'business-logic'
+            critical: true
+          - name: 'Browser Environment'
+            pattern: 'browser'
+            critical: false
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Setup test environment
+        working-directory: frontend
+        run: |
+          echo "VITE_API_URL=/api/v1" >> .env.test
+          echo "VITE_USE_MOCK_AUTH=true" >> .env.test
+          echo "VITE_ENABLE_DEBUG=true" >> .env.test
+
+      - name: Run integration tests
+        working-directory: frontend
+        run: |
+          npx vitest run \
+            --config vite.config.ts \
+            --reporter=json \
+            --reporter=github-actions \
+            --coverage \
+            --testTimeout=60000 \
+            --retry=2 \
+            "src/__tests__/integration/${{ matrix.test-suite.pattern }}/**/*.test.{ts,tsx}"
+        env:
+          NODE_ENV: test
+          CI: true
+          VITE_API_URL: /api/v1
+          VITE_USE_MOCK_AUTH: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: integration-test-results-${{ matrix.test-suite.pattern }}
+          path: |
+            frontend/coverage/
+            frontend/test-results.json
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: frontend/coverage/coverage-final.json
+          flags: integration-tests,${{ matrix.test-suite.pattern }}
+          name: integration-test-coverage-${{ matrix.test-suite.pattern }}
+
+      - name: Check critical test failures
+        if: matrix.test-suite.critical && failure()
+        run: |
+          echo "Critical test suite '${{ matrix.test-suite.name }}' failed!"
+          exit 1
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [setup, integration-tests]
+    if: contains(fromJson('["full", "performance"]'), needs.setup.outputs.test-level)
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run performance tests
+        working-directory: frontend
+        run: |
+          npx vitest run \
+            --config vite.config.ts \
+            --reporter=json \
+            --testTimeout=120000 \
+            --pool=forks \
+            --poolOptions.forks.singleFork=true \
+            "src/__tests__/integration/performance/**/*.test.{ts,tsx}"
+        env:
+          NODE_ENV: test
+          CI: true
+          PERFORMANCE_TESTING_ENABLED: true
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results
+          path: |
+            frontend/coverage/
+            frontend/performance-results.json
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: [setup, integration-tests]
+    if: contains(fromJson('["full"]'), needs.setup.outputs.test-level)
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: jidelnicek_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Setup Python for backend
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Restore frontend dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Install backend dependencies
+        run: |
+          pip install poetry
+          poetry install --no-dev
+
+      - name: Start backend server
+        run: |
+          poetry run uvicorn src.jidelnicek.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/jidelnicek_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Start frontend server
+        working-directory: frontend
+        run: |
+          npm run preview -- --port 3000 &
+          sleep 5
+
+      - name: Run Cypress E2E tests
+        working-directory: frontend
+        run: |
+          npx cypress run \
+            --config baseUrl=http://localhost:3000 \
+            --spec "cypress/e2e/integration/**/*.cy.{js,ts}" \
+            --browser chrome \
+            --headless
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            frontend/cypress/videos/
+            frontend/cypress/screenshots/
+
+  comprehensive-report:
+    name: Generate Comprehensive Report
+    runs-on: ubuntu-latest
+    needs: [setup, unit-tests, integration-tests, performance-tests, e2e-tests]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: test-results
+
+      - name: Generate comprehensive test report
+        working-directory: frontend
+        run: |
+          npx tsx src/__tests__/integration/ci-cd/test-runner.ts
+        env:
+          NODE_ENV: test
+          CI: true
+
+      - name: Upload comprehensive report
+        uses: actions/upload-artifact@v3
+        with:
+          name: comprehensive-test-report
+          path: |
+            frontend/coverage/integration/
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'frontend/coverage/integration/integration-test-report.json';
+            
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              
+              const comment = `
+              ## 🧪 Integration Test Results
+              
+              **Duration:** ${(report.totalDuration / 1000).toFixed(2)}s
+              **Coverage:** ${report.overallCoverage.toFixed(1)}%
+              
+              | Suite | Tests | ✅ Passed | ❌ Failed | ⏭️ Skipped | Coverage |
+              |-------|-------|----------|----------|-----------|----------|
+              ${report.results.map(r => 
+                `| ${r.suite} | ${r.passed + r.failed + r.skipped} | ${r.passed} | ${r.failed} | ${r.skipped} | ${r.coverage.toFixed(1)}% |`
+              ).join('\n')}
+              
+              **Summary:**
+              - Total Tests: ${report.summary.totalTests}
+              - Passed: ${report.summary.totalPassed}
+              - Failed: ${report.summary.totalFailed}
+              - Critical Failures: ${report.summary.criticalFailures}
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+  deploy-preview:
+    name: Deploy Preview Environment
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.event_name == 'pull_request' && success()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Build for preview
+        working-directory: frontend
+        run: |
+          npm run build
+        env:
+          VITE_API_URL: https://api-preview.jidelnicek.app
+          VITE_ENABLE_DEBUG: false
+
+      - name: Deploy to preview environment
+        uses: netlify/actions/cli@master
+        with:
+          args: deploy --dir=frontend/dist --functions=netlify/functions
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PREVIEW_SITE_ID }}
+
+      - name: Comment PR with preview link
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `
+              ## 🌐 Preview Environment
+              
+              Your changes have been deployed to a preview environment:
+              **🔗 [Preview Link](https://deploy-preview-${context.issue.number}--jidelnicek-preview.netlify.app)**
+              
+              This preview includes all the changes from this PR and can be used for manual testing.
+              `
+            });
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: setup
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run npm audit
+        working-directory: frontend
+        run: npm audit --audit-level=moderate
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=frontend/package.json
+
+      - name: Upload Snyk results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: snyk.sarif

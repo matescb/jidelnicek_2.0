@@ -80,6 +80,12 @@ paths:
                 $ref: '#/components/schemas/IngredientList'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
       - Ingredients
@@ -114,6 +120,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '409':
           description: Ingredient with this name already exists
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /ingredients/global:
     get:
       tags:
@@ -138,6 +150,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IngredientList'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /ingredients/{ingredientId}:
     get:
       tags:
@@ -157,6 +175,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       tags:
       - Ingredients
@@ -185,6 +209,12 @@ paths:
           description: Cannot modify global ingredients
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
       - Ingredients
@@ -203,6 +233,12 @@ paths:
           description: Cannot delete global ingredients
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /ingredients/categories:
     get:
       tags:
@@ -229,6 +265,10 @@ paths:
                 - Oils & Fats
                 - Beverages
                 - Other
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     bearerAuth:
@@ -356,6 +396,27 @@ components:
           example:
             error: Too Many Requests
             message: Rate limit exceeded. Please try again later.
+    ValidationError:
+      description: Validation error - invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Validation Error
+            message: Request validation failed
+            details:
+              - field: ingredientId
+                issue: Invalid UUID format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Internal Server Error
+            message: An unexpected error occurred
   schemas:
     Error:
       type: object

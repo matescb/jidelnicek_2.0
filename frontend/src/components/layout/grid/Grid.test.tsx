@@ -4,50 +4,48 @@ import { Grid, GridItem } from './index'
 
 describe('Grid Component', () => {
   it('renders children correctly', () => {
-    render(
-      <Grid data-testid="grid">
+    const { container } = render(
+      <Grid>
         <div>Item 1</div>
         <div>Item 2</div>
         <div>Item 3</div>
       </Grid>
     )
     
-    const grid = screen.getByTestId('grid')
+    const grid = container.firstChild as HTMLElement
     expect(grid).toBeInTheDocument()
     expect(grid.children).toHaveLength(3)
   })
 
   it('applies grid styles', () => {
-    render(
-      <Grid columns={3} gap={4} data-testid="grid">
+    const { container } = render(
+      <Grid columns={3} gap={4}>
         <div>Item</div>
       </Grid>
     )
     
-    const grid = screen.getByTestId('grid')
+    const grid = container.firstChild as HTMLElement
     expect(grid).toHaveStyle({ display: 'grid' })
     expect(grid).toHaveClass('grid', 'grid-cols-3', 'gap-4')
   })
 
   it('handles responsive columns', () => {
-    render(
+    const { container } = render(
       <Grid 
         columns={{ base: 1, md: 2, lg: 3 }} 
-        data-testid="grid"
       >
         <div>Item</div>
       </Grid>
     )
     
-    const grid = screen.getByTestId('grid')
+    const grid = container.firstChild as HTMLElement
     expect(grid).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3')
   })
 
   it('supports grid areas', () => {
-    render(
+    const { container } = render(
       <Grid
         areas={['header header', 'sidebar content']}
-        data-testid="grid"
       >
         <GridItem area="header">Header</GridItem>
         <GridItem area="sidebar">Sidebar</GridItem>
@@ -55,7 +53,7 @@ describe('Grid Component', () => {
       </Grid>
     )
     
-    const grid = screen.getByTestId('grid')
+    const grid = container.firstChild as HTMLElement
     expect(grid).toHaveStyle({
       gridTemplateAreas: '"header header" "sidebar content"'
     })
@@ -64,44 +62,43 @@ describe('Grid Component', () => {
 
 describe('GridItem Component', () => {
   it('renders with span classes', () => {
-    render(
+    const { container } = render(
       <Grid>
-        <GridItem colSpan={2} data-testid="item">
+        <GridItem colSpan={2}>
           Spanning item
         </GridItem>
       </Grid>
     )
     
-    const item = screen.getByTestId('item')
+    const item = screen.getByText('Spanning item')
     expect(item).toHaveClass('col-span-2')
   })
 
   it('handles responsive spans', () => {
-    render(
+    const { container } = render(
       <Grid>
         <GridItem 
           colSpan={{ base: 'full', md: 2 }} 
-          data-testid="item"
         >
           Responsive item
         </GridItem>
       </Grid>
     )
     
-    const item = screen.getByTestId('item')
+    const item = screen.getByText('Responsive item')
     expect(item).toHaveClass('col-span-full', 'md:col-span-2')
   })
 
   it('applies grid area', () => {
-    render(
+    const { container } = render(
       <Grid areas={['header']}>
-        <GridItem area="header" data-testid="item">
+        <GridItem area="header">
           Header
         </GridItem>
       </Grid>
     )
     
-    const item = screen.getByTestId('item')
+    const item = screen.getByText('Header')
     expect(item).toHaveStyle({ gridArea: 'header' })
   })
 })

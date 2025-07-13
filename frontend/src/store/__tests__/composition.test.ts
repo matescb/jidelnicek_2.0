@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { create } from 'zustand';
 import { StoreComposer } from '../composition/storeComposer';
 import { createSliceFactory } from '../composition/sliceFactory';
@@ -131,7 +131,7 @@ describe('Store Composition', () => {
     });
 
     it('should apply middleware to composed store', () => {
-      const logMiddleware = jest.fn((config: any) => (set: any, get: any, api: any) => 
+      const logMiddleware = vi.fn((config: any) => (set: any, get: any, api: any) => 
         config(
           (args: any) => {
             console.log('State update:', args);
@@ -158,7 +158,7 @@ describe('Store Composition', () => {
         .addMiddleware(logMiddleware)
         .create();
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       useStore.getState().increment();
 
@@ -410,7 +410,7 @@ describe('Store Composition', () => {
     });
 
     it('should cache selector results', () => {
-      const computeFn = jest.fn((users: any[], filter: any) =>
+      const computeFn = vi.fn((users: any[], filter: any) =>
         users.filter(u => u.age >= filter.minAge && u.age <= filter.maxAge)
       );
 
@@ -510,7 +510,7 @@ describe('Store Composition', () => {
 
   describe('Middleware Composition', () => {
     it('should compose multiple middleware', () => {
-      const middleware1 = jest.fn((config: any) => (set: any, get: any, api: any) => {
+      const middleware1 = vi.fn((config: any) => (set: any, get: any, api: any) => {
         const enhancedSet = (args: any) => {
           console.log('Middleware 1:', args);
           set(args);
@@ -518,7 +518,7 @@ describe('Store Composition', () => {
         return config(enhancedSet, get, api);
       });
 
-      const middleware2 = jest.fn((config: any) => (set: any, get: any, api: any) => {
+      const middleware2 = vi.fn((config: any) => (set: any, get: any, api: any) => {
         const enhancedSet = (args: any) => {
           console.log('Middleware 2:', args);
           set(args);
@@ -535,7 +535,7 @@ describe('Store Composition', () => {
         }))
       );
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       useStore.getState().increment();
 
@@ -579,9 +579,9 @@ describe('Store Composition', () => {
         }))
       );
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-      const timeSpy = jest.spyOn(console, 'time').mockImplementation(() => {});
-      const timeEndSpy = jest.spyOn(console, 'timeEnd').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const timeSpy = vi.spyOn(console, 'time').mockImplementation(() => {});
+      const timeEndSpy = vi.spyOn(console, 'timeEnd').mockImplementation(() => {});
 
       useStore.getState().setValue(42);
 
@@ -739,8 +739,8 @@ describe('Store Composition', () => {
 
       // Plugins should be applied
       const mockStorage = {
-        getItem: jest.fn(),
-        setItem: jest.fn(),
+        getItem: vi.fn(),
+        setItem: vi.fn(),
       };
       Object.defineProperty(window, 'localStorage', {
         value: mockStorage,

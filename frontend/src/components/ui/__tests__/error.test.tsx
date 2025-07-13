@@ -49,7 +49,7 @@ const EmptyState = ({
 const NetworkError = ({ onRetry }: { onRetry: () => void }) => (
   <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
     <div className="flex items-center gap-3">
-      <svg className="w-5 h-5 text-yellow-600 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+      <svg className="w-5 h-5 text-yellow-600 animate-pulse" fill="currentColor" viewBox="0 0 20 20" role="img" aria-label="Warning icon">
         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
       </svg>
       <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
@@ -82,7 +82,7 @@ describe('Alert Error States', () => {
   it('applies destructive variant styles', () => {
     render(<Alert variant="destructive">Error content</Alert>);
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveClass('border-red-200', 'text-red-800');
+    expect(alert).toHaveClass('bg-error-50', 'text-error-900', 'border-error-200');
   });
 
   it('renders with icon slot', () => {
@@ -197,7 +197,7 @@ describe('EmptyState', () => {
   it('icon has bounce animation', () => {
     render(<EmptyState icon="📦" />);
     const icon = screen.getByText('📦');
-    expect(icon.parentElement).toHaveClass('animate-bounce');
+    expect(icon).toHaveClass('animate-bounce');
   });
 });
 
@@ -246,7 +246,7 @@ describe('Error animations', () => {
   it('empty state icon bounces', () => {
     render(<EmptyState />);
     
-    const icon = screen.getByText('📭').parentElement;
+    const icon = screen.getByText('📭');
     expect(icon).toHaveClass('animate-bounce');
   });
 

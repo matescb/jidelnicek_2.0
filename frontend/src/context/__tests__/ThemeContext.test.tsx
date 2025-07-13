@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import { vi } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { ThemeProvider, ThemeContext } from '../ThemeContext'
 import { themes, validateTheme } from '../../config/theme'
@@ -8,11 +9,11 @@ const mockMatchMedia = (matches: boolean) => ({
   matches,
   media: '(prefers-color-scheme: dark)',
   onchange: null,
-  addListener: jest.fn(),
-  removeListener: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
 })
 
 // Helper hook to access ThemeContext
@@ -25,9 +26,9 @@ const useTheme = () => {
 }
 
 // Mock the theme config module
-jest.mock('../../config/theme', () => ({
-  ...jest.requireActual('../../config/theme'),
-  applyThemeToCSSVariables: jest.fn(),
+vi.mock('../../config/theme', () => ({
+  ...vi.importActual('../../config/theme'),
+  applyThemeToCSSVariables: vi.fn(),
 }))
 
 describe('ThemeContext', () => {
@@ -36,7 +37,7 @@ describe('ThemeContext', () => {
   beforeEach(() => {
     originalMatchMedia = window.matchMedia
     // Default to light mode
-    window.matchMedia = jest.fn().mockImplementation((query) => {
+    window.matchMedia = vi.fn().mockImplementation((query) => {
       if (query === '(prefers-color-scheme: dark)') {
         return mockMatchMedia(false)
       }
@@ -68,7 +69,7 @@ describe('ThemeContext', () => {
     })
 
     it('should detect system dark theme preference', () => {
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-color-scheme: dark)') {
           return mockMatchMedia(true)
         }
@@ -90,13 +91,13 @@ describe('ThemeContext', () => {
       const listeners: Array<(e: any) => void> = []
       const mediaQueryMock = {
         ...mockMatchMedia(false),
-        addEventListener: jest.fn((event, listener) => {
+        addEventListener: vi.fn((event, listener) => {
           if (event === 'change') listeners.push(listener)
         }),
-        removeEventListener: jest.fn(),
+        removeEventListener: vi.fn(),
       }
 
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-color-scheme: dark)') {
           return mediaQueryMock
         }
@@ -270,7 +271,7 @@ describe('ThemeContext', () => {
 
   describe('Reduced Motion Support', () => {
     it('should detect reduced motion preference', () => {
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-reduced-motion: reduce)') {
           return mockMatchMedia(true)
         }
@@ -362,7 +363,7 @@ describe('ThemeContext', () => {
     })
 
     it('should reject invalid custom themes', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation()
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <ThemeProvider>{children}</ThemeProvider>
       )
@@ -497,7 +498,7 @@ describe('ThemeContext', () => {
     })
 
     it('should disable transitions when reduced motion is preferred', () => {
-      window.matchMedia = jest.fn().mockImplementation((query) => {
+      window.matchMedia = vi.fn().mockImplementation((query) => {
         if (query === '(prefers-reduced-motion: reduce)') {
           return mockMatchMedia(true)
         }
@@ -536,7 +537,7 @@ describe('ThemeContext', () => {
 
   describe('Edge Cases', () => {
     it('should handle invalid theme names gracefully', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation()
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <ThemeProvider>{children}</ThemeProvider>
       )
@@ -577,7 +578,7 @@ describe('ThemeContext', () => {
   describe('Context Without Provider', () => {
     it('should throw error when used outside provider', () => {
       // Suppress console.error for this test
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation()
 
       expect(() => {
         renderHook(() => useTheme())

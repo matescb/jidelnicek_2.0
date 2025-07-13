@@ -7,11 +7,11 @@ import { generateSecureKey } from '../encryption';
 // Mock crypto API for testing
 global.crypto = {
   subtle: {
-    importKey: jest.fn(),
-    deriveKey: jest.fn(),
-    encrypt: jest.fn(),
-    decrypt: jest.fn(),
-    digest: jest.fn(),
+    importKey: vi.fn(),
+    deriveKey: vi.fn(),
+    encrypt: vi.fn(),
+    decrypt: vi.fn(),
+    digest: vi.fn(),
   },
   getRandomValues: (arr: Uint8Array) => {
     for (let i = 0; i < arr.length; i++) {
@@ -23,7 +23,7 @@ global.crypto = {
 
 describe('Persistence Middleware', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Basic Persistence', () => {
@@ -292,12 +292,12 @@ describe('Persistence Middleware', () => {
   describe('Storage Adapters', () => {
     it('should handle storage errors gracefully', async () => {
       const failingStorage = {
-        getItem: jest.fn().mockRejectedValue(new Error('Storage failed')),
-        setItem: jest.fn().mockRejectedValue(new Error('Storage failed')),
-        removeItem: jest.fn().mockResolvedValue(undefined),
+        getItem: vi.fn().mockRejectedValue(new Error('Storage failed')),
+        setItem: vi.fn().mockRejectedValue(new Error('Storage failed')),
+        removeItem: vi.fn().mockResolvedValue(undefined),
       };
 
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+      const consoleError = vi.spyOn(console, 'error').mockImplementation();
 
       interface TestStore {
         data: string;

@@ -32,7 +32,7 @@ const HeavyComponent = lazy(() => {
 
 describe('Component Performance Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('LazyImage', () => {
@@ -57,7 +57,7 @@ describe('Component Performance Tests', () => {
       const image = screen.getByRole('img')
       
       // Mock intersection observer callback
-      const observerCallback = jest.fn()
+      const observerCallback = vi.fn()
       const observer = new IntersectionObserver(observerCallback)
       observer.observe(image)
 
@@ -100,7 +100,7 @@ describe('Component Performance Tests', () => {
   describe('MemoizedList', () => {
     it('should prevent unnecessary re-renders', async () => {
       const items = performanceHelpers.createLargeDataset(100)
-      const renderItem = jest.fn((item: any) => (
+      const renderItem = vi.fn((item: any) => (
         <div key={item.id}>{item.name}</div>
       ))
 

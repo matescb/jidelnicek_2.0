@@ -81,7 +81,7 @@ const NavigationTest = () => {
 
 describe('Performance Benchmarks', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('List Rendering Performance', () => {

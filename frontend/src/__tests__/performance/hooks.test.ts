@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { 
   renderHookWithPerformance,
@@ -33,13 +34,13 @@ import {
 
 describe('Performance Optimization Hooks', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    jest.useFakeTimers()
+    vi.clearAllMocks()
+    vi.useFakeTimers()
   })
 
   afterEach(() => {
-    jest.runOnlyPendingTimers()
-    jest.useRealTimers()
+    vi.runOnlyPendingTimers()
+    vi.useRealTimers()
   })
 
   describe('useDebounce', () => {
@@ -69,7 +70,7 @@ describe('Performance Optimization Hooks', () => {
 
       // Fast forward time
       act(() => {
-        jest.advanceTimersByTime(300)
+        vi.advanceTimersByTime(300)
       })
 
       // Debounced value should now be updated
@@ -105,7 +106,7 @@ describe('Performance Optimization Hooks', () => {
       unmount()
 
       act(() => {
-        jest.advanceTimersByTime(300)
+        vi.advanceTimersByTime(300)
       })
 
       // Should not throw or cause issues
@@ -126,7 +127,7 @@ describe('Performance Optimization Hooks', () => {
       for (let i = 1; i <= 10; i++) {
         act(() => {
           rerender({ value: i })
-          jest.advanceTimersByTime(20)
+          vi.advanceTimersByTime(20)
         })
       }
 
@@ -149,7 +150,7 @@ describe('Performance Optimization Hooks', () => {
       expect(result.current).toBe(0)
 
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
 
       // Should update after throttle period
@@ -159,11 +160,11 @@ describe('Performance Optimization Hooks', () => {
 
   describe('useMemoizedCallback', () => {
     it('should track dependency changes in development', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation()
       const originalEnv = process.env.NODE_ENV
       process.env.NODE_ENV = 'development'
 
-      const callback = jest.fn()
+      const callback = vi.fn()
       const { result, rerender } = renderHook(
         ({ dep1, dep2 }) => useMemoizedCallback(callback, [dep1, dep2], 'TestCallback'),
         { initialProps: { dep1: 'a', dep2: 'b' } }
@@ -184,7 +185,7 @@ describe('Performance Optimization Hooks', () => {
     })
 
     it('should maintain callback reference when dependencies dont change', () => {
-      const callback = jest.fn()
+      const callback = vi.fn()
       const { result, rerender } = renderHook(
         ({ dep }) => useMemoizedCallback(callback, [dep]),
         { initialProps: { dep: 'value' } }
@@ -201,7 +202,7 @@ describe('Performance Optimization Hooks', () => {
 
   describe('useDeepCompareMemo', () => {
     it('should only recompute when deep equality fails', () => {
-      const factory = jest.fn(() => ({ computed: true }))
+      const factory = vi.fn(() => ({ computed: true }))
       const { result, rerender } = renderHook(
         ({ obj }) => useDeepCompareMemo(factory, [obj]),
         { initialProps: { obj: { a: 1, b: 2 } } }
@@ -219,7 +220,7 @@ describe('Performance Optimization Hooks', () => {
     })
 
     it('should handle complex nested objects', () => {
-      const factory = jest.fn(() => 'computed')
+      const factory = vi.fn(() => 'computed')
       const { result, rerender } = renderHook(
         ({ data }) => useDeepCompareMemo(factory, [data]),
         { 
@@ -260,14 +261,14 @@ describe('Performance Optimization Hooks', () => {
     })
 
     it('should warn about slow renders in development', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation()
       const originalEnv = process.env.NODE_ENV
       process.env.NODE_ENV = 'development'
 
       // Mock slow render
       const originalNow = performance.now
       let mockTime = 0
-      performance.now = jest.fn(() => {
+      performance.now = vi.fn(() => {
         const time = mockTime
         mockTime += 20 // Simulate 20ms render
         return time
@@ -287,7 +288,7 @@ describe('Performance Optimization Hooks', () => {
 
   describe('useLazyInitialState', () => {
     it('should compute initial state lazily', () => {
-      const factory = jest.fn(() => performanceHelpers.createLargeDataset(1000))
+      const factory = vi.fn(() => performanceHelpers.createLargeDataset(1000))
       
       const { result, rerender } = renderHook(
         ({ deps }) => useLazyInitialState(factory, deps),
@@ -351,7 +352,7 @@ describe('Performance Optimization Hooks', () => {
 
       // Fast forward
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
 
       // Value should now be updated
@@ -367,7 +368,7 @@ describe('Performance Optimization Hooks', () => {
       expect(result.current).toBe(false)
 
       act(() => {
-        jest.advanceTimersByTime(100)
+        vi.advanceTimersByTime(100)
       })
 
       // Should be enhanced after delay
@@ -378,18 +379,18 @@ describe('Performance Optimization Hooks', () => {
   describe('useLazyLoad', () => {
     it('should detect intersection for lazy loading', () => {
       let observerCallback: IntersectionObserverCallback | null = null
-      const mockObserve = jest.fn()
-      const mockDisconnect = jest.fn()
+      const mockObserve = vi.fn()
+      const mockDisconnect = vi.fn()
 
       // Mock IntersectionObserver
       const originalIO = global.IntersectionObserver
-      global.IntersectionObserver = jest.fn((callback) => {
+      global.IntersectionObserver = vi.fn((callback) => {
         observerCallback = callback
         return {
           observe: mockObserve,
           disconnect: mockDisconnect,
-          unobserve: jest.fn(),
-          takeRecords: jest.fn(() => [])
+          unobserve: vi.fn(),
+          takeRecords: vi.fn(() => [])
         }
       }) as any
 
@@ -405,7 +406,7 @@ describe('Performance Optimization Hooks', () => {
 
       // Trigger effect
       act(() => {
-        jest.runAllTimers()
+        vi.runAllTimers()
       })
 
       expect(mockObserve).toHaveBeenCalledWith(element)
@@ -489,12 +490,12 @@ describe('Performance Optimization Hooks', () => {
     })
 
     it('should restore scroll position', () => {
-      const mockScrollToIndex = jest.fn()
+      const mockScrollToIndex = vi.fn()
       const virtualizer = {
         scrollOffset: 1000,
         getVirtualItems: () => [{ index: 20 }],
         scrollToIndex: mockScrollToIndex,
-        scrollToOffset: jest.fn(),
+        scrollToOffset: vi.fn(),
         scrollElement: document.createElement('div')
       }
 
@@ -514,14 +515,14 @@ describe('Performance Optimization Hooks', () => {
 
       // Should attempt to restore
       act(() => {
-        jest.runAllTimers()
+        vi.runAllTimers()
       })
 
       expect(mockScrollToIndex).toHaveBeenCalledWith(20, { align: 'start' })
     })
 
     it('should handle keyboard navigation', () => {
-      const mockScrollToIndex = jest.fn()
+      const mockScrollToIndex = vi.fn()
       const virtualizer = {
         getVirtualItems: () => Array.from({ length: 10 }, (_, i) => ({ index: i })),
         options: { count: 100 },
@@ -529,7 +530,7 @@ describe('Performance Optimization Hooks', () => {
         scrollElement: document.createElement('div')
       }
 
-      const onItemSelect = jest.fn()
+      const onItemSelect = vi.fn()
       const { result } = renderHook(() => 
         useVirtualKeyboardNavigation(virtualizer, { onItemSelect })
       )

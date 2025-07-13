@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { create } from 'zustand';
 import { persistenceMiddleware } from '../persistence/persistenceMiddleware';
 import { 
@@ -15,35 +15,35 @@ import type { PersistenceConfig, StorageAdapter } from '../persistence/types';
 const createMockStorage = (): Storage => {
   let store: Record<string, string> = {};
   return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => { store[key] = value; }),
-    removeItem: jest.fn((key: string) => { delete store[key]; }),
-    clear: jest.fn(() => { store = {}; }),
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    removeItem: vi.fn((key: string) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; }),
     get length() { return Object.keys(store).length; },
-    key: jest.fn((index: number) => Object.keys(store)[index] || null),
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
   };
 };
 
 // Mock IndexedDB
 const mockIndexedDB = {
   databases: new Map<string, Map<string, any>>(),
-  open: jest.fn((name: string) => {
+  open: vi.fn((name: string) => {
     if (!mockIndexedDB.databases.has(name)) {
       mockIndexedDB.databases.set(name, new Map());
     }
     const db = mockIndexedDB.databases.get(name)!;
     
     return {
-      put: jest.fn((key: string, value: any) => {
+      put: vi.fn((key: string, value: any) => {
         db.set(key, value);
         return Promise.resolve();
       }),
-      get: jest.fn((key: string) => Promise.resolve(db.get(key))),
-      delete: jest.fn((key: string) => {
+      get: vi.fn((key: string) => Promise.resolve(db.get(key))),
+      delete: vi.fn((key: string) => {
         db.delete(key);
         return Promise.resolve();
       }),
-      clear: jest.fn(() => {
+      clear: vi.fn(() => {
         db.clear();
         return Promise.resolve();
       }),
@@ -69,11 +69,11 @@ describe('Persistence', () => {
       writable: true,
     });
     
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Storage Adapters', () => {
@@ -121,7 +121,7 @@ describe('Persistence', () => {
 
       it('should handle storage errors', async () => {
         const adapter = new LocalStorageAdapter();
-        mockLocalStorage.setItem = jest.fn(() => {
+        mockLocalStorage.setItem = vi.fn(() => {
           throw new Error('Storage full');
         });
 
@@ -261,8 +261,8 @@ describe('Persistence', () => {
     });
 
     it('should skip already applied migrations', async () => {
-      const migration1 = jest.fn((state: any) => ({ ...state, migrated1: true }));
-      const migration2 = jest.fn((state: any) => ({ ...state, migrated2: true }));
+      const migration1 = vi.fn((state: any) => ({ ...state, migrated1: true }));
+      const migration2 = vi.fn((state: any) => ({ ...state, migrated2: true }));
 
       const migrations = [
         createMigration(1, migration1),
@@ -438,16 +438,16 @@ describe('Persistence', () => {
 
     it('should handle storage errors gracefully', async () => {
       const brokenAdapter: StorageAdapter = {
-        getItem: jest.fn().mockRejectedValue(new Error('Storage error')),
-        setItem: jest.fn().mockRejectedValue(new Error('Storage error')),
-        removeItem: jest.fn().mockRejectedValue(new Error('Storage error')),
-        clear: jest.fn().mockRejectedValue(new Error('Storage error')),
+        getItem: vi.fn().mockRejectedValue(new Error('Storage error')),
+        setItem: vi.fn().mockRejectedValue(new Error('Storage error')),
+        removeItem: vi.fn().mockRejectedValue(new Error('Storage error')),
+        clear: vi.fn().mockRejectedValue(new Error('Storage error')),
       };
 
       const config: PersistenceConfig<TestState> = {
         name: 'error-store',
         storage: brokenAdapter,
-        onError: jest.fn(),
+        onError: vi.fn(),
       };
 
       const useStore = create<TestState>()(

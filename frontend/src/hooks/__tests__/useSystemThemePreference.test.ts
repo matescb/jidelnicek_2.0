@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react'
 import { useSystemThemePreference, usePrefersReducedMotion } from '../useSystemThemePreference'
 
@@ -6,11 +7,11 @@ const createMockMediaQueryList = (matches: boolean): MediaQueryList => ({
   matches,
   media: '',
   onchange: null,
-  addListener: jest.fn(),
-  removeListener: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
 })
 
 describe('useSystemThemePreference', () => {
@@ -21,7 +22,7 @@ describe('useSystemThemePreference', () => {
     originalMatchMedia = window.matchMedia
     listeners = new Map()
 
-    window.matchMedia = jest.fn().mockImplementation((query: string) => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => {
       const mqList = createMockMediaQueryList(
         query === '(prefers-color-scheme: dark)' ? false : false
       )
@@ -43,11 +44,11 @@ describe('useSystemThemePreference', () => {
         }
       }
 
-      mqList.addEventListener = jest.fn((event, listener) => {
+      mqList.addEventListener = vi.fn((event, listener) => {
         if (event === 'change') addListener(listener)
       })
       
-      mqList.removeEventListener = jest.fn((event, listener) => {
+      mqList.removeEventListener = vi.fn((event, listener) => {
         if (event === 'change') removeListener(listener)
       })
 
@@ -74,7 +75,7 @@ describe('useSystemThemePreference', () => {
     })
 
     it('should return dark theme when system prefers dark', () => {
-      window.matchMedia = jest.fn().mockImplementation((query: string) => {
+      window.matchMedia = vi.fn().mockImplementation((query: string) => {
         const matches = query === '(prefers-color-scheme: dark)'
         return createMockMediaQueryList(matches)
       })
@@ -115,7 +116,7 @@ describe('useSystemThemePreference', () => {
   describe('Listener Management', () => {
     it('should add and remove event listeners properly', () => {
       const mockMediaQuery = createMockMediaQueryList(false)
-      window.matchMedia = jest.fn().mockReturnValue(mockMediaQuery)
+      window.matchMedia = vi.fn().mockReturnValue(mockMediaQuery)
 
       const { unmount } = renderHook(() => useSystemThemePreference())
 
@@ -133,7 +134,7 @@ describe('useSystemThemePreference', () => {
         removeEventListener: undefined,
       }
 
-      window.matchMedia = jest.fn().mockReturnValue(mockMediaQuery)
+      window.matchMedia = vi.fn().mockReturnValue(mockMediaQuery)
 
       const { unmount } = renderHook(() => useSystemThemePreference())
 
@@ -170,16 +171,16 @@ describe('usePrefersReducedMotion', () => {
     originalMatchMedia = window.matchMedia
     listeners = []
 
-    window.matchMedia = jest.fn().mockImplementation((query: string) => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => {
       const mqList = createMockMediaQueryList(
         query === '(prefers-reduced-motion: reduce)' ? false : false
       )
 
-      mqList.addEventListener = jest.fn((event, listener) => {
+      mqList.addEventListener = vi.fn((event, listener) => {
         if (event === 'change') listeners.push(listener)
       })
 
-      mqList.removeEventListener = jest.fn((event, listener) => {
+      mqList.removeEventListener = vi.fn((event, listener) => {
         const index = listeners.indexOf(listener)
         if (index > -1) listeners.splice(index, 1)
       })
@@ -207,7 +208,7 @@ describe('usePrefersReducedMotion', () => {
     })
 
     it('should return true when reduced motion is preferred', () => {
-      window.matchMedia = jest.fn().mockImplementation((query: string) => {
+      window.matchMedia = vi.fn().mockImplementation((query: string) => {
         const matches = query === '(prefers-reduced-motion: reduce)'
         return createMockMediaQueryList(matches)
       })
@@ -242,7 +243,7 @@ describe('usePrefersReducedMotion', () => {
   describe('Listener Management', () => {
     it('should clean up listeners on unmount', () => {
       const mockMediaQuery = createMockMediaQueryList(false)
-      window.matchMedia = jest.fn().mockReturnValue(mockMediaQuery)
+      window.matchMedia = vi.fn().mockReturnValue(mockMediaQuery)
 
       const { unmount } = renderHook(() => usePrefersReducedMotion())
 

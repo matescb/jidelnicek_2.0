@@ -11,24 +11,24 @@ import type { AuthContextType } from '@context/AuthContext'
 import type { Trip } from '@/store/slices/tripStore'
 
 // Mock the store
-jest.mock('@/store', () => ({
-  useStore: jest.fn(),
+vi.mock('@/store', () => ({
+  useStore: vi.fn(),
 }))
 
 // Mock router navigation
-const mockNavigate = jest.fn()
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', () => ({
+  ...vi.importActual('react-router-dom'),
   useNavigate: () => mockNavigate,
 }))
 
 // Mock i18next
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
     i18n: {
       language: 'en',
-      changeLanguage: jest.fn(),
+      changeLanguage: vi.fn(),
     },
   }),
 }))
@@ -45,9 +45,9 @@ describe('TripListPage', () => {
     user: mockUser,
     isAuthenticated: true,
     isLoading: false,
-    login: jest.fn(),
-    logout: jest.fn(),
-    register: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    register: vi.fn(),
   }
 
   const mockTrips: Trip[] = [
@@ -98,10 +98,10 @@ describe('TripListPage', () => {
     },
   ]
 
-  const mockFetchTrips = jest.fn()
-  const mockDeleteTrip = jest.fn()
-  const mockSetFilter = jest.fn()
-  const mockSetSort = jest.fn()
+  const mockFetchTrips = vi.fn()
+  const mockDeleteTrip = vi.fn()
+  const mockSetFilter = vi.fn()
+  const mockSetSort = vi.fn()
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -112,7 +112,7 @@ describe('TripListPage', () => {
     })
 
     // Setup store mock
-    ;(useStore as jest.Mock).mockReturnValue({
+    ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
       trips: mockTrips,
       fetchTrips: mockFetchTrips,
       deleteTrip: mockDeleteTrip,
@@ -123,7 +123,7 @@ describe('TripListPage', () => {
     })
 
     // Clear all mocks
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   const renderWithProviders = (component: React.ReactElement) => {
@@ -198,7 +198,7 @@ describe('TripListPage', () => {
 
   describe('Empty States', () => {
     it('shows empty state when no trips exist', () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: [],
         fetchTrips: mockFetchTrips,
         deleteTrip: mockDeleteTrip,
@@ -214,7 +214,7 @@ describe('TripListPage', () => {
     })
 
     it('navigates to create trip from empty state', async () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: [],
         fetchTrips: mockFetchTrips,
         deleteTrip: mockDeleteTrip,
@@ -233,7 +233,7 @@ describe('TripListPage', () => {
 
   describe('Loading and Error States', () => {
     it('shows loading state', () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: [],
         fetchTrips: mockFetchTrips,
         deleteTrip: mockDeleteTrip,
@@ -248,7 +248,7 @@ describe('TripListPage', () => {
     })
 
     it('shows error state', () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: [],
         fetchTrips: mockFetchTrips,
         deleteTrip: mockDeleteTrip,
@@ -264,7 +264,7 @@ describe('TripListPage', () => {
     })
 
     it('retries fetching on error', async () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: [],
         fetchTrips: mockFetchTrips,
         deleteTrip: mockDeleteTrip,
@@ -359,8 +359,8 @@ describe('TripListPage', () => {
     })
 
     it('duplicates a trip', async () => {
-      const mockDuplicateTrip = jest.fn().mockResolvedValue({ id: 'new-trip-id' })
-      ;(useStore as jest.Mock).mockReturnValue({
+      const mockDuplicateTrip = vi.fn().mockResolvedValue({ id: 'new-trip-id' })
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: mockTrips,
         fetchTrips: mockFetchTrips,
         deleteTrip: mockDeleteTrip,
@@ -489,14 +489,14 @@ describe('TripListPage', () => {
         name: `Trip ${i + 1}`,
       }))
       
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: manyTrips,
         totalTrips: 25,
         currentPage: 1,
         pageSize: 10,
         fetchTrips: mockFetchTrips,
         deleteTrip: mockDeleteTrip,
-        setPage: jest.fn(),
+        setPage: vi.fn(),
         isLoading: false,
         error: null,
       })
@@ -510,8 +510,8 @@ describe('TripListPage', () => {
     })
 
     it('navigates between pages', async () => {
-      const setPage = jest.fn()
-      ;(useStore as jest.Mock).mockReturnValue({
+      const setPage = vi.fn()
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         trips: mockTrips,
         totalTrips: 25,
         currentPage: 1,

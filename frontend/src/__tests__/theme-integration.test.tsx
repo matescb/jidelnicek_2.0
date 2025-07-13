@@ -12,11 +12,11 @@ const createMockMediaQueryList = (matches: boolean): MediaQueryList => ({
   matches,
   media: '',
   onchange: null,
-  addListener: jest.fn(),
-  removeListener: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
 })
 
 // Component that displays current theme information
@@ -41,7 +41,7 @@ describe('Theme System Integration', () => {
     mediaQueryListeners = new Map()
 
     // Mock matchMedia with ability to trigger changes
-    window.matchMedia = jest.fn().mockImplementation((query: string) => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => {
       const mqList = createMockMediaQueryList(
         query === '(prefers-color-scheme: dark)' ? false : false
       )
@@ -50,13 +50,13 @@ describe('Theme System Integration', () => {
         mediaQueryListeners.set(query, [])
       }
 
-      mqList.addEventListener = jest.fn((event, listener) => {
+      mqList.addEventListener = vi.fn((event, listener) => {
         if (event === 'change') {
           mediaQueryListeners.get(query)?.push(listener)
         }
       })
 
-      mqList.removeEventListener = jest.fn((event, listener) => {
+      mqList.removeEventListener = vi.fn((event, listener) => {
         if (event === 'change') {
           const listeners = mediaQueryListeners.get(query) || []
           const index = listeners.indexOf(listener)

@@ -8,17 +8,17 @@ import { useStore } from '@/store'
 import type { Participant } from '@/store/slices/participantStore'
 
 // Mock the store
-jest.mock('@/store', () => ({
-  useStore: jest.fn(),
+vi.mock('@/store', () => ({
+  useStore: vi.fn(),
 }))
 
 // Mock i18next
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
     i18n: {
       language: 'en',
-      changeLanguage: jest.fn(),
+      changeLanguage: vi.fn(),
     },
   }),
 }))
@@ -63,15 +63,15 @@ describe('ParticipantManager', () => {
   ]
 
   const mockSelectedParticipants = ['p1', 'p2']
-  const mockOnParticipantToggle = jest.fn()
-  const mockOnParticipantAdd = jest.fn()
-  const mockOnParticipantEdit = jest.fn()
-  const mockOnParticipantRemove = jest.fn()
+  const mockOnParticipantToggle = vi.fn()
+  const mockOnParticipantAdd = vi.fn()
+  const mockOnParticipantEdit = vi.fn()
+  const mockOnParticipantRemove = vi.fn()
 
-  const mockFetchParticipants = jest.fn()
-  const mockCreateParticipant = jest.fn()
-  const mockUpdateParticipant = jest.fn()
-  const mockDeleteParticipant = jest.fn()
+  const mockFetchParticipants = vi.fn()
+  const mockCreateParticipant = vi.fn()
+  const mockUpdateParticipant = vi.fn()
+  const mockDeleteParticipant = vi.fn()
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -82,7 +82,7 @@ describe('ParticipantManager', () => {
     })
 
     // Setup store mock
-    ;(useStore as jest.Mock).mockReturnValue({
+    ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
       participants: mockParticipants,
       fetchParticipants: mockFetchParticipants,
       createParticipant: mockCreateParticipant,
@@ -92,7 +92,7 @@ describe('ParticipantManager', () => {
       error: null,
     })
 
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   const renderWithProviders = (component: React.ReactElement) => {
@@ -586,7 +586,7 @@ describe('ParticipantManager', () => {
     })
 
     it('exports participants to CSV', async () => {
-      const createObjectURL = jest.fn()
+      const createObjectURL = vi.fn()
       global.URL.createObjectURL = createObjectURL
       
       renderWithProviders(
@@ -656,7 +656,7 @@ describe('ParticipantManager', () => {
 
   describe('Loading and Error States', () => {
     it('shows loading state', () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         participants: [],
         isLoading: true,
         error: null,
@@ -674,7 +674,7 @@ describe('ParticipantManager', () => {
     })
 
     it('shows error state', () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         participants: [],
         isLoading: false,
         error: 'Failed to load participants',
@@ -692,7 +692,7 @@ describe('ParticipantManager', () => {
     })
 
     it('retries on error', async () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         participants: [],
         fetchParticipants: mockFetchParticipants,
         isLoading: false,
@@ -715,7 +715,7 @@ describe('ParticipantManager', () => {
 
   describe('Empty State', () => {
     it('shows empty state when no participants', () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         participants: [],
         fetchParticipants: mockFetchParticipants,
         isLoading: false,
@@ -734,7 +734,7 @@ describe('ParticipantManager', () => {
     })
 
     it('allows adding participant from empty state', async () => {
-      ;(useStore as jest.Mock).mockReturnValue({
+      ;(useStore as ReturnType<typeof vi.fn>).mockReturnValue({
         participants: [],
         fetchParticipants: mockFetchParticipants,
         isLoading: false,

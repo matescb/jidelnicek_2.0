@@ -3329,3 +3329,160 @@ async def get_template_stats(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while retrieving template statistics"
         )
+
+
+@router.post(
+    "/{trip_id}/apply-template/{template_id}",
+    summary="Apply template to trip",
+    description="Apply a template's structure and content to an existing trip",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    responses={
+        501: {
+            "description": "Not implemented yet",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": {"type": "string"},
+                            "message": {"type": "string"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
+async def apply_template_to_trip(
+    trip_id: UUID = Path(..., description="Trip ID"),
+    template_id: UUID = Path(..., description="Template ID"),
+    current_user: AuthUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Apply a template's structure and content to an existing trip."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Template application to trip not implemented yet"
+    )
+
+
+# Missing endpoints from OpenAPI specification
+
+@router.get(
+    "/{trip_id}/summary",
+    response_model=Dict[str, Any],
+    summary="Get trip summary",
+    description="Get comprehensive nutritional and logistical summary for the trip"
+)
+async def get_trip_summary(
+    trip_id: UUID = Path(..., description="Trip ID")
+):
+    """Get comprehensive nutritional and logistical summary for the trip."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Trip summary endpoint not implemented yet"
+    )
+
+
+@router.put(
+    "/{trip_id}/stove",
+    response_model=Dict[str, Any],
+    summary="Set or update stove",
+    description="Configure camping stove for fuel calculations"
+)
+async def set_trip_stove(
+    trip_id: UUID = Path(..., description="Trip ID"),
+    stove_config: Dict[str, Any] = Body(...)
+):
+    """Configure camping stove for fuel calculations."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Stove configuration endpoint not implemented yet"
+    )
+
+
+@router.post(
+    "/{trip_id}/days",
+    response_model=Dict[str, Any],
+    status_code=status.HTTP_201_CREATED,
+    summary="Add day to trip",
+    description="Add a new day to the trip"
+)
+async def add_trip_day(
+    trip_id: UUID = Path(..., description="Trip ID"),
+    day_data: Dict[str, Any] = Body(...)
+):
+    """Add a new day to the trip."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Add trip day endpoint not implemented yet"
+    )
+
+
+@router.put(
+    "/{trip_id}/days/reorder",
+    response_model=Dict[str, Any],
+    summary="Reorder days",
+    description="Change the order of days in the trip"
+)
+async def reorder_trip_days(
+    trip_id: UUID = Path(..., description="Trip ID"),
+    reorder_data: Dict[str, Any] = Body(...)
+):
+    """Change the order of days in the trip."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Reorder trip days endpoint not implemented yet"
+    )
+
+
+@router.get(
+    "/{trip_id}/days/{day_id}",
+    response_model=Dict[str, Any],
+    summary="Get day details",
+    description="Get detailed information about a specific trip day"
+)
+async def get_trip_day_details(
+    trip_id: UUID = Path(..., description="Trip ID"),
+    day_id: UUID = Path(..., description="Day ID")
+):
+    """Get detailed information about a specific trip day."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Get trip day details endpoint not implemented yet"
+    )
+
+
+@router.put(
+    "/{trip_id}/days/{day_id}",
+    response_model=Dict[str, Any],
+    summary="Update day",
+    description="Update trip day information"
+)
+async def update_trip_day(
+    trip_id: UUID = Path(..., description="Trip ID"),
+    day_id: UUID = Path(..., description="Day ID"),
+    day_update: Dict[str, Any] = Body(...)
+):
+    """Update trip day information."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Update trip day endpoint not implemented yet"
+    )
+
+
+@router.delete(
+    "/{trip_id}/days/{day_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove day",
+    description="Remove a day from the trip"
+)
+async def remove_trip_day(
+    trip_id: UUID = Path(..., description="Trip ID"),
+    day_id: UUID = Path(..., description="Day ID")
+):
+    """Remove a day from the trip."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Remove trip day endpoint not implemented yet"
+    )

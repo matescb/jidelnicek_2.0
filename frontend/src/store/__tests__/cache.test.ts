@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { CacheManager } from '../cache/cacheManager';
 import { cacheMiddleware } from '../cache/cacheMiddleware';
 import { create } from 'zustand';
@@ -8,13 +8,13 @@ describe('Cache Management', () => {
   let cacheManager: CacheManager;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     cacheManager = new CacheManager();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   describe('CacheManager', () => {
@@ -64,7 +64,7 @@ describe('Cache Management', () => {
         expect(cacheManager.get(key)).toEqual(data);
 
         // Advance time past TTL
-        jest.advanceTimersByTime(1001);
+        vi.advanceTimersByTime(1001);
         expect(cacheManager.get(key)).toBeNull();
       });
 
@@ -75,7 +75,7 @@ describe('Cache Management', () => {
         cacheManager.set(key, data);
         
         // Advance time significantly
-        jest.advanceTimersByTime(1000000);
+        vi.advanceTimersByTime(1000000);
         expect(cacheManager.get(key)).toEqual(data);
       });
 
@@ -83,11 +83,11 @@ describe('Cache Management', () => {
         const key = 'update-key';
         
         cacheManager.set(key, { value: 'initial' }, { ttl: 1000 });
-        jest.advanceTimersByTime(800);
+        vi.advanceTimersByTime(800);
         
         // Update with new TTL
         cacheManager.set(key, { value: 'updated' }, { ttl: 2000 });
-        jest.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(1500);
         
         // Should still exist after original TTL would have expired
         expect(cacheManager.get(key)).toEqual({ value: 'updated' });
@@ -99,13 +99,17 @@ describe('Cache Management', () => {
         const manager = new CacheManager({ maxSize: 3, evictionPolicy: 'lru' });
 
         manager.set('key1', { value: 'data1' });
+        vi.advanceTimersByTime(1);
         manager.set('key2', { value: 'data2' });
+        vi.advanceTimersByTime(1);
         manager.set('key3', { value: 'data3' });
         
         // Access key1 to make it recently used
+        vi.advanceTimersByTime(1);
         manager.get('key1');
         
         // Add new entry, should evict key2 (least recently used)
+        vi.advanceTimersByTime(1);
         manager.set('key4', { value: 'data4' });
 
         expect(manager.get('key1')).toEqual({ value: 'data1' });
@@ -199,7 +203,7 @@ describe('Cache Management', () => {
     }
 
     it('should cache API responses', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({ id: '1', name: 'Test User' });
+      const mockFetch = vi.fn().mockResolvedValue({ id: '1', name: 'Test User' });
 
       const useStore = create<TestState>()(
         cacheMiddleware(
@@ -241,7 +245,7 @@ describe('Cache Management', () => {
     });
 
     it('should invalidate cache on mutations', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({ id: '1', name: 'Test User' });
+      const mockFetch = vi.fn().mockResolvedValue({ id: '1', name: 'Test User' });
 
       const useStore = create<TestState & { updateUser: (id: string, name: string) => void }>()(
         cacheMiddleware(
@@ -291,8 +295,8 @@ describe('Cache Management', () => {
     });
 
     it('should handle cache errors gracefully', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({ id: '1', name: 'Test User' });
-      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockFetch = vi.fn().mockResolvedValue({ id: '1', name: 'Test User' });
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       // Create a broken cache manager
       const brokenCacheManager = {
@@ -338,7 +342,7 @@ describe('Cache Management', () => {
     });
 
     it('should support conditional caching', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({ id: '1', name: 'Test User' });
+      const mockFetch = vi.fn().mockResolvedValue({ id: '1', name: 'Test User' });
 
       const useStore = create<TestState & { skipCache?: boolean }>()(
         cacheMiddleware(

@@ -1,0 +1,6 @@
+{
+  "email": "test-new-user@example.com",
+  "password": "StrongPass482!",
+  "confirm_password": "StrongPass482!",
+  "language": "cs"
+}

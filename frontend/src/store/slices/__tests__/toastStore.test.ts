@@ -60,7 +60,7 @@ describe('toastStore', () => {
     })
 
     it('should auto-remove non-persistent toasts after duration', async () => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
       const { result } = renderHook(() => useToastStore())
       
       act(() => {
@@ -73,16 +73,16 @@ describe('toastStore', () => {
       expect(result.current.toasts).toHaveLength(1)
       
       act(() => {
-        jest.advanceTimersByTime(1000)
+        vi.advanceTimersByTime(1000)
       })
       
       expect(result.current.toasts).toHaveLength(0)
       
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
 
     it('should not auto-remove persistent toasts', async () => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
       const { result } = renderHook(() => useToastStore())
       
       act(() => {
@@ -96,12 +96,12 @@ describe('toastStore', () => {
       expect(result.current.toasts).toHaveLength(1)
       
       act(() => {
-        jest.advanceTimersByTime(2000)
+        vi.advanceTimersByTime(2000)
       })
       
       expect(result.current.toasts).toHaveLength(1)
       
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
   })
 
@@ -166,7 +166,7 @@ describe('toastStore', () => {
 
     it('should call onClose callback when removing', () => {
       const { result } = renderHook(() => useToastStore())
-      const onClose = jest.fn()
+      const onClose = vi.fn()
       let toastId: string
       
       act(() => {
@@ -205,8 +205,8 @@ describe('toastStore', () => {
 
     it('should call all onClose callbacks', () => {
       const { result } = renderHook(() => useToastStore())
-      const onClose1 = jest.fn()
-      const onClose2 = jest.fn()
+      const onClose1 = vi.fn()
+      const onClose2 = vi.fn()
       
       act(() => {
         result.current.addToast({ title: 'Toast 1', onClose: onClose1 })

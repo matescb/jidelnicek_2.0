@@ -315,4 +315,92 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     host: true,
   },
+  
+  // Test configuration
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/setupTests.ts'],
+    css: true,
+    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    transformMode: {
+      web: [/\.[jt]sx?$/],
+    },
+    deps: {
+      optimizer: {
+        web: {
+          exclude: ['@testing-library/jest-dom'],
+        },
+      },
+    },
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@context': path.resolve(__dirname, './src/context'),
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@types': path.resolve(__dirname, './src/types'),
+      '@store': path.resolve(__dirname, './src/store'),
+      '@router': path.resolve(__dirname, './src/router'),
+    },
+    // Enhanced coverage reporting
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/setupTests.ts',
+        'src/**/*.stories.{js,jsx,ts,tsx}',
+        'src/**/*.d.ts',
+        'src/__tests__/utils/',
+        'dist/',
+      ],
+      thresholds: {
+        global: {
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80,
+        },
+        // Specific thresholds for responsive and accessibility components
+        'src/components/navigation/': {
+          branches: 85,
+          functions: 85,
+          lines: 85,
+          statements: 85,
+        },
+        'src/components/forms/': {
+          branches: 90,
+          functions: 90,
+          lines: 90,
+          statements: 90,
+        },
+        'src/hooks/responsive/': {
+          branches: 95,
+          functions: 95,
+          lines: 95,
+          statements: 95,
+        },
+      },
+    },
+    // Test timeout for slower responsive tests
+    testTimeout: 10000,
+    // Retry flaky tests
+    retry: 2,
+    // Reporter configuration
+    reporters: [
+      'default',
+      ['junit', { outputFile: './coverage/junit.xml' }],
+      ['json', { outputFile: './coverage/test-results.json' }],
+    ],
+    // Environment variables for testing
+    env: {
+      NODE_ENV: 'test',
+      VITE_API_URL: '/api/v1',
+      VITE_USE_MOCK_AUTH: 'true',
+    },
+  },
 }))

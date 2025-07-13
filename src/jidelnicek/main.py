@@ -21,15 +21,19 @@ import uvicorn
 
 from jidelnicek.core.config import settings
 from jidelnicek.core.dependencies import init_db, close_db, init_redis, close_redis
+from jidelnicek.auth.exceptions import AuthException
 from jidelnicek.auth.routers import auth_router, monitoring_router
 from jidelnicek.auth.tasks import start_session_cleanup_background_task
-from jidelnicek.recipe.routers import categories_router, tags_router, recipes_router, search_router, scaling_router
-from jidelnicek.trip.routers import trips_router
+from jidelnicek.recipe.routers import categories_router, tags_router, recipes_router, search_router, scaling_router, marketplace_router
+from jidelnicek.trip.routers import trips_router, meals_router, templates_router, export_router as trip_export_router
 from jidelnicek.core.routers.jobs import router as jobs_router, export_router
 from jidelnicek.ingredients import ingredients_router
 from jidelnicek.users import users_router
+from jidelnicek.calculations.routers import calculations_router
+from jidelnicek.snacks.routers import snacks_router
 # from jidelnicek.core.routers.cleanup import router as cleanup_router
 from jidelnicek.core.routers.progress import router as progress_router
+from jidelnicek.core.routers.sharing import router as sharing_router
 # from jidelnicek.api.v1.endpoints.exports import router as unified_export_router
 # from jidelnicek.admin.routers import users_router as admin_users_router, dashboard_router as admin_dashboard_router
 from jidelnicek.core.middleware.security import (
@@ -281,6 +285,29 @@ app.add_exception_handler(ResponseValidationError, response_validation_exception
 app.add_exception_handler(ValidationError, pydantic_validation_exception_handler)
 app.add_exception_handler(ValidationException, custom_validation_exception_handler)
 
+# Authentication exception handler
+@app.exception_handler(AuthException)
+async def auth_exception_handler(request: Request, exc: AuthException):
+    """
+    Handle authentication exceptions and convert to OpenAPI-compliant format.
+    
+    Converts AuthException instances to the flat format:
+    {"error": "ERROR_CODE", "message": "Human readable message"}
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    
+    # Get the formatted response from the exception
+    content = exc.to_dict()
+    
+    # Add request ID for tracking
+    if request_id != "unknown":
+        content["request_id"] = request_id
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=content
+    )
+
 
 # Request ID middleware
 @app.middleware("http")
@@ -374,15 +401,25 @@ app.include_router(tags_router, prefix="/api/v1/recipes")
 app.include_router(recipes_router, prefix="/api/v1")
 app.include_router(search_router, prefix="/api/v1")
 app.include_router(scaling_router, prefix="/api/v1")
+app.include_router(marketplace_router, prefix="/api/v1")
 
 # Trip module routers
 app.include_router(trips_router, prefix="/api/v1")
+app.include_router(meals_router, prefix="/api/v1")
+app.include_router(templates_router, prefix="/api/v1")
+app.include_router(trip_export_router, prefix="/api/v1")
+
+# Calculations module router
+app.include_router(calculations_router, prefix="/api/v1")
 
 # Ingredients module router
 app.include_router(ingredients_router)
 
 # Users module router
 app.include_router(users_router)
+
+# Snacks module router
+app.include_router(snacks_router, prefix="/api/v1")
 
 # Job and export routers
 app.include_router(jobs_router)
@@ -393,6 +430,9 @@ app.include_router(export_router)
 
 # Progress tracking router
 app.include_router(progress_router)
+
+# Sharing router
+app.include_router(sharing_router, prefix="/api/v1")
 
 # Cleanup management router (temporarily disabled)
 # app.include_router(cleanup_router, prefix="/api/v1")

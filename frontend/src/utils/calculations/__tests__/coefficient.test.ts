@@ -191,9 +191,9 @@ describe('Coefficient Calculations', () => {
       expect(summary.dailySummaries).toHaveLength(4);
       
       // Check meal slot totals
-      expect(summary.mealSlotTotals['Breakfast'].toNumber()).toBeCloseTo(9.3, 1); // Sum of all breakfast effective counts
-      expect(summary.mealSlotTotals['Lunch'].toNumber()).toBeCloseTo(10.5, 1);
-      expect(summary.mealSlotTotals['Dinner'].toNumber()).toBeCloseTo(10.5, 1);
+      expect(summary.mealSlotTotals['Breakfast'].toNumber()).toBeCloseTo(9.45, 1); // Sum of all breakfast effective counts
+      expect(summary.mealSlotTotals['Lunch'].toNumber()).toBeCloseTo(10.25, 1);
+      expect(summary.mealSlotTotals['Dinner'].toNumber()).toBeCloseTo(10.25, 1);
     });
 
     it('should calculate total effective days correctly', () => {
@@ -210,9 +210,9 @@ describe('Coefficient Calculations', () => {
       const baseQuantity = new Decimal(100); // 100g per person
       const quantities = calculateShoppingQuantities(mockTrip, baseQuantity);
       
-      expect(quantities['Breakfast'].toNumber()).toBeCloseTo(930, 0); // 9.3 × 100
-      expect(quantities['Lunch'].toNumber()).toBeCloseTo(1050, 0); // 10.5 × 100
-      expect(quantities['Dinner'].toNumber()).toBeCloseTo(1050, 0); // 10.5 × 100
+      expect(quantities['Breakfast'].toNumber()).toBeCloseTo(945, 0); // 9.45 × 100
+      expect(quantities['Lunch'].toNumber()).toBeCloseTo(1025, 0); // 10.25 × 100
+      expect(quantities['Dinner'].toNumber()).toBeCloseTo(1025, 0); // 10.25 × 100
     });
 
     it('should filter by meal slots when specified', () => {

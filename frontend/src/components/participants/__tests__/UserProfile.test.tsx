@@ -19,8 +19,8 @@ jest.mock('date-fns', () => ({
   parseISO: jest.fn((date: string) => new Date(date)),
 }))
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
-const mockUseToast = useToast as jest.MockedFunction<typeof useToast>
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>
+const mockUseToast = useToast as vi.MockedFunction<typeof useToast>
 
 describe('UserProfile', () => {
   const mockCurrentUser: User = {

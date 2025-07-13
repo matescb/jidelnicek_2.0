@@ -5,16 +5,16 @@ import { useTripStore } from '@/store/slices/tripStore'
 import type { Trip, ShoppingListItem } from '@/store/slices/tripStore'
 
 // Mock the store
-jest.mock('@/store/slices/tripStore')
-jest.mock('@/hooks/useWebSocket', () => ({
-  useWebSocketEvent: jest.fn(),
-  useTripWebSocket: jest.fn(() => ({ onTripEvent: jest.fn() }))
+vi.mock('@/store/slices/tripStore')
+vi.mock('@/hooks/useWebSocket', () => ({
+  useWebSocketEvent: vi.fn(),
+  useTripWebSocket: vi.fn(() => ({ onTripEvent: vi.fn() }))
 }))
 
 // Mock toast
-jest.mock('@/hooks/useToast', () => ({
+vi.mock('@/hooks/useToast', () => ({
   useToast: () => ({
-    toast: jest.fn()
+    toast: vi.fn()
   })
 }))
 
@@ -62,7 +62,7 @@ const mockShoppingList: ShoppingListItem[] = [
 ]
 
 describe('ShoppingListView', () => {
-  const mockGenerateShoppingList = jest.fn()
+  const mockGenerateShoppingList = vi.fn()
   
   beforeEach(() => {
     (useTripStore as unknown as jest.Mock).mockReturnValue({
@@ -73,7 +73,7 @@ describe('ShoppingListView', () => {
   })
 
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('renders shopping list with categories', () => {
@@ -169,13 +169,13 @@ describe('ShoppingListView', () => {
 
   it('exports to CSV when export button clicked', () => {
     // Mock URL.createObjectURL
-    global.URL.createObjectURL = jest.fn(() => 'blob:test')
-    global.URL.revokeObjectURL = jest.fn()
+    global.URL.createObjectURL = vi.fn(() => 'blob:test')
+    global.URL.revokeObjectURL = vi.fn()
     
     // Mock document.createElement
     const mockAnchor = document.createElement('a')
-    const clickSpy = jest.spyOn(mockAnchor, 'click')
-    jest.spyOn(document, 'createElement').mockReturnValueOnce(mockAnchor)
+    const clickSpy = vi.spyOn(mockAnchor, 'click')
+    vi.spyOn(document, 'createElement').mockReturnValueOnce(mockAnchor)
     
     render(<ShoppingListView trip={mockTrip} />)
     
@@ -187,7 +187,7 @@ describe('ShoppingListView', () => {
   })
 
   it('triggers print when print button clicked', () => {
-    const printSpy = jest.spyOn(window, 'print').mockImplementation()
+    const printSpy = vi.spyOn(window, 'print').mockImplementation()
     
     render(<ShoppingListView trip={mockTrip} />)
     

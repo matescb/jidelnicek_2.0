@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { renderHook } from '@testing-library/react'
 import { usePermissions, useParticipantPermissions, useTripPermissions } from '../usePermissions'
 import { useAuth } from '../../context/AuthContext'
@@ -5,9 +6,9 @@ import { ROLE_PERMISSIONS, PERMISSIONS } from '../../types/participants'
 import type { Participant } from '../../types/participants'
 
 // Mock the auth context
-jest.mock('../../context/AuthContext')
+vi.mock('../../context/AuthContext')
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>
 
 describe('usePermissions', () => {
   const mockUser = {
@@ -18,12 +19,12 @@ describe('usePermissions', () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      login: jest.fn(),
-      logout: jest.fn(),
+      login: vi.fn(),
+      logout: vi.fn(),
       isAuthenticated: true,
     } as any)
   })

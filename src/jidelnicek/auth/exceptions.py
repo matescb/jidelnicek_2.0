@@ -27,13 +27,11 @@ class AuthException(Exception):
     def to_dict(self) -> Dict[str, Any]:
         """Convert exception to dictionary for API responses."""
         result = {
-            "error": {
-                "code": self.error_code,
-                "message": self.message
-            }
+            "error": self.error_code,
+            "message": self.message
         }
         if self.details:
-            result["error"]["details"] = self.details
+            result["details"] = self.details
         return result
 
 

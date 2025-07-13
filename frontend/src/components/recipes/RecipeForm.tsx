@@ -20,13 +20,19 @@ const recipeSchema = z.object({
   instructions: z.array(z.object({
     step: z.number(),
     text: z.string().min(1, 'Instruction is required').max(500)
-  })).min(1, 'At least one instruction is required'),
+  })).min(1, 'At least one instruction is required').refine(
+    (instructions) => instructions.some(instruction => instruction.text.trim().length > 0),
+    'At least one instruction is required'
+  ),
   ingredients: z.array(z.object({
     name: z.string().min(1, 'Ingredient name is required'),
     quantity: z.number().positive('Quantity must be positive'),
     unit: z.string().min(1, 'Unit is required'),
     notes: z.string().optional()
-  })).min(1, 'At least one ingredient is required'),
+  })).min(1, 'At least one ingredient is required').refine(
+    (ingredients) => ingredients.some(ingredient => ingredient.name.trim().length > 0),
+    'At least one ingredient is required'
+  ),
   prepTime: z.number().min(0).optional(),
   cookTime: z.number().min(0).optional(),
   servings: z.number().min(1).max(100),
@@ -58,9 +64,9 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
       name: recipe?.name || '',
       description: recipe?.description || '',
       instructions: recipe?.instructions || [{ step: 1, text: '' }],
-      ingredients: recipe?.ingredients || [{ name: '', quantity: 1, unit: 'g', notes: '' }],
-      prepTime: recipe?.prepTime || 0,
-      cookTime: recipe?.cookTime || 0,
+      ingredients: recipe?.ingredients || [{ name: '', quantity: 200, unit: 'g', notes: '' }],
+      prepTime: recipe?.prepTime || 15,
+      cookTime: recipe?.cookTime || 30,
       servings: recipe?.servings || 4,
       difficulty: recipe?.difficulty || 'medium',
       categories: recipe?.categories || [],
@@ -130,15 +136,17 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="recipe-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('recipes.name')} *
             </label>
             <input
+              id="recipe-name"
               {...register('name')}
+              aria-describedby={errors.name ? 'recipe-name-error' : undefined}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.name && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              <p id="recipe-name-error" className="mt-1 text-sm text-red-600 dark:text-red-400">
                 {errors.name.message}
               </p>
             )}
@@ -146,16 +154,18 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
           
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="recipe-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('recipes.description')}
             </label>
             <textarea
+              id="recipe-description"
               {...register('description')}
               rows={3}
+              aria-describedby={errors.description ? 'recipe-description-error' : undefined}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.description && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              <p id="recipe-description-error" className="mt-1 text-sm text-red-600 dark:text-red-400">
                 {errors.description.message}
               </p>
             )}
@@ -164,38 +174,49 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
           {/* Time and Servings */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="recipe-prep-time" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('recipes.prepTime')} ({t('common.minutes')})
               </label>
               <input
+                id="recipe-prep-time"
                 type="number"
+                min="0"
+                tabIndex={0}
                 {...register('prepTime', { valueAsNumber: true })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="recipe-cook-time" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('recipes.cookTime')} ({t('common.minutes')})
               </label>
               <input
+                id="recipe-cook-time"
                 type="number"
+                min="0"
+                tabIndex={0}
                 {...register('cookTime', { valueAsNumber: true })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="recipe-servings" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('recipes.servings')} *
               </label>
               <input
+                id="recipe-servings"
                 type="number"
+                min="1"
+                max="100"
+                tabIndex={0}
                 {...register('servings', { valueAsNumber: true })}
+                aria-describedby={errors.servings ? 'recipe-servings-error' : undefined}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {errors.servings && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                <p id="recipe-servings-error" className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.servings.message}
                 </p>
               )}
@@ -204,10 +225,11 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
           
           {/* Difficulty */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="recipe-difficulty" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('recipes.difficulty')} *
             </label>
             <select
+              id="recipe-difficulty"
               {...register('difficulty')}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
@@ -220,11 +242,12 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
           {/* Public Toggle */}
           <div className="flex items-center">
             <input
+              id="recipe-is-public"
               type="checkbox"
               {...register('isPublic')}
               className="mr-2 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
             />
-            <label className="text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor="recipe-is-public" className="text-sm text-gray-700 dark:text-gray-300">
               {t('recipes.isPublic')}
             </label>
           </div>
@@ -238,6 +261,7 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
             {t('recipes.ingredients')} *
           </h3>
           <TouchableArea
+            type="button"
             onClick={() => appendIngredient({ name: '', quantity: 1, unit: 'g', notes: '' })}
             className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -250,24 +274,47 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
           {ingredientFields.map((field, index) => (
             <div key={field.id} className="flex gap-2">
               <div className="flex-1">
+                <label htmlFor={`ingredient-name-${index}`} className="sr-only">
+                  {t('recipes.ingredientName')} {index + 1}
+                </label>
                 <input
+                  id={`ingredient-name-${index}`}
                   {...register(`ingredients.${index}.name`)}
                   placeholder={t('recipes.ingredientName')}
+                  aria-label={`${t('recipes.ingredientName')} ${index + 1}`}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div className="w-24">
+                <label htmlFor={`ingredient-quantity-${index}`} className="sr-only">
+                  {t('recipes.quantity')} {index + 1}
+                </label>
                 <input
+                  id={`ingredient-quantity-${index}`}
                   type="number"
                   step="0.1"
+                  min="0"
+                  tabIndex={0}
                   {...register(`ingredients.${index}.quantity`, { valueAsNumber: true })}
                   placeholder={t('recipes.quantity')}
+                  aria-label={`${t('recipes.quantity')} ${index + 1}`}
+                  aria-describedby={errors.ingredients?.[index]?.quantity ? `ingredient-quantity-error-${index}` : undefined}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                {errors.ingredients?.[index]?.quantity && (
+                  <p id={`ingredient-quantity-error-${index}`} className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.ingredients[index]?.quantity?.message}
+                  </p>
+                )}
               </div>
               <div className="w-24">
+                <label htmlFor={`ingredient-unit-${index}`} className="sr-only">
+                  {t('recipes.unit')} {index + 1}
+                </label>
                 <select
+                  id={`ingredient-unit-${index}`}
                   {...register(`ingredients.${index}.unit`)}
+                  aria-label={`${t('recipes.unit')} ${index + 1}`}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="g">{t('recipes.units.g')}</option>
@@ -281,8 +328,10 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
                 </select>
               </div>
               <TouchableArea
+                type="button"
                 onClick={() => removeIngredient(index)}
                 className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                aria-label={`${t('common.remove')} ${t('recipes.ingredient')} ${index + 1}`}
               >
                 <Trash2 className="w-5 h-5" />
               </TouchableArea>
@@ -292,7 +341,7 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
         
         {errors.ingredients && (
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-            {errors.ingredients.message}
+            {errors.ingredients.message || errors.ingredients.root?.message}
           </p>
         )}
       </div>
@@ -304,6 +353,7 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
             {t('recipes.instructions')} *
           </h3>
           <TouchableArea
+            type="button"
             onClick={() => appendInstruction({ step: instructionFields.length + 1, text: '' })}
             className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -337,16 +387,23 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
                           <GripVertical className="w-5 h-5 text-gray-400" />
                         </div>
                         <div className="flex-1">
+                          <label htmlFor={`instruction-${index}`} className="sr-only">
+                            {t('common.step')} {index + 1}
+                          </label>
                           <textarea
+                            id={`instruction-${index}`}
                             {...register(`instructions.${index}.text`)}
                             placeholder={`${t('common.step')} ${index + 1}`}
                             rows={2}
+                            aria-label={`${t('common.step')} ${index + 1}`}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
                         <TouchableArea
+                          type="button"
                           onClick={() => removeInstruction(index)}
                           className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                          aria-label={`${t('common.remove')} ${t('common.step')} ${index + 1}`}
                         >
                           <Trash2 className="w-5 h-5" />
                         </TouchableArea>
@@ -362,7 +419,7 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
         
         {errors.instructions && (
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-            {errors.instructions.message}
+            {errors.instructions.message || errors.instructions.root?.message}
           </p>
         )}
       </div>
@@ -390,8 +447,10 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
                         className="w-full h-24 object-cover rounded-lg"
                       />
                       <TouchableArea
+                        type="button"
                         onClick={() => removeExistingImage(image.id)}
                         className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={`${t('common.remove')} ${image.alt || 'image'}`}
                       >
                         <X className="w-4 h-4" />
                       </TouchableArea>
@@ -446,6 +505,7 @@ const RecipeFormComponent = ({ recipe, onSubmit, onCancel }: RecipeFormProps) =>
       {/* Form Actions */}
       <div className="flex justify-end gap-4">
         <TouchableArea
+          type="button"
           onClick={onCancel}
           className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
         >

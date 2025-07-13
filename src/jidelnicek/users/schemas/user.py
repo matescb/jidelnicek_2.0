@@ -2,15 +2,13 @@
 
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 class UserBase(BaseModel):
     """Base user schema."""
     email: EmailStr
-    username: str = Field(..., min_length=3, max_length=50)
-    first_name: Optional[str] = Field(None, max_length=100)
-    last_name: Optional[str] = Field(None, max_length=100)
 
 
 class UserCreate(UserBase):
@@ -20,26 +18,29 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """Schema for updating user profile."""
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    first_name: Optional[str] = Field(None, max_length=100)
-    last_name: Optional[str] = Field(None, max_length=100)
     email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=20)
-    bio: Optional[str] = Field(None, max_length=500)
+    language: Optional[str] = Field(None, max_length=2)
+    unit_system: Optional[str] = Field(None, max_length=10)
+    energy_unit: Optional[str] = Field(None, max_length=10)
+    timezone: Optional[str] = Field(None, max_length=50)
 
 
 class UserResponse(UserBase):
     """Schema for user response."""
-    id: int
+    id: UUID
     is_active: bool
-    is_verified: bool
-    is_admin: bool
+    email_verified: bool
+    role: str
+    language: str
+    unit_system: str
+    energy_unit: str
+    timezone: str
+    has_pku: bool
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime
     last_login: Optional[datetime]
-    phone: Optional[str]
-    bio: Optional[str]
-    avatar_url: Optional[str]
+    recipe_count: int
+    trip_count: int
     
     model_config = ConfigDict(from_attributes=True)
 

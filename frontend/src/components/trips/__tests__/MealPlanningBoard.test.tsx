@@ -8,27 +8,27 @@ import type { Trip, TripDay } from '@/store/slices/tripStore'
 import type { Recipe } from '@/types/recipe'
 
 // Mock drag and drop
-jest.mock('@hello-pangea/dnd', () => ({
+vi.mock('@hello-pangea/dnd', () => ({
   DragDropContext: ({ children }: any) => children,
   Droppable: ({ children }: any) => children({
     draggableProps: {},
     dragHandleProps: {},
-    innerRef: jest.fn(),
+    innerRef: vi.fn(),
   }),
   Draggable: ({ children }: any) => children({
     draggableProps: {},
     dragHandleProps: {},
-    innerRef: jest.fn(),
+    innerRef: vi.fn(),
   }, {}),
 }))
 
 // Mock i18next
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
     i18n: {
       language: 'en',
-      changeLanguage: jest.fn(),
+      changeLanguage: vi.fn(),
     },
   }),
 }))
@@ -170,9 +170,9 @@ describe('MealPlanningBoard', () => {
     }
   }
 
-  const mockOnMealAssign = jest.fn()
-  const mockOnMealRemove = jest.fn()
-  const mockOnGenerateShoppingList = jest.fn()
+  const mockOnMealAssign = vi.fn()
+  const mockOnMealRemove = vi.fn()
+  const mockOnGenerateShoppingList = vi.fn()
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -182,7 +182,7 @@ describe('MealPlanningBoard', () => {
       },
     })
 
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   const renderWithProviders = (component: React.ReactElement) => {

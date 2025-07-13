@@ -4,15 +4,15 @@ import { participantsApi } from '@/services/participants'
 import axios from 'axios'
 
 // Mock the participantsApi
-jest.mock('@/services/participants')
-jest.mock('axios')
+vi.mock('@/services/participants')
+vi.mock('axios')
 
-const mockParticipantsApi = participantsApi as jest.Mocked<typeof participantsApi>
-const mockAxios = axios as jest.Mocked<typeof axios>
+const mockParticipantsApi = participantsApi as vi.Mocked<typeof participantsApi>
+const mockAxios = axios as vi.Mocked<typeof axios>
 
 describe('TripStore - Participant Operations', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('addParticipant', () => {

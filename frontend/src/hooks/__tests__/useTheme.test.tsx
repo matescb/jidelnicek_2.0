@@ -1,14 +1,15 @@
+import { vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react'
 import { useTheme, ThemeProvider, useThemeContext } from '../useTheme'
 import * as themeUtils from '../../utils/theme'
 
 // Mock the theme utilities
-jest.mock('../../utils/theme', () => ({
-  getThemePreference: jest.fn(() => 'system'),
-  getResolvedTheme: jest.fn(() => 'light'),
-  applyTheme: jest.fn(),
-  toggleTheme: jest.fn(() => 'dark'),
-  initializeTheme: jest.fn(),
+vi.mock('../../utils/theme', () => ({
+  getThemePreference: vi.fn(() => 'system'),
+  getResolvedTheme: vi.fn(() => 'light'),
+  applyTheme: vi.fn(),
+  toggleTheme: vi.fn(() => 'dark'),
+  initializeTheme: vi.fn(),
 }))
 
 // Mock matchMedia
@@ -16,11 +17,11 @@ const mockMatchMedia = (matches: boolean) => ({
   matches,
   media: '(prefers-color-scheme: dark)',
   onchange: null,
-  addListener: jest.fn(),
-  removeListener: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
 })
 
 describe('useTheme Hook', () => {
@@ -31,14 +32,14 @@ describe('useTheme Hook', () => {
     originalMatchMedia = window.matchMedia
     mediaQueryListeners = []
     
-    window.matchMedia = jest.fn().mockImplementation(() => {
+    window.matchMedia = vi.fn().mockImplementation(() => {
       const mq = mockMatchMedia(false)
-      mq.addEventListener = jest.fn((event, listener) => {
+      mq.addEventListener = vi.fn((event, listener) => {
         if (event === 'change') {
           mediaQueryListeners.push(listener)
         }
       })
-      mq.removeEventListener = jest.fn((event, listener) => {
+      mq.removeEventListener = vi.fn((event, listener) => {
         if (event === 'change') {
           const index = mediaQueryListeners.indexOf(listener)
           if (index > -1) {
@@ -53,7 +54,7 @@ describe('useTheme Hook', () => {
     localStorage.clear()
     
     // Reset all mocks
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   afterEach(() => {
@@ -79,8 +80,8 @@ describe('useTheme Hook', () => {
     })
 
     it('should handle different initial theme modes', () => {
-      (themeUtils.getThemePreference as jest.Mock).mockReturnValue('dark')
-      ;(themeUtils.getResolvedTheme as jest.Mock).mockReturnValue('dark')
+      (themeUtils.getThemePreference as ReturnType<typeof vi.fn>).mockReturnValue('dark')
+      ;(themeUtils.getResolvedTheme as ReturnType<typeof vi.fn>).mockReturnValue('dark')
 
       const { result } = renderHook(() => useTheme())
 
@@ -103,7 +104,7 @@ describe('useTheme Hook', () => {
     })
 
     it('should handle system theme mode', () => {
-      (themeUtils.getResolvedTheme as jest.Mock)
+      (themeUtils.getResolvedTheme as ReturnType<typeof vi.fn>)
         .mockReturnValueOnce('light')
         .mockReturnValueOnce('dark')
 
@@ -120,7 +121,7 @@ describe('useTheme Hook', () => {
 
   describe('System Theme Detection', () => {
     it('should respond to system theme changes when in system mode', () => {
-      (themeUtils.getResolvedTheme as jest.Mock).mockReturnValue('light')
+      (themeUtils.getResolvedTheme as ReturnType<typeof vi.fn>).mockReturnValue('light')
 
       const { result } = renderHook(() => useTheme())
 
@@ -138,8 +139,8 @@ describe('useTheme Hook', () => {
     })
 
     it('should not respond to system changes when not in system mode', () => {
-      (themeUtils.getThemePreference as jest.Mock).mockReturnValue('light')
-      ;(themeUtils.getResolvedTheme as jest.Mock).mockReturnValue('light')
+      (themeUtils.getThemePreference as ReturnType<typeof vi.fn>).mockReturnValue('light')
+      ;(themeUtils.getResolvedTheme as ReturnType<typeof vi.fn>).mockReturnValue('light')
 
       const { result } = renderHook(() => useTheme())
 
@@ -147,7 +148,7 @@ describe('useTheme Hook', () => {
         result.current.setThemeMode('light')
       })
 
-      const applyThemeCallCount = (themeUtils.applyTheme as jest.Mock).mock.calls.length
+      const applyThemeCallCount = (themeUtils.applyTheme as ReturnType<typeof vi.fn>).mock.calls.length
 
       // Simulate system theme change
       act(() => {
@@ -157,7 +158,7 @@ describe('useTheme Hook', () => {
       })
 
       // Should not have called applyTheme again
-      expect((themeUtils.applyTheme as jest.Mock).mock.calls.length).toBe(applyThemeCallCount)
+      expect((themeUtils.applyTheme as ReturnType<typeof vi.fn>).mock.calls.length).toBe(applyThemeCallCount)
     })
   })
 
@@ -175,7 +176,7 @@ describe('useTheme Hook', () => {
     })
 
     it('should update theme state after toggle', () => {
-      (themeUtils.toggleTheme as jest.Mock).mockReturnValue('light')
+      (themeUtils.toggleTheme as ReturnType<typeof vi.fn>).mockReturnValue('light')
 
       const { result } = renderHook(() => useTheme())
 
@@ -190,10 +191,10 @@ describe('useTheme Hook', () => {
 
   describe('Cleanup', () => {
     it('should remove event listeners on unmount when in system mode', () => {
-      const removeEventListenerSpy = jest.fn()
-      window.matchMedia = jest.fn().mockImplementation(() => ({
+      const removeEventListenerSpy = vi.fn()
+      window.matchMedia = vi.fn().mockImplementation(() => ({
         ...mockMatchMedia(false),
-        addEventListener: jest.fn(),
+        addEventListener: vi.fn(),
         removeEventListener: removeEventListenerSpy,
       }))
 
@@ -205,7 +206,7 @@ describe('useTheme Hook', () => {
     })
 
     it('should not set up listeners when not in system mode', () => {
-      (themeUtils.getThemePreference as jest.Mock).mockReturnValue('dark')
+      (themeUtils.getThemePreference as ReturnType<typeof vi.fn>).mockReturnValue('dark')
 
       renderHook(() => useTheme())
 
@@ -241,7 +242,7 @@ describe('ThemeProvider and useThemeContext', () => {
 
   it('should throw error when useThemeContext is used outside provider', () => {
     // Suppress console.error for this test
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation()
 
     expect(() => {
       renderHook(() => useThemeContext())

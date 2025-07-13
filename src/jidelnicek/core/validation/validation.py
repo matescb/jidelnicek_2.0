@@ -62,11 +62,9 @@ class ValidationDependency:
         return HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
-                "error": {
-                    "code": self.error_code,
-                    "message": message,
-                    "details": details or []
-                }
+                "error": self.error_code,
+                "message": message,
+                "details": details or []
             }
         )
 
@@ -254,10 +252,8 @@ class PermissionValidator(ValidationDependency):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
-                    "error": {
-                        "code": "EMAIL_NOT_VERIFIED",
-                        "message": "Email verification required for this action"
-                    }
+                    "error": "EMAIL_NOT_VERIFIED",
+                    "message": "Email verification required for this action"
                 }
             )
         
@@ -266,11 +262,9 @@ class PermissionValidator(ValidationDependency):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
-                    "error": {
-                        "code": "PERMISSION_DENIED",
-                        "message": f"Permission '{self.required_permission}' required",
-                        "details": [{"required_permission": self.required_permission}]
-                    }
+                    "error": "PERMISSION_DENIED",
+                    "message": f"Permission '{self.required_permission}' required",
+                    "details": [{"required_permission": self.required_permission}]
                 }
             )
         

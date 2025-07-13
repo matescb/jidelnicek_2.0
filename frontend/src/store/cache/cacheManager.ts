@@ -16,7 +16,7 @@ import {
 
 // Default configuration
 const DEFAULT_CONFIG: CacheConfig = {
-  defaultTTL: 5 * 60 * 1000, // 5 minutes
+  defaultTTL: 0, // No expiration by default  
   maxCacheSize: 50 * 1024 * 1024, // 50MB
   evictionPolicy: EvictionPolicy.LRU,
   enablePersistence: false,
@@ -24,18 +24,25 @@ const DEFAULT_CONFIG: CacheConfig = {
   globalKeyPrefix: 'jidelnicek_cache_'
 }
 
+// Extended config interface for constructor that accepts additional options
+interface ExtendedCacheConfig extends Partial<CacheConfig> {
+  maxSize?: number // Maximum number of items (alternative to maxCacheSize)
+}
+
 export class CacheManager {
   private cache: Map<string, CacheEntry>
   private accessCount: Map<string, number>
   private accessTime: Map<string, number>
   private config: CacheConfig
+  private maxItems?: number // If set, limit by item count instead of size
   private stats: CacheStats
   private warmingConfig?: CacheWarmingConfig
   private warmingInterval?: NodeJS.Timeout
   private tags: Map<string, Set<string>> // tag -> Set of cache keys
 
-  constructor(config: Partial<CacheConfig> = {}) {
+  constructor(config: ExtendedCacheConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
+    this.maxItems = config.maxSize // If maxSize is provided, use it as item count limit
     this.cache = new Map()
     this.accessCount = new Map()
     this.accessTime = new Map()
@@ -126,15 +133,20 @@ export class CacheManager {
     options: CacheOptions = {}
   ): void {
     const fullKey = this.ensurePrefix(key)
-    const ttl = options.ttl || this.config.defaultTTL
+    const ttl = options.ttl !== undefined ? options.ttl : this.config.defaultTTL
     const timestamp = Date.now()
-    const expiresAt = timestamp + ttl
+    // If ttl is 0 or not specified (and defaultTTL is 0), never expire
+    const expiresAt = ttl === 0 ? Number.MAX_SAFE_INTEGER : timestamp + ttl
 
     // Calculate size (rough estimation)
     const size = this.estimateSize(data)
 
-    // Check if we need to evict
-    if (this.stats.size + size > this.config.maxCacheSize) {
+    // Check if we need to evict (either by size or count)
+    const needsEviction = this.maxItems 
+      ? this.cache.size >= this.maxItems  // Only evict when we would exceed maxItems
+      : this.stats.size + size > this.config.maxCacheSize
+    
+    if (needsEviction) {
       this.evict(size)
     }
 
@@ -152,7 +164,10 @@ export class CacheManager {
     }
 
     this.cache.set(fullKey, entry)
-    this.accessTime.set(fullKey, timestamp)
+    // Only set initial access time if this is a new entry
+    if (!this.accessTime.has(fullKey)) {
+      this.accessTime.set(fullKey, timestamp)
+    }
     this.accessCount.set(fullKey, 0)
 
     // Update tags
@@ -207,11 +222,25 @@ export class CacheManager {
     keysToDelete.forEach(key => this.delete(key))
   }
 
-  // Invalidate cache by pattern
-  invalidate(pattern: CacheInvalidationPattern): number {
+  // Invalidate cache by pattern or key
+  invalidate(pattern: CacheInvalidationPattern | string): number {
+    if (typeof pattern === 'string') {
+      // Handle simple key invalidation
+      const deleted = this.delete(pattern)
+      return deleted ? 1 : 0
+    }
+    
     const keysToDelete = this.getKeysToInvalidate(pattern)
     keysToDelete.forEach(key => this.delete(key))
     return keysToDelete.length
+  }
+
+  // Invalidate cache by regex pattern (convenience method)
+  invalidatePattern(pattern: RegExp): number {
+    return this.invalidate({
+      type: 'regex',
+      pattern
+    })
   }
 
   // Get keys to invalidate based on pattern
@@ -267,6 +296,7 @@ export class CacheManager {
   private evict(requiredSize: number): void {
     const entries = Array.from(this.cache.entries())
     let freedSize = 0
+    let evictedCount = 0
 
     // Sort based on eviction policy
     switch (this.config.evictionPolicy) {
@@ -295,13 +325,17 @@ export class CacheManager {
         break
     }
 
-    // Evict until we have enough space
+    // Determine how many items to evict
+    const targetEvictCount = this.maxItems ? 1 : Math.ceil(entries.length * 0.25) // Evict 25% or 1 item
+
+    // Evict until we have enough space or items
     for (const [key, entry] of entries) {
-      if (freedSize >= requiredSize) break
+      if (this.maxItems ? evictedCount >= targetEvictCount : freedSize >= requiredSize) break
       
       freedSize += this.estimateSize(entry.data)
       this.delete(this.removePrefix(key))
       this.stats.evictions++
+      evictedCount++
     }
   }
 

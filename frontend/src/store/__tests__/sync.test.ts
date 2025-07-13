@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { create } from 'zustand';
 import { syncMiddleware } from '../sync/syncMiddleware';
 import { BroadcastSync } from '../sync/broadcastSync';
@@ -72,14 +72,14 @@ class MockBroadcastChannel {
 
 describe('State Synchronization', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     MockBroadcastChannel.clear();
     (global as any).WebSocket = MockWebSocket;
     (global as any).BroadcastChannel = MockBroadcastChannel;
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('BroadcastSync', () => {
@@ -209,7 +209,7 @@ describe('State Synchronization', () => {
         maxReconnectAttempts: 3,
       });
 
-      const connectSpy = jest.spyOn(sync as any, 'connect');
+      const connectSpy = vi.spyOn(sync as any, 'connect');
 
       await new Promise(resolve => setTimeout(resolve, 20));
 
@@ -242,7 +242,7 @@ describe('State Synchronization', () => {
 
       // Message should be sent after connection
       const ws = (sync as any).ws as MockWebSocket;
-      const sendSpy = jest.spyOn(ws, 'send');
+      const sendSpy = vi.spyOn(ws, 'send');
 
       // Send another message while connected
       const message2: SyncMessage = {
@@ -263,7 +263,7 @@ describe('State Synchronization', () => {
 
     it('should handle WebSocket errors', async () => {
       const sync = new WebSocketSync('ws://localhost:3000');
-      const errorHandler = jest.fn();
+      const errorHandler = vi.fn();
 
       sync.subscribe((message) => {
         if (message.type === 'error') {
@@ -288,7 +288,7 @@ describe('State Synchronization', () => {
         auth: { token: authToken },
       });
 
-      const sendSpy = jest.fn();
+      const sendSpy = vi.fn();
 
       await new Promise(resolve => setTimeout(resolve, 20));
 
@@ -496,17 +496,17 @@ describe('State Synchronization', () => {
 
     it('should handle sync errors gracefully', async () => {
       const brokenChannel = {
-        connect: jest.fn(),
-        disconnect: jest.fn(),
-        send: jest.fn().mockImplementation(() => {
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        send: vi.fn().mockImplementation(() => {
           throw new Error('Send failed');
         }),
-        subscribe: jest.fn(),
+        subscribe: vi.fn(),
       };
 
       const config: SyncConfig<TestState> = {
         channel: brokenChannel as any,
-        onError: jest.fn(),
+        onError: vi.fn(),
       };
 
       const useStore = create<TestState>()(
@@ -530,7 +530,7 @@ describe('State Synchronization', () => {
 
     it('should support throttled sync', async () => {
       const channel = new BroadcastSync('throttle-sync');
-      const sendSpy = jest.spyOn(channel, 'send');
+      const sendSpy = vi.spyOn(channel, 'send');
 
       const config: SyncConfig<TestState> = {
         channel,
@@ -573,7 +573,7 @@ describe('State Synchronization', () => {
 
     it('should support debounced sync', async () => {
       const channel = new BroadcastSync('debounce-sync');
-      const sendSpy = jest.spyOn(channel, 'send');
+      const sendSpy = vi.spyOn(channel, 'send');
 
       const config: SyncConfig<TestState> = {
         channel,
@@ -616,14 +616,14 @@ describe('State Synchronization', () => {
     it('should handle offline queue', async () => {
       let isOnline = true;
       const channel = {
-        connect: jest.fn(),
-        disconnect: jest.fn(),
-        send: jest.fn().mockImplementation((message) => {
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        send: vi.fn().mockImplementation((message) => {
           if (!isOnline) {
             throw new Error('Offline');
           }
         }),
-        subscribe: jest.fn(),
+        subscribe: vi.fn(),
       };
 
       const config: SyncConfig<TestState> = {

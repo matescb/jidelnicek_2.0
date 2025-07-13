@@ -8,13 +8,26 @@ import { formatDistanceToNow, format } from 'date-fns'
 
 // Mock @mui/lab components
 jest.mock('@mui/lab', () => ({
-  Timeline: ({ children }: any) => <div data-testid="timeline">{children}</div>,
+  Timeline: ({ children, position }: any) => (
+    <div 
+      data-testid="timeline" 
+      className={position === 'right' ? 'MuiTimeline-positionRight' : 'MuiTimeline-positionAlternate'}
+    >
+      {children}
+    </div>
+  ),
   TimelineItem: ({ children }: any) => <div data-testid="timeline-item">{children}</div>,
   TimelineSeparator: ({ children }: any) => <div data-testid="timeline-separator">{children}</div>,
   TimelineConnector: () => <div data-testid="timeline-connector" />,
   TimelineContent: ({ children }: any) => <div data-testid="timeline-content">{children}</div>,
   TimelineDot: ({ children }: any) => <div data-testid="timeline-dot">{children}</div>,
   TimelineOppositeContent: ({ children }: any) => <div data-testid="timeline-opposite-content">{children}</div>,
+}));
+
+// Mock @mui/material components that need special handling in tests
+jest.mock('@mui/material', () => ({
+  ...jest.requireActual('@mui/material'),
+  Collapse: ({ in: inProp, children }: any) => inProp ? <div data-testid="collapse-content">{children}</div> : null,
 }));
 
 // Mock date-fns
@@ -159,9 +172,7 @@ describe('ActivityTimeline', () => {
     it('applies correct colors to timeline dots', () => {
       renderComponent()
       
-      const timelineDots = screen.getAllByRole('generic').filter(el => 
-        el.className.includes('MuiTimelineDot')
-      )
+      const timelineDots = screen.getAllByTestId('timeline-dot')
       
       // Verify dots exist for each activity
       expect(timelineDots.length).toBe(mockActivities.length)
@@ -238,12 +249,12 @@ describe('ActivityTimeline', () => {
       // Expand
       await user.click(expandButton)
       expect(screen.getByText('"Looking forward to this trip!"')).toBeInTheDocument()
-      expect(screen.getByTestId('ExpandLessIcon')).toBeInTheDocument()
+      expect(within(commentActivity!).getByTestId('ExpandLessIcon')).toBeInTheDocument()
       
       // Collapse
       await user.click(expandButton)
       expect(screen.queryByText('"Looking forward to this trip!"')).not.toBeInTheDocument()
-      expect(screen.getByTestId('ExpandMoreIcon')).toBeInTheDocument()
+      expect(within(commentActivity!).getByTestId('ExpandMoreIcon')).toBeInTheDocument()
     })
 
     it('shows additional metadata when expanded', async () => {
@@ -368,7 +379,7 @@ describe('ActivityTimeline', () => {
       renderComponent({ activities: [] })
       
       // Should render timeline container without errors
-      const timeline = document.querySelector('.MuiTimeline-root')
+      const timeline = screen.getByTestId('timeline')
       expect(timeline).toBeInTheDocument()
     })
 
@@ -386,7 +397,7 @@ describe('ActivityTimeline', () => {
     it('renders timeline in right position for compact mode', () => {
       renderComponent({ compact: true })
       
-      const timeline = document.querySelector('.MuiTimeline-root')
+      const timeline = screen.getByTestId('timeline')
       expect(timeline).toHaveClass('MuiTimeline-positionRight')
     })
 
@@ -545,7 +556,7 @@ describe('ActivityTimeline', () => {
     it('has accessible timeline structure', () => {
       renderComponent()
       
-      const timelineItems = document.querySelectorAll('.MuiTimelineItem-root')
+      const timelineItems = screen.getAllByTestId('timeline-item')
       expect(timelineItems).toHaveLength(mockActivities.length)
     })
 
@@ -583,10 +594,10 @@ describe('ActivityTimeline', () => {
         timestamp: new Date(Date.now() - i * 60000),
       }))
       
-      renderComponent({ activities: manyActivities, maxItems: 10 })
+      renderComponent({ activities: manyActivities, maxItems: 10, showLoadMore: true })
       
       // Should only render maxItems
-      const timelineItems = document.querySelectorAll('.MuiTimelineItem-root')
+      const timelineItems = screen.getAllByTestId('timeline-item')
       expect(timelineItems).toHaveLength(10)
       
       // Should show correct load more count

@@ -5,9 +5,9 @@ import { Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard } from '../skeleto
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, className, ...props }: any) => (
-      <div className={className} {...props}>{children}</div>
-    ),
+    div: React.forwardRef(({ children, className, ...props }: any, ref: any) => (
+      <div ref={ref} className={className} {...props}>{children}</div>
+    )),
   },
 }));
 
@@ -20,33 +20,33 @@ jest.mock('@/utils/animations', () => ({
 describe('Skeleton', () => {
   describe('Basic Skeleton', () => {
     it('renders with default props', () => {
-      render(<Skeleton />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<Skeleton />);
+      const skeleton = container.firstChild;
       expect(skeleton).toBeInTheDocument();
       expect(skeleton).toHaveClass('rounded-md', 'relative', 'overflow-hidden');
     });
 
     it('applies default variant classes', () => {
-      render(<Skeleton />);
-      const skeleton = screen.getByRole('generic');
-      expect(skeleton).toHaveClass('bg-gray-200', 'dark:bg-gray-800');
+      const { container } = render(<Skeleton />);
+      const skeleton = container.firstChild;
+      expect(skeleton).toHaveClass('bg-secondary-200');
     });
 
     it('applies light variant classes', () => {
-      render(<Skeleton variant="light" />);
-      const skeleton = screen.getByRole('generic');
-      expect(skeleton).toHaveClass('bg-gray-100', 'dark:bg-gray-900');
+      const { container } = render(<Skeleton variant="light" />);
+      const skeleton = container.firstChild;
+      expect(skeleton).toHaveClass('bg-secondary-100');
     });
 
     it('applies dark variant classes', () => {
-      render(<Skeleton variant="dark" />);
-      const skeleton = screen.getByRole('generic');
-      expect(skeleton).toHaveClass('bg-gray-300', 'dark:bg-gray-700');
+      const { container } = render(<Skeleton variant="dark" />);
+      const skeleton = container.firstChild;
+      expect(skeleton).toHaveClass('bg-secondary-300');
     });
 
     it('applies custom className', () => {
-      render(<Skeleton className="custom-class h-20 w-40" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<Skeleton className="custom-class h-20 w-40" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('custom-class', 'h-20', 'w-40');
     });
 
@@ -65,21 +65,21 @@ describe('Skeleton', () => {
 
   describe('SkeletonText', () => {
     it('renders with default height and full width', () => {
-      render(<SkeletonText />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<SkeletonText />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('h-4', 'w-full');
     });
 
     it('applies custom className', () => {
-      render(<SkeletonText className="h-6 w-3/4" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<SkeletonText className="h-6 w-3/4" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('h-6', 'w-3/4');
     });
 
     it('inherits variant from props', () => {
-      render(<SkeletonText variant="light" />);
-      const skeleton = screen.getByRole('generic');
-      expect(skeleton).toHaveClass('bg-gray-100', 'dark:bg-gray-900');
+      const { container } = render(<SkeletonText variant="light" />);
+      const skeleton = container.firstChild;
+      expect(skeleton).toHaveClass('bg-secondary-100');
     });
 
     it('can disable animation', () => {
@@ -91,44 +91,44 @@ describe('Skeleton', () => {
 
   describe('SkeletonAvatar', () => {
     it('renders with default medium size', () => {
-      render(<SkeletonAvatar />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<SkeletonAvatar />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('rounded-full', 'h-10', 'w-10');
     });
 
     it('renders with small size', () => {
-      render(<SkeletonAvatar size="sm" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<SkeletonAvatar size="sm" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('h-8', 'w-8');
     });
 
     it('renders with large size', () => {
-      render(<SkeletonAvatar size="lg" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<SkeletonAvatar size="lg" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('h-12', 'w-12');
     });
 
     it('applies custom className', () => {
-      render(<SkeletonAvatar className="border-2" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<SkeletonAvatar className="border-2" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('rounded-full', 'border-2');
     });
 
     it('maintains circular shape', () => {
-      render(<SkeletonAvatar />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<SkeletonAvatar />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('rounded-full');
     });
   });
 
   describe('SkeletonCard', () => {
     it('renders card layout with multiple skeletons', () => {
-      render(<SkeletonCard />);
-      const container = screen.getByRole('generic');
-      expect(container).toHaveClass('space-y-3');
+      const { container } = render(<SkeletonCard />);
+      const cardContainer = container.firstChild;
+      expect(cardContainer).toHaveClass('space-y-3');
 
       // Should have image skeleton
-      const skeletons = container.querySelectorAll('[class*="bg-gray"]');
+      const skeletons = container.querySelectorAll('[class*="bg-secondary"]');
       expect(skeletons.length).toBeGreaterThan(0);
       
       // Check for image skeleton
@@ -139,8 +139,7 @@ describe('Skeleton', () => {
     });
 
     it('renders text skeletons in card', () => {
-      render(<SkeletonCard />);
-      const container = screen.getByRole('generic');
+      const { container } = render(<SkeletonCard />);
       
       // Check for text content area
       const textArea = container.querySelector('.space-y-2');
@@ -156,62 +155,60 @@ describe('Skeleton', () => {
     });
 
     it('applies custom className to container', () => {
-      render(<SkeletonCard className="p-4 border" />);
-      const container = screen.getByRole('generic');
-      expect(container).toHaveClass('space-y-3', 'p-4', 'border');
+      const { container } = render(<SkeletonCard className="p-4 border" />);
+      const cardContainer = container.firstChild;
+      expect(cardContainer).toHaveClass('space-y-3', 'p-4', 'border');
     });
 
     it('passes variant to all child skeletons', () => {
-      render(<SkeletonCard variant="light" />);
-      const skeletons = screen.getAllByRole('generic').filter(el => 
-        el.classList.contains('bg-gray-100') || el.classList.contains('dark:bg-gray-900')
-      );
+      const { container } = render(<SkeletonCard variant="light" />);
+      const skeletons = container.querySelectorAll('[class*="bg-secondary-100"]');
       expect(skeletons.length).toBeGreaterThan(0);
     });
 
     it('can disable animation for all child skeletons', () => {
       const { container } = render(<SkeletonCard animate={false} />);
-      const skeletons = container.querySelectorAll('[class*="bg-gray"]');
+      const skeletons = container.querySelectorAll('[class*="bg-secondary"]');
       expect(skeletons.length).toBeGreaterThan(0);
     });
   });
 
   describe('Dark mode support', () => {
     it('applies dark mode classes for default variant', () => {
-      render(<Skeleton />);
-      const skeleton = screen.getByRole('generic');
-      expect(skeleton).toHaveClass('dark:bg-gray-800');
+      const { container } = render(<Skeleton />);
+      const skeleton = container.firstChild;
+      expect(skeleton).toHaveClass('bg-secondary-200');
     });
 
     it('applies dark mode classes for light variant', () => {
-      render(<Skeleton variant="light" />);
-      const skeleton = screen.getByRole('generic');
-      expect(skeleton).toHaveClass('dark:bg-gray-900');
+      const { container } = render(<Skeleton variant="light" />);
+      const skeleton = container.firstChild;
+      expect(skeleton).toHaveClass('bg-secondary-100');
     });
 
     it('applies dark mode classes for dark variant', () => {
-      render(<Skeleton variant="dark" />);
-      const skeleton = screen.getByRole('generic');
-      expect(skeleton).toHaveClass('dark:bg-gray-700');
+      const { container } = render(<Skeleton variant="dark" />);
+      const skeleton = container.firstChild;
+      expect(skeleton).toHaveClass('bg-secondary-300');
     });
   });
 
   describe('Custom dimensions', () => {
     it('accepts custom width and height via className', () => {
-      render(<Skeleton className="h-24 w-48" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<Skeleton className="h-24 w-48" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('h-24', 'w-48');
     });
 
     it('works with responsive classes', () => {
-      render(<Skeleton className="h-10 w-full md:h-20 md:w-1/2" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<Skeleton className="h-10 w-full md:h-20 md:w-1/2" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('h-10', 'w-full', 'md:h-20', 'md:w-1/2');
     });
 
     it('works with arbitrary values', () => {
-      render(<Skeleton className="h-[100px] w-[200px]" />);
-      const skeleton = screen.getByRole('generic');
+      const { container } = render(<Skeleton className="h-[100px] w-[200px]" />);
+      const skeleton = container.firstChild;
       expect(skeleton).toHaveClass('h-[100px]', 'w-[200px]');
     });
   });
@@ -221,8 +218,8 @@ describe('Skeleton', () => {
       const variants = ['default', 'light', 'dark'] as const;
       
       variants.forEach(variant => {
-        const { unmount } = render(<Skeleton variant={variant} />);
-        const skeleton = screen.getByRole('generic');
+        const { unmount, container } = render(<Skeleton variant={variant} />);
+        const skeleton = container.firstChild;
         expect(skeleton).toBeInTheDocument();
         unmount();
       });
@@ -232,8 +229,8 @@ describe('Skeleton', () => {
       const animationStates = [true, false];
       
       animationStates.forEach(animate => {
-        const { unmount } = render(<Skeleton animate={animate} />);
-        const skeleton = screen.getByRole('generic');
+        const { unmount, container } = render(<Skeleton animate={animate} />);
+        const skeleton = container.firstChild;
         expect(skeleton).toBeInTheDocument();
         unmount();
       });

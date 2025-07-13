@@ -41,6 +41,11 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+  - url: https://api.jidelnicek.cz/api/v1
+    description: Production server
 paths:
   /calculate/nutrition:
     post:
@@ -82,6 +87,18 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
   /calculate/scaling:
     post:
       tags:
@@ -138,6 +155,18 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
   /calculate/fuel:
     post:
       tags:
@@ -195,6 +224,18 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
 components:
   securitySchemes:
     bearerAuth:
@@ -322,6 +363,36 @@ components:
           example:
             error: Too Many Requests
             message: Rate limit exceeded. Please try again later.
+    ValidationError:
+      description: Validation error - invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Validation Error
+            message: Request validation failed
+            details:
+              - field: parameterId
+                issue: Invalid UUID format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Internal Server Error
+            message: An unexpected error occurred
+    NotImplemented:
+      description: Not implemented
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NOT_IMPLEMENTED
+            message: Feature not implemented yet
   schemas:
     Error:
       type: object
@@ -345,6 +416,58 @@ components:
                 type: string
               issue:
                 type: string
+    ValidationError:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          description: Error code for validation failures
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: array
+          description: Detailed validation error information
+          items:
+            type: object
+            required:
+            - field
+            - message
+            - type
+            properties:
+              field:
+                type: string
+                description: Field that caused the validation error
+              message:
+                type: string
+                description: Validation error message
+              type:
+                type: string
+                description: Type of validation error
+              input:
+                description: The input value that caused the error
+              context:
+                type: object
+                description: Additional context for the validation error
+        request_id:
+          type: string
+          description: Request ID for tracking
+      example:
+        error: VALIDATION_ERROR
+        message: Request validation failed
+        details:
+        - field: ingredients
+          message: field required
+          type: missing
+        - field: quantity_g
+          message: ensure this value is greater than 0
+          type: value_error.number.not_gt
+          input: -5
     Pagination:
       type: object
       properties:
