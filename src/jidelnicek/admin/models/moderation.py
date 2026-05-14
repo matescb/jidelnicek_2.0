@@ -11,6 +11,7 @@ from sqlalchemy import (
     Column, Integer, String, Text, DateTime, ForeignKey, Boolean,
     Enum as SQLEnum, Index, CheckConstraint
 )
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 import enum
@@ -98,7 +99,7 @@ class ContentReport(Base):
     content_url = Column(String(255))  # Optional URL to content
     
     # Reporter information
-    reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    reporter_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     reporter = relationship("User", foreign_keys=[reporter_id], backref="reports_made")
     
     # Report details
@@ -110,7 +111,7 @@ class ContentReport(Base):
     priority = Column(Integer, default=0)  # Higher number = higher priority
     
     # Moderator handling the report
-    assigned_to_id = Column(Integer, ForeignKey("users.id"))
+    assigned_to_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"))
     assigned_to = relationship("User", foreign_keys=[assigned_to_id], backref="assigned_reports")
     
     # Timestamps
@@ -144,7 +145,7 @@ class ModerationLog(Base):
     id = Column(Integer, primary_key=True)
     
     # Who performed the action
-    moderator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    moderator_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     moderator = relationship("User", foreign_keys=[moderator_id], backref="moderation_actions")
     
     # What action was taken
@@ -164,7 +165,7 @@ class ModerationLog(Base):
     
     # Reversal information
     reversed = Column(Boolean, default=False)
-    reversed_by_id = Column(Integer, ForeignKey("users.id"))
+    reversed_by_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"))
     reversed_by = relationship("User", foreign_keys=[reversed_by_id])
     reversed_at = Column(DateTime)
     reversal_reason = Column(Text)
@@ -213,7 +214,7 @@ class AutoModerationRule(Base):
     false_positives = Column(Integer, default=0)
     
     # Audit
-    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_by_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     created_by = relationship("User", foreign_keys=[created_by_id])
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -248,7 +249,7 @@ class BannedContent(Base):
     active = Column(Boolean, default=True)
     
     # Audit
-    added_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    added_by_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     added_by = relationship("User", foreign_keys=[added_by_id])
     added_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
@@ -286,7 +287,7 @@ class ModerationQueue(Base):
     
     # Priority and assignment
     priority = Column(Integer, default=0)
-    assigned_to_id = Column(Integer, ForeignKey("users.id"))
+    assigned_to_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"))
     assigned_to = relationship("User")
     
     # Status
@@ -320,11 +321,11 @@ class UserSanction(Base):
     id = Column(Integer, primary_key=True)
     
     # User being sanctioned
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     user = relationship("User")
     
     # Who issued the sanction
-    issued_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    issued_by_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     issued_by = relationship("User", foreign_keys=[issued_by_id])
     
     # Sanction details
@@ -338,7 +339,7 @@ class UserSanction(Base):
     issued_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime)
     lifted_at = Column(DateTime)
-    lifted_by = Column(Integer, ForeignKey("users.id"))
+    lifted_by = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"))
     lift_reason = Column(Text)
     
     def __repr__(self):
@@ -352,7 +353,7 @@ class UserAppeal(Base):
     id = Column(Integer, primary_key=True)
     
     # User making the appeal
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     user = relationship("User")
     
     # Sanction being appealed
@@ -367,7 +368,7 @@ class UserAppeal(Base):
     status = Column(SQLEnum(AppealStatus), default=AppealStatus.PENDING)
     
     # Review
-    reviewed_by = Column(Integer, ForeignKey("users.id"))
+    reviewed_by = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"))
     reviewer = relationship("User", foreign_keys=[reviewed_by])
     reviewed_at = Column(DateTime)
     decision = Column(Text)
