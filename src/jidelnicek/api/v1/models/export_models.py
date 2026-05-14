@@ -71,7 +71,7 @@ class ExportJob(Base):
     last_downloaded_at = Column(DateTime)
     
     # Relationships
-    user = relationship("User", back_populates="export_jobs")
+    user = relationship("AuthUser", back_populates="export_jobs")
     
     def __repr__(self):
         return f"<ExportJob {self.id} - {self.export_type.value}/{self.export_format.value} - {self.status.value}>"
@@ -112,7 +112,7 @@ class ExportPreset(Base):
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
     
     # Relationships
-    user = relationship("User", back_populates="export_presets")
+    user = relationship("AuthUser", back_populates="export_presets")
     
     def __repr__(self):
         return f"<ExportPreset {self.id} - {self.name}>"
@@ -149,7 +149,7 @@ class ExportQuota(Base):
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
     
     # Relationships
-    user = relationship("User", back_populates="export_quota", uselist=False)
+    user = relationship("AuthUser", back_populates="export_quota", uselist=False)
     
     def __repr__(self):
         return f"<ExportQuota user_id={self.user_id} daily={self.exports_today}/{self.daily_limit}>"
@@ -198,7 +198,7 @@ class ExportStatistics(Base):
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
     
     # Relationships
-    user = relationship("User", back_populates="export_statistics")
+    user = relationship("AuthUser", back_populates="export_statistics")
     
     def __repr__(self):
         return f"<ExportStatistics user_id={self.user_id} date={self.date} total={self.total_exports}>"
