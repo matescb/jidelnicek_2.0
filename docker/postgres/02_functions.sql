@@ -208,8 +208,10 @@ RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.is_archived = TRUE AND OLD.is_archived = FALSE THEN
         -- Archive recipe ingredients (soft reference, no action needed)
-        -- Archive reviews
-        UPDATE sharing_reviews SET recipe_id = NULL WHERE recipe_id = NEW.id;
+        -- Reviews are intentionally left intact on archive.
+        -- Hard delete is handled by the ON DELETE CASCADE FK on sharing_reviews.recipe_id.
+        -- (Previously this set sharing_reviews.recipe_id = NULL, which violates NOT NULL.)
+        NULL;
     END IF;
     RETURN NEW;
 END;
@@ -295,16 +297,15 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION validate_trip_dates()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Maximum trip duration is 30 days
-    IF (NEW.end_date - NEW.start_date) > 30 THEN
-        RAISE EXCEPTION 'Trip duration cannot exceed 30 days';
-    END IF;
-    
+    -- start_date <= end_date is enforced by the CHECK constraint on trip_trips.
+    -- Per Validation Rules doc: no hard upper limit on trip duration
+    -- (a > 365 day soft warning is handled in the application layer).
+
     -- Start date cannot be more than 1 year in the future
     IF NEW.start_date > CURRENT_DATE + INTERVAL '1 year' THEN
         RAISE EXCEPTION 'Trip start date cannot be more than 1 year in the future';
     END IF;
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
