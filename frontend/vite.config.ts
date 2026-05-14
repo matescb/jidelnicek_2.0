@@ -152,8 +152,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Optimize chunk size
-    chunkSizeWarningLimit: 500, // Warn for chunks larger than 500kb
+    // Optimize chunk size - more aggressive limits for better loading
+    chunkSizeWarningLimit: 400, // Warn for chunks larger than 400kb
     
     // Target modern browsers for smaller bundles
     target: 'es2020',
@@ -214,9 +214,34 @@ export default defineConfig(({ mode }) => ({
               return 'data-vendor'
             }
             
+            // PDF generation (dynamically loaded) - separate chunk for better caching
+            if (id.includes('jspdf') || id.includes('pdf-lib')) {
+              return 'pdf-vendor'
+            }
+            
             // i18n
             if (id.includes('i18next') || id.includes('react-i18next')) {
               return 'i18n-vendor'
+            }
+            
+            // Router and HTTP client libraries
+            if (id.includes('react-router') || id.includes('history')) {
+              return 'router-vendor'
+            }
+            
+            // Chart and visualization libraries
+            if (id.includes('recharts') || id.includes('d3') || id.includes('chart')) {
+              return 'charts-vendor'
+            }
+            
+            // CSS-in-JS and styling libraries  
+            if (id.includes('styled-components') || id.includes('emotion') || id.includes('@mantine') || id.includes('tailwind')) {
+              return 'styles-vendor'
+            }
+            
+            // Development and debugging tools (only in dev builds)
+            if (id.includes('react-hot-toast') || id.includes('react-dev') || id.includes('devtools')) {
+              return 'dev-vendor'
             }
             
             // All other vendor chunks
@@ -238,6 +263,33 @@ export default defineConfig(({ mode }) => ({
           }
           if (id.includes('src/components/dashboard') || id.includes('src/pages/dashboard')) {
             return 'dashboard'
+          }
+          if (id.includes('src/utils/export') || id.includes('src/components/export')) {
+            return 'export-utils'
+          }
+          if (id.includes('src/components/shopping') || id.includes('src/pages/shopping')) {
+            return 'shopping'
+          }
+          
+          // Split large UI component groups for better caching
+          if (id.includes('src/components/ui') || id.includes('src/components/common')) {
+            return 'ui-components'
+          }
+          if (id.includes('src/components/layout') || id.includes('src/components/navigation')) {
+            return 'layout-components'
+          }
+          if (id.includes('src/components/forms') || id.includes('src/components/inputs')) {
+            return 'form-components'
+          }
+          
+          // Split utilities and helpers
+          if (id.includes('src/utils') || id.includes('src/hooks')) {
+            return 'app-utils'
+          }
+          
+          // Split store and state management
+          if (id.includes('src/store') || id.includes('src/context')) {
+            return 'app-state'
           }
         },
         
@@ -286,7 +338,7 @@ export default defineConfig(({ mode }) => ({
     copyPublicDir: true,
   },
   optimizeDeps: {
-    // Pre-bundle heavy dependencies
+    // Pre-bundle heavy dependencies for faster dev server
     include: [
       'react',
       'react-dom',
@@ -298,10 +350,18 @@ export default defineConfig(({ mode }) => ({
       'react-hook-form',
       'framer-motion',
       'date-fns',
+      'clsx',
+      'class-variance-authority',
+      'lucide-react',
     ],
     
     // Exclude from optimization
-    exclude: [],
+    exclude: [
+      'jspdf', // Keep jsPDF as dynamic import
+    ],
+    
+    // Force re-optimization in development
+    force: mode === 'development',
   },
   
   // Performance optimizations

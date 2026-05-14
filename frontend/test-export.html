@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Export Functionality</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <h1>Shopping List Export Test</h1>
+    <button onclick="testCSVExport()">Test CSV Export</button>
+    <button onclick="testPDFExport()">Test PDF Export</button>
+
+    <script>
+        // Mock data for testing
+        const mockTrip = {
+            id: '1',
+            name: 'Summer Trip 2024',
+            startDate: '2024-08-01',
+            endDate: '2024-08-07',
+            participantCount: 4,
+            days: [],
+            participants: []
+        };
+
+        const mockShoppingList = [
+            {
+                ingredientId: '1',
+                name: 'Tomatoes',
+                quantity: 2,
+                unit: 'kg',
+                category: 'produce',
+                recipes: ['Pasta Sauce', 'Salad']
+            },
+            {
+                ingredientId: '2',
+                name: 'Pasta',
+                quantity: 500,
+                unit: 'g',
+                category: 'grains',
+                recipes: ['Pasta Sauce']
+            },
+            {
+                ingredientId: '3',
+                name: 'Milk',
+                quantity: 1,
+                unit: 'l',
+                category: 'dairy',
+                recipes: ['Breakfast Cereal']
+            },
+            {
+                ingredientId: '4',
+                name: 'Chicken Breast',
+                quantity: 1.5,
+                unit: 'kg',
+                category: 'meat',
+                recipes: ['Grilled Chicken', 'Chicken Salad']
+            }
+        ];
+
+        function formatQuantity(quantity, unit) {
+            if (quantity === Math.floor(quantity)) {
+                return quantity.toString();
+            }
+            return quantity < 1 ? quantity.toFixed(2) : quantity.toFixed(1);
+        }
+
+        function testCSVExport() {
+            try {
+                const categoryMapping = {
+                    'produce': 'Fruits & Vegetables',
+                    'dairy': 'Dairy & Eggs',
+                    'meat': 'Meat & Poultry',
+                    'grains': 'Grains & Pasta'
+                };
+
+                const headers = ['Category', 'Item', 'Quantity', 'Unit', 'Used In Recipes'];
+                const rows = [headers];
+
+                // Add trip info as comments
+                rows.push([`# Shopping List for: ${mockTrip.name}`]);
+                rows.push([`# Trip Dates: ${mockTrip.startDate} - ${mockTrip.endDate}`]);
+                rows.push([`# Participants: ${mockTrip.participantCount}`]);
+                rows.push(['']); // Empty row
+
+                // Group items by category
+                const grouped = {};
+                mockShoppingList.forEach(item => {
+                    const category = item.category || 'other';
+                    if (!grouped[category]) grouped[category] = [];
+                    grouped[category].push(item);
+                });
+
+                // Add items
+                Object.entries(grouped).forEach(([category, items]) => {
+                    items.forEach(item => {
+                        rows.push([
+                            categoryMapping[category] || category,
+                            item.name,
+                            formatQuantity(item.quantity, item.unit),
+                            item.unit,
+                            item.recipes.join('; ')
+                        ]);
+                    });
+                    rows.push(['']); // Empty row between categories
+                });
+
+                const csvContent = rows.map(row => 
+                    row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
+                ).join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Shopping_List_${mockTrip.name.replace(/\s+/g, '_')}_2024-08-01.csv`;
+                link.style.display = 'none';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+                alert('CSV export successful!');
+            } catch (error) {
+                alert('CSV export failed: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function testPDFExport() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const margin = 20;
+                let currentY = margin;
+
+                // Title
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Shopping List', pageWidth / 2, currentY, { align: 'center' });
+                currentY += 15;
+
+                // Trip info
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                
+                const tripInfo = [
+                    `Trip: ${mockTrip.name}`,
+                    `Dates: ${mockTrip.startDate} - ${mockTrip.endDate}`,
+                    `Participants: ${mockTrip.participantCount}`,
+                    `Generated: ${new Date().toLocaleDateString()}`
+                ];
+                
+                tripInfo.forEach(line => {
+                    doc.text(line, margin, currentY);
+                    currentY += 8;
+                });
+                
+                currentY += 10;
+
+                // Summary
+                doc.setFont('helvetica', 'bold');
+                doc.text('Summary', margin, currentY);
+                currentY += 10;
+                
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Total items: ${mockShoppingList.length}`, margin, currentY);
+                currentY += 8;
+                doc.text(`Categories: 4`, margin, currentY);
+                currentY += 15;
+
+                // Items by category
+                const categoryMapping = {
+                    'produce': 'Fruits & Vegetables',
+                    'dairy': 'Dairy & Eggs',
+                    'meat': 'Meat & Poultry',
+                    'grains': 'Grains & Pasta'
+                };
+
+                const grouped = {};
+                mockShoppingList.forEach(item => {
+                    const category = item.category || 'other';
+                    if (!grouped[category]) grouped[category] = [];
+                    grouped[category].push(item);
+                });
+
+                Object.entries(grouped).forEach(([category, items]) => {
+                    // Category header
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(categoryMapping[category] || category, margin, currentY);
+                    currentY += 12;
+                    
+                    // Items
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    
+                    items.forEach(item => {
+                        const itemText = `• ${item.name}`;
+                        const quantityText = `${formatQuantity(item.quantity, item.unit)} ${item.unit}`;
+                        
+                        doc.text(itemText, margin + 5, currentY);
+                        doc.text(quantityText, pageWidth - margin - 40, currentY, { align: 'right' });
+                        currentY += 6;
+                        
+                        if (item.recipes.length > 0) {
+                            const recipesText = `   Used in: ${item.recipes.join(', ')}`;
+                            doc.setFont('helvetica', 'italic');
+                            doc.text(recipesText, margin + 10, currentY);
+                            doc.setFont('helvetica', 'normal');
+                            currentY += 6;
+                        }
+                        
+                        currentY += 2;
+                    });
+                    
+                    currentY += 8;
+                });
+
+                doc.save(`Shopping_List_${mockTrip.name.replace(/\s+/g, '_')}_2024-08-01.pdf`);
+                alert('PDF export successful!');
+            } catch (error) {
+                alert('PDF export failed: ' + error.message);
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

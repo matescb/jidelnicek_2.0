@@ -1,0 +1,2 @@
+- use docker mcp for docker!
+- use /docker:deploy-stack (MCP) for docker operations

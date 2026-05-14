@@ -9,13 +9,15 @@ from alembic import context
 from dotenv import load_dotenv
 
 # Add project root to Python path
-sys.path.append(str(Path(__file__).parent.parent))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
 # Load environment variables
 load_dotenv()
 
 # Import your models' Base
-from src.jidelnicek.core.database import Base  # noqa: E402
+from jidelnicek.core.database import Base  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

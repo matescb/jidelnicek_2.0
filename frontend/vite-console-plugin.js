@@ -13,8 +13,8 @@ export function consoleLogPlugin() {
       })
     },
     transformIndexHtml: {
-      enforce: 'pre',
-      transform(html) {
+      order: 'pre',
+      handler(html) {
         return html.replace(
           '<head>',
           `<head>
