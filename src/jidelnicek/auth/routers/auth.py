@@ -1295,34 +1295,51 @@ async def refresh_token(
         if settings.rotate_refresh_tokens:
             # Generate new refresh token
             refresh_token, refresh_expires = token_service.generate_refresh_token(user)
-            
-            # Invalidate old session
-            await token_service.revoke_session(session.id)
-            
-            # Create new session
-            session = await token_service.create_session(
-                user=user,
-                refresh_token=refresh_token,
-                expires_at=refresh_expires,
+
+            # Atomic refresh-token rotation (issue #8): revoke the old
+            # session, create the new session and write the rotation
+            # audit-log row in a single transaction. A crash between
+            # revoke and create previously left the user permanently
+            # logged out of that device with no recovery path.
+            async with db.begin():
+                session = await token_service.rotate_refresh_session(
+                    old_session_id=session.id,
+                    user=user,
+                    refresh_token=refresh_token,
+                    expires_at=refresh_expires,
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                )
+                audit_log = AuditLog(
+                    user_id=user.id,
+                    action="token_refreshed",
+                    entity_type="session",
+                    entity_id=session.id,
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                    changes={
+                        "session_id": str(session.id),
+                        "rotated": True,
+                    },
+                )
+                db.add(audit_log)
+            await db.refresh(session)
+        else:
+            # No rotation: just write the audit-log row.
+            audit_log = AuditLog(
+                user_id=user.id,
+                action="token_refreshed",
+                entity_type="session",
+                entity_id=session.id,
                 ip_address=client_ip,
-                user_agent=user_agent
+                user_agent=user_agent,
+                changes={
+                    "session_id": str(session.id),
+                    "rotated": False,
+                },
             )
-        
-        # Log successful token refresh
-        audit_log = AuditLog(
-            user_id=user.id,
-            action="token_refreshed",
-            entity_type="session",
-            entity_id=session.id,
-            ip_address=client_ip,
-            user_agent=user_agent,
-            changes={
-                "session_id": str(session.id),
-                "rotated": settings.rotate_refresh_tokens
-            }
-        )
-        db.add(audit_log)
-        await db.commit()
+            db.add(audit_log)
+            await db.commit()
         
         logger.info(
             f"Token refreshed for user {user.email} from IP: {client_ip}"

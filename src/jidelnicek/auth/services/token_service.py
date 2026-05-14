@@ -284,7 +284,7 @@ class TokenService:
     async def revoke_session(self, session_id: UUID) -> None:
         """
         Revoke a session by ID.
-        
+
         Args:
             session_id: Session ID to revoke
         """
@@ -292,10 +292,87 @@ class TokenService:
             select(AuthSession).where(AuthSession.id == session_id)
         )
         session = result.scalar_one_or_none()
-        
+
         if session:
             session.is_valid = False
             await self.db.commit()
+
+    async def rotate_refresh_session(
+        self,
+        old_session_id: UUID,
+        user: AuthUser,
+        refresh_token: str,
+        expires_at: datetime,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> AuthSession:
+        """
+        Atomically revoke an existing refresh session and create a new one.
+
+        This method performs the revoke and create as a single atomic unit
+        so that a crash, exception or connection drop between the two
+        operations can never leave the user with a revoked session and no
+        replacement (which would have permanently logged them out of that
+        device with no recovery path -- the bug fixed by issue #8).
+
+        The method only flushes (does not commit) so the caller may wrap
+        this call together with any related rows (e.g. the rotation
+        audit-log INSERT) in a single ``async with db.begin()`` block. If
+        no outer transaction is active, this method opens its own
+        ``async with self.db.begin()`` so that the revoke + create still
+        commit together.
+
+        Args:
+            old_session_id: ID of the session being rotated out.
+            user: User the new session belongs to.
+            refresh_token: The freshly minted refresh token.
+            expires_at: Expiration timestamp for the new session.
+            ip_address: Client IP address for the new session.
+            user_agent: Client user agent for the new session.
+
+        Returns:
+            The newly created ``AuthSession`` instance.
+        """
+        from jidelnicek.auth.utils.user_agent import parse_user_agent
+
+        token_hash = self._hash_token(refresh_token)
+        device_info = parse_user_agent(user_agent or "")
+
+        new_session = AuthSession(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            device_name=device_info.get("device_name"),
+            device_type=device_info.get("device_type"),
+            browser=device_info.get("browser"),
+            os=device_info.get("os"),
+        )
+
+        async def _do_rotation() -> None:
+            result = await self.db.execute(
+                select(AuthSession).where(AuthSession.id == old_session_id)
+            )
+            old_session = result.scalar_one_or_none()
+            if old_session is not None:
+                old_session.is_valid = False
+
+            self.db.add(new_session)
+            await self.db.flush()
+
+        # If the caller already opened a transaction (so they can include
+        # the rotation audit-log row in the same commit), join it. Otherwise
+        # open our own ``async with self.db.begin()`` so revoke + create
+        # still commit atomically.
+        if self.db.in_transaction():
+            await _do_rotation()
+        else:
+            async with self.db.begin():
+                await _do_rotation()
+            await self.db.refresh(new_session)
+
+        return new_session
     
     async def revoke_all_user_sessions(self, user_id: UUID) -> int:
         """
