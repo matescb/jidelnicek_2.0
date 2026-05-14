@@ -8,6 +8,7 @@ This module provides API endpoints for user authentication including:
 - Token refresh
 """
 
+import asyncio
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -363,11 +364,15 @@ async def login(
                 )
                 await asyncio.sleep(delay_seconds)
         
-        # Verify password
-        if not PasswordHasher.verify_password(
+        # Verify password (offload bcrypt to thread pool to avoid blocking event loop)
+        loop = asyncio.get_running_loop()
+        password_valid = await loop.run_in_executor(
+            None,
+            PasswordHasher.verify_password,
             credentials.password.get_secret_value(),
-            user.password_hash
-        ):
+            user.password_hash,
+        )
+        if not password_valid:
             # Increment failed login attempts
             failed_attempts = await user_service.increment_failed_login_attempts(user)
             
@@ -1099,9 +1104,12 @@ async def confirm_password_reset(
                 detail={"errors": errors}
             )
         
-        # Hash the new password
-        new_password_hash = PasswordHasher.hash_password(
-            reset_data.new_password.get_secret_value()
+        # Hash the new password (offload bcrypt to thread pool to avoid blocking event loop)
+        loop = asyncio.get_running_loop()
+        new_password_hash = await loop.run_in_executor(
+            None,
+            PasswordHasher.hash_password,
+            reset_data.new_password.get_secret_value(),
         )
         
         # Update user's password
