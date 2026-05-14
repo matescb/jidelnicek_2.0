@@ -59,7 +59,11 @@ def upgrade() -> None:
     op.create_index('idx_recipe_reviews_recipe', 'recipe_reviews', ['recipe_id'])
     op.create_index('idx_recipe_reviews_user', 'recipe_reviews', ['user_id'])
     op.create_index('idx_recipe_reviews_created', 'recipe_reviews', ['created_at'])
-    
+
+    # Add aggregate rating columns to recipe_recipes (referenced by the trigger below)
+    op.add_column('recipe_recipes', sa.Column('rating_average', sa.Numeric(4, 2), nullable=True))
+    op.add_column('recipe_recipes', sa.Column('rating_count', sa.Integer(), server_default='0', nullable=False))
+
     # Create a function to update recipe rating statistics
     op.execute("""
         CREATE OR REPLACE FUNCTION update_recipe_rating_stats()
@@ -117,7 +121,11 @@ def downgrade() -> None:
     
     # Drop function
     op.execute("DROP FUNCTION IF EXISTS update_recipe_rating_stats()")
-    
+
+    # Drop aggregate rating columns from recipe_recipes (added in upgrade for the trigger)
+    op.drop_column('recipe_recipes', 'rating_count')
+    op.drop_column('recipe_recipes', 'rating_average')
+
     # Drop indexes for recipe_reviews
     op.drop_index('idx_recipe_reviews_created', table_name='recipe_reviews')
     op.drop_index('idx_recipe_reviews_user', table_name='recipe_reviews')
