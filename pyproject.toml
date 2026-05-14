@@ -50,6 +50,7 @@ flake8 = "^7.1.1"
 mypy = "^1.14.1"
 pre-commit = "^4.0.1"
 PyPDF2 = "^3.0.1"
+psutil = "^6.1.0"  # required by tests/api/v1/endpoints/test_exports_performance.py + tests/core/test_export_*
 
 [build-system]
 requires = ["poetry-core"]

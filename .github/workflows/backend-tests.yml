@@ -124,6 +124,7 @@ jobs:
           poetry run pytest tests/ \
             --tb=short \
             --maxfail=200 \
+            --continue-on-collection-errors \
             --color=yes \
             -p no:cacheprovider
 
