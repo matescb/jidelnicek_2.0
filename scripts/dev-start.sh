@@ -42,8 +42,9 @@ echo "🚀 Starting FastAPI application..."
 source .venv/bin/activate
 
 # Export environment variables for local development
-export DATABASE_URL="postgresql://${DB_USER:-jidelnicek}:${DB_PASSWORD:-jidelnicek_dev_2024}@localhost:5432/${DB_NAME:-jidelnicek}"
-export REDIS_URL="redis://:${REDIS_PASSWORD:-redis_dev_password_2024}@localhost:6379/0"
+export DATABASE_URL="postgresql://${DB_USER:-jidelnicek}:${DB_PASSWORD:?DB_PASSWORD must be set in .env}@localhost:5432/${DB_NAME:-jidelnicek}"
+# Redis password is optional (dev compose runs Redis with no auth).
+export REDIS_URL="redis://${REDIS_PASSWORD:+:${REDIS_PASSWORD}@}localhost:6379/0"
 
 echo ""
 echo "✅ Development environment started!"
@@ -66,7 +67,7 @@ echo ""
 if [ "$1" = "--with-tools" ] || [ "$2" = "--with-tools" ]; then
     echo "🔧 Starting additional tools..."
     docker-compose -f docker-compose.yml -f docker-compose.dev.yml --profile tools up -d
-    echo "   - pgAdmin: http://localhost:5050 (admin@jidelnicek.local / pgadmin_dev_2024)"
+    echo "   - pgAdmin: http://localhost:5050 (admin@jidelnicek.local / \$PGADMIN_PASSWORD)"
     echo "   - Redis Commander: http://localhost:8081"
 fi
 

@@ -19,7 +19,7 @@ source .venv/bin/activate
 source .env
 
 # Export database URL for Alembic
-export DATABASE_URL="postgresql://${DB_USER:-jidelnicek}:${DB_PASSWORD:-jidelnicek_dev_2024}@localhost:5432/${DB_NAME:-jidelnicek}"
+export DATABASE_URL="postgresql://${DB_USER:-jidelnicek}:${DB_PASSWORD:?DB_PASSWORD must be set in .env}@localhost:5432/${DB_NAME:-jidelnicek}"
 
 # Check if database is running
 echo "🔍 Checking database connection..."

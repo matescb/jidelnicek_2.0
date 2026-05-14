@@ -1,0 +1,122 @@
+name: Backend Tests
+
+# Runs pytest against a real Postgres 15 + Redis 7 inside GitHub-hosted runners.
+#
+# Test failures are currently SURFACED but NOT BLOCKING (continue-on-error).
+# Reason: the recovered worktree has a known conftest FK-ordering bug (issue #C-12)
+# that blocks ~1,148 tests at setup, plus several other test-suite hygiene problems
+# tracked in the Phase 2 milestone. Once those issues are resolved, flip
+# `continue-on-error` to `false` on the pytest step so CI actually enforces.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Cancel in-progress runs on new pushes to the same ref
+concurrency:
+  group: backend-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: pytest (py3.11 + pg15 + redis7)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: jidelnicek_test
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: jidelnicek_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jidelnicek_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      # Async URL used by the FastAPI app + tests
+      DATABASE_URL: postgresql+asyncpg://jidelnicek_test:ci-only-not-a-secret@localhost:5432/jidelnicek_test
+      # Sync URL for Alembic
+      DATABASE_SYNC_URL: postgresql://jidelnicek_test:ci-only-not-a-secret@localhost:5432/jidelnicek_test
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_KEY: ci-only-secret-not-for-prod-32-chars-minimum-xxx
+      ENVIRONMENT: test
+      DEBUG: "false"
+      LOG_LEVEL: WARNING
+      # Disable security relaxations that the test fixtures may rely on
+      RATE_LIMIT_ENABLED: "false"
+      CSRF_ENABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: |
+          pipx install poetry==1.8.5
+          poetry --version
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-py3.11-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-py3.11-
+
+      - name: Install backend deps
+        run: poetry install --no-interaction --with dev
+
+      - name: Wait for Postgres + Redis
+        run: |
+          for i in $(seq 1 30); do
+            pg_isready -h localhost -p 5432 -U jidelnicek_test && break || sleep 2
+          done
+          redis-cli -h localhost -p 6379 ping
+
+      - name: Run Alembic migrations
+        # Known issue #C-2: alembic.ini may point at empty migrations dir.
+        # Don't block CI on this until #C-2 is resolved.
+        continue-on-error: true
+        run: poetry run alembic upgrade head
+
+      - name: Run pytest
+        # Known issues #C-12 (FK ordering blocks 1148 tests) and related test-suite
+        # decay. Flip continue-on-error to false once those Phase 2 issues close.
+        continue-on-error: true
+        run: |
+          poetry run pytest tests/ \
+            --tb=short \
+            --maxfail=200 \
+            --color=yes \
+            -p no:cacheprovider
+
+      - name: Summarize result
+        if: always()
+        run: |
+          echo "## Backend test summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Test failures are currently non-blocking. Track progress in the Phase 2 milestone." >> "$GITHUB_STEP_SUMMARY"
+          echo "Flip \`continue-on-error\` to \`false\` on the pytest step once #C-12 and related issues close." >> "$GITHUB_STEP_SUMMARY"

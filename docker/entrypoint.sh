@@ -24,8 +24,8 @@ alembic upgrade head
 # Initialize database and seed data if needed
 echo "Initializing database..."
 # Ensure DATABASE_URL uses asyncpg for the Python app
-# Get password from environment or use default
-DB_PASSWORD=${DB_PASSWORD:-jidelnicek_dev_2024}
+# DB_PASSWORD must be supplied via container env (no fallback literal)
+DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set in the container env}
 export DATABASE_URL="postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 echo "Using DATABASE_URL for seeding: ${DATABASE_URL}"
 

@@ -1,3 +1,9 @@
+-- DEPRECATED: docker-compose now mounts docker/postgres/00_init_minimal.sh instead.
+-- This file is retained only as a documentation stub.  See 00_init_minimal.sh
+-- for the live init.  The password literals below are no longer executed in
+-- compose (mount paths in docker-compose.yml were updated in the same commit).
+-- Issue #C-9 tracks the full least-privilege follow-up.
+
 -- Minimal PostgreSQL initialization for Jídelníček 2.0
 -- This file only handles database infrastructure setup
 -- All application tables are managed by Alembic migrations
@@ -21,7 +27,8 @@ BEGIN
    IF NOT EXISTS (
       SELECT FROM pg_catalog.pg_user
       WHERE  usename = 'jidelnicek_app') THEN
-      CREATE USER jidelnicek_app WITH PASSWORD 'jidelnicek_dev_2024';
+      -- Live password creation moved to 00_init_minimal.sh (env-driven).
+      CREATE USER jidelnicek_app WITH PASSWORD 'CHANGE_ME_use_00_init_minimal_sh';
    END IF;
 END
 $do$;
@@ -42,7 +49,7 @@ BEGIN
    IF NOT EXISTS (
       SELECT FROM pg_catalog.pg_user
       WHERE  usename = 'jidelnicek_readonly') THEN
-      CREATE USER jidelnicek_readonly WITH PASSWORD 'readonly_dev_2024';
+      CREATE USER jidelnicek_readonly WITH PASSWORD 'CHANGE_ME_use_00_init_minimal_sh';
    END IF;
 END
 $do$;

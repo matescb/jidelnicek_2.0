@@ -7,10 +7,11 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME:-jidelnicek}
       POSTGRES_USER: ${DB_USER:-jidelnicek}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-jidelnicek_dev_2024}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-${DB_PASSWORD}}
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
-      - ./docker/postgres/00_init.sql:/docker-entrypoint-initdb.d/00_init.sql:ro
+      - ./docker/postgres/00_init.sh:/docker-entrypoint-initdb.d/00_init.sh:ro
       - ./docker/postgres/01_dev_schema.sql:/docker-entrypoint-initdb.d/01_dev_schema.sql:ro
     ports:
       - "5432:5432"  # Expose PostgreSQL directly for development
@@ -50,7 +51,7 @@ services:
       DEBUG: "true"
       LOG_LEVEL: DEBUG
       # Database - use container name for host
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-jidelnicek}:${DB_PASSWORD:-jidelnicek_dev_2024}@db:5432/${DB_NAME:-jidelnicek}
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-jidelnicek}:${DB_PASSWORD:?DB_PASSWORD must be set in .env}@db:5432/${DB_NAME:-jidelnicek}
       DB_HOST: db
       DB_PORT: 5432
       # Redis - use container name for host (no password for development)
@@ -105,7 +106,7 @@ services:
     container_name: jidelnicek_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@localhost.localdomain
-      PGADMIN_DEFAULT_PASSWORD: pgadmin_dev_2024
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?PGADMIN_PASSWORD must be set in .env if you start the tools profile}
       PGADMIN_CONFIG_SERVER_MODE: "False"
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:

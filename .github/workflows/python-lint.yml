@@ -1,0 +1,56 @@
+name: Python Lint
+
+# Fast lint job using ruff. Currently non-blocking (continue-on-error) because
+# the existing codebase has not been run through ruff yet; expect a long initial
+# report. Once the codebase is cleaned up, flip continue-on-error to false.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: python-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ruff:
+    name: ruff (check + format)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install --no-cache-dir ruff==0.15.12
+
+      - name: ruff check
+        continue-on-error: true
+        run: |
+          ruff check \
+            --output-format=github \
+            src/ tests/ scripts/ alembic/ migrations/
+
+      - name: ruff format --check
+        continue-on-error: true
+        run: |
+          ruff format --check src/ tests/ scripts/ alembic/ migrations/
+
+      - name: Summarize
+        if: always()
+        run: |
+          echo "## ruff lint summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Lint findings are currently non-blocking. Flip continue-on-error to false once the codebase is cleaned up." >> "$GITHUB_STEP_SUMMARY"
+          echo "Suggested ruff rules to enable explicitly: E722 (bare except), BLE001 (broad except), TRY400 (logger.error f-string), PERF203 (try/except in loop)." >> "$GITHUB_STEP_SUMMARY"

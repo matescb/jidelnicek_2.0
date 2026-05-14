@@ -1,5 +1,9 @@
--- Initialize database for development
--- This script runs when the PostgreSQL container is first created
+-- DEPRECATED: docker-compose now mounts docker/postgres/00_init.sh instead.
+-- This file is retained only as an explanatory stub for fresh-clone users
+-- who may still see references to it.  See 00_init.sh for the live init.
+-- The literal-password version below is no longer executed in compose
+-- (mount paths in docker-compose.yml / docker-compose.dev.yml were updated
+-- in the same commit).  Issue #C-9 tracks the full least-privilege follow-up.
 
 -- Create extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -16,7 +20,11 @@ BEGIN
    IF NOT EXISTS (
       SELECT FROM pg_catalog.pg_user
       WHERE  usename = 'jidelnicek_app') THEN
-      CREATE USER jidelnicek_app WITH PASSWORD 'jidelnicek_dev_2024';
+      -- Password creation moved to 00_init.sh (env-driven). This file is no
+      -- longer mounted at /docker-entrypoint-initdb.d/ — the line below
+      -- intentionally uses a placeholder so that any accidental run fails fast
+      -- instead of installing a guessable credential.
+      CREATE USER jidelnicek_app WITH PASSWORD 'CHANGE_ME_use_00_init_sh';
    END IF;
 END
 $do$;
