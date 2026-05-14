@@ -37,8 +37,13 @@ AuthUser = globals()['AuthUser']  # AuthUser imported via db.base
 from jidelnicek.auth.utils.password import PasswordHasher
 from jidelnicek.auth.services.token_service import TokenService
 
-# Test database URL - use PostgreSQL for tests
-TEST_DATABASE_URL = "postgresql+asyncpg://jidelnicek:testpassword@localhost:5433/jidelnicek_test"
+# Test database URL — prefer $DATABASE_URL from the runner env (so CI can point
+# at its service-container Postgres with the right credentials); fall back to
+# a localhost default that matches docker-compose.dev for local development.
+TEST_DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+asyncpg://jidelnicek_test:ci-only-not-a-secret@localhost:5432/jidelnicek_test",
+)
 
 
 @pytest.fixture(scope="session")

@@ -98,10 +98,12 @@ jobs:
         continue-on-error: true
         run: poetry lock --no-update
 
-      - name: Install backend deps
-        # --no-root skips installing the root project package; deps only.
-        # Tests import jidelnicek via pythonpath, not via an installed package.
-        run: poetry install --no-interaction --with dev --no-root --sync
+      - name: Install backend deps + the jidelnicek package
+        # Install the project too (no --no-root) so tests can `import jidelnicek`.
+        # pyproject.toml declares packages = [{include = "jidelnicek", from = "src"}]
+        # and `[tool.pytest.ini_options]` has no `pythonpath` entry, so the
+        # editable install is the way tests find the package.
+        run: poetry install --no-interaction --with dev --sync
 
       # Service-container --health-cmd above already polls inside each container;
       # GitHub Actions waits for healthy state before starting these steps, so
@@ -122,6 +124,7 @@ jobs:
           poetry run pytest tests/ \
             --tb=short \
             --maxfail=200 \
+            --continue-on-collection-errors \
             --color=yes \
             -p no:cacheprovider
 
