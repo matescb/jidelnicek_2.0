@@ -322,8 +322,8 @@ class UserSanction(Base):
     
     # User being sanctioned
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
-    user = relationship("AuthUser")
-    
+    user = relationship("AuthUser", foreign_keys=[user_id])
+
     # Who issued the sanction
     issued_by_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
     issued_by = relationship("AuthUser", foreign_keys=[issued_by_id])
@@ -354,7 +354,7 @@ class UserAppeal(Base):
     
     # User making the appeal
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False)
-    user = relationship("AuthUser")
+    user = relationship("AuthUser", foreign_keys=[user_id])
     
     # Sanction being appealed
     sanction_id = Column(Integer, ForeignKey("user_sanctions.id"), nullable=False)
