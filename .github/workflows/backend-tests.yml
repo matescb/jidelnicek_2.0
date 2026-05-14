@@ -103,12 +103,10 @@ jobs:
         # Tests import jidelnicek via pythonpath, not via an installed package.
         run: poetry install --no-interaction --with dev --no-root --sync
 
-      - name: Wait for Postgres + Redis
-        run: |
-          for i in $(seq 1 30); do
-            pg_isready -h localhost -p 5432 -U jidelnicek_test && break || sleep 2
-          done
-          redis-cli -h localhost -p 6379 ping
+      # Service-container --health-cmd above already polls inside each container;
+      # GitHub Actions waits for healthy state before starting these steps, so
+      # an explicit pg_isready/redis-cli wait would be redundant AND require
+      # client tools that ubuntu-latest doesn't ship by default.
 
       - name: Run Alembic migrations
         # Known issue #C-2: alembic.ini may point at empty migrations dir.
